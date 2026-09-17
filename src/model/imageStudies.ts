@@ -1,4 +1,4 @@
-import type { Style } from './types'
+import type { Style } from './types.js'
 
 interface ImageStudy {
   id: string

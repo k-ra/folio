@@ -1,4 +1,4 @@
-import type { ImageModel } from '../magic/models'
+import type { ImageModel } from '../magic/models.js'
 
 export type FontName = 'Instrument Sans' | 'Libre Caslon Text' | 'Newsreader' | 'Archivo' | 'IBM Plex Mono'
 export type Backdrop = 'none' | 'gradient' | 'custom' | 'drift' | 'shader' | 'image'

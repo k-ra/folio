@@ -1,4 +1,4 @@
-import type { ArtifactOutput, Attachment, MagicLayout, MagicMode, Style } from '../model/types'
+import type { ArtifactOutput, Attachment, MagicLayout, MagicMode, Style } from '../model/types.js'
 
 /** Shared wire contract; no browser or provider implementation dependencies. */
 export interface GenerateRequest {

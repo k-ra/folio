@@ -8,4 +8,4 @@
 - Public source and production output checked for original personal writing, sensitive sample notes, credentials and machine paths. Only generated style-reference WebPs are bundled as image assets. Original design handoffs, workspace data, local references, personal images and earlier Git history are not part of this release.
 - A new repository history is used. No license file was added.
 
-The current bring-your-own-key setup runs locally. Static hosting has browser-local persistence but no live AI backend or cloud sync. See [hosting](hosting.md) for boundaries and setup.
+These checks describe the initial public snapshot. Vercel/BYOK was added afterward; see [deployment QA](qa-vercel.md) and [hosting](hosting.md). Static-only hosting still has no live AI backend, and cloud sync remains unimplemented.

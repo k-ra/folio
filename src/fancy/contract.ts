@@ -1,4 +1,4 @@
-import type { ChatMessage, FancyParams, Style } from '../model/types'
+import type { ChatMessage, FancyParams, Style } from '../model/types.js'
 
 export type FancyStyle = Required<FancyParams>
 export const DEFAULT_FANCY: FancyStyle = {

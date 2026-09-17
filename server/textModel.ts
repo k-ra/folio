@@ -28,9 +28,11 @@ export async function generateText(env: Env, payload: TextPayload, signal: Abort
   })
   if (!response.ok)
     throw new Error(
-      response.status === 429
-        ? 'The model has reached its limit. Try again shortly.'
-        : `The model could not finish (${response.status}). Check the server connection.`,
+      response.status === 401
+        ? 'OpenAI rejected this API key. Replace it in AI settings and try again.'
+        : response.status === 429
+          ? 'The model has reached its limit. Try again shortly.'
+          : `The model could not finish (${response.status}). Check the server connection.`,
     )
   const result = (await response.json()) as {
     status?: string

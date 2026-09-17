@@ -1,6 +1,7 @@
 import type { ArtifactOutput } from '../model/types'
 import { parseData } from './data'
 import type { GenerateRequest } from './contract'
+import { apiFetch } from '../ai/session'
 
 export const generationMode = (provider: 'preview' | 'connected' | undefined, configured: boolean) =>
   provider ?? (configured ? 'connected' : 'preview')
@@ -40,7 +41,13 @@ function dataOutput(r: GenerateRequest): ArtifactOutput {
   const caption = /^(caption|title|call it)[:\s]+/i.test(r.instruction)
     ? r.instruction.replace(/^(caption|title|call it)[:\s]+/i, '')
     : previous?.caption || `${parsed.yLabel}, by ${parsed.xLabel.toLowerCase()}`
-  return { kind: 'chart', ...parsed, chartStyle: style, caption, demo: (!file && previous?.demo) || undefined }
+  return {
+    kind: 'chart',
+    ...parsed,
+    chartStyle: style,
+    caption,
+    demo: (!file && previous?.demo) || undefined,
+  }
 }
 
 /** Deterministic offline samples. They are explicitly labeled in the UI. */
@@ -74,7 +81,7 @@ export const previewProvider: ArtifactProvider = {
 
 export const connectedProvider: ArtifactProvider = {
   async generate(request, signal) {
-    const response = await fetch('/api/magic', {
+    const response = await apiFetch('/api/magic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),

@@ -1,4 +1,4 @@
-import type { FontName, HomeTheme, HomeThemeKey, Style } from './types'
+import type { FontName, HomeTheme, HomeThemeKey, Style } from './types.js'
 
 export const FONTS: Record<FontName, string> = {
   'Instrument Sans': "'Instrument Sans', sans-serif",

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { apiFetch } from '../ai/session'
 import type { FancyBlock, Story, Style } from '../model/types'
 import type { StoryUpdater } from '../model/store'
 import { newId } from '../model/util'
@@ -7,7 +8,7 @@ import { commitFancy, fancyInstruction, restoreFancy, updateFancy } from './stat
 
 export type FancyProvider = (request: FancyRequest, signal: AbortSignal) => Promise<FancyResult>
 export const connectedFancy: FancyProvider = async (request, signal) => {
-  const response = await fetch('/api/fancy', {
+  const response = await apiFetch('/api/fancy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(request),

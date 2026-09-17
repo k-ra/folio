@@ -1,15 +1,13 @@
 import { Readable } from 'node:stream'
 import { readFile } from 'node:fs/promises'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { ViteDevServer } from 'vite'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { magicApi } from '../server/magic'
+import { createMagicHandler } from '../server/magic'
 import { IMAGE_INSTRUCTIONS } from '../server/imageInstructions'
 import { DEF_STYLE } from '../src/model/constants'
 import { IMAGE_STUDIES } from '../src/style/imageStudies'
 import type { GenerateRequest } from '../src/magic/contract'
 
-vi.mock('vite', () => ({ loadEnv: () => ({}) }))
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
@@ -18,46 +16,37 @@ afterEach(() => {
 async function send(request: GenerateRequest) {
   vi.stubEnv('OPENAI_API_KEY', 'offline-test-only')
   vi.stubEnv('FOLIO_TEXT_PROVIDER', 'openai')
-  let handler!: (req: IncomingMessage, res: ServerResponse) => Promise<void>
-  const configure = magicApi().configureServer as (server: ViteDevServer) => void
-  configure({
-    config: { mode: 'test', root: '.' },
-    middlewares: {
-      use: (_path: string, fn: typeof handler) => {
-        handler = fn
-      },
-    },
-  } as unknown as ViteDevServer)
+  const handler = createMagicHandler(process.env, '.')
   const req = Object.assign(Readable.from([JSON.stringify(request)]), {
     method: 'POST',
     url: '/',
     headers: { host: 'localhost:5173', origin: 'http://localhost:5173' },
   }) as IncomingMessage
-  const res = {
-    destroyed: false,
-    writableEnded: false,
-    on: vi.fn(),
-    writeHead: vi.fn(),
-    end: vi.fn(),
-  }
-  const fetch = vi.fn().mockResolvedValue({
-    ok: true,
-    json: async () => ({
-      output:
-        request.mode === 'image'
-          ? [{ type: 'image_generation_call', result: 'aW1hZ2U=' }]
-          : [
-              {
-                content: [
-                  {
-                    type: 'output_text',
-                    text: JSON.stringify({ html: '<svg></svg>', caption: 'Offline test', reply: 'Updated' }),
-                  },
-                ],
-              },
-            ],
-    }),
-  })
+  const res = { destroyed: false, writableEnded: false, on: vi.fn(), writeHead: vi.fn(), end: vi.fn() }
+  const fetch = vi
+    .fn()
+    .mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output:
+          request.mode === 'image'
+            ? [{ type: 'image_generation_call', result: 'aW1hZ2U=' }]
+            : [
+                {
+                  content: [
+                    {
+                      type: 'output_text',
+                      text: JSON.stringify({
+                        html: '<svg></svg>',
+                        caption: 'Offline test',
+                        reply: 'Updated',
+                      }),
+                    },
+                  ],
+                },
+              ],
+      }),
+    })
   vi.stubGlobal('fetch', fetch)
   await handler(req, res as unknown as ServerResponse)
   expect(res.writeHead).toHaveBeenCalledWith(200, expect.anything())
@@ -74,11 +63,7 @@ describe('image generation direction', () => {
         originalPrompt: 'An octopus',
         history: [],
         attachments: [],
-        style: {
-          ...DEF_STYLE,
-          imageStyle: study.treatment,
-          imageDirection: study.direction,
-        },
+        style: { ...DEF_STYLE, imageStyle: study.treatment, imageDirection: study.direction },
       })
       expect(payload.instructions).toBe(IMAGE_INSTRUCTIONS)
       const content = payload.input[0].content

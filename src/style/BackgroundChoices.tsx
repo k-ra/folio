@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { apiFetch } from '../ai/session'
 import type { Style } from '../model/types'
 import type { WriteCtl } from '../write/ctl'
 import AutoTextarea from '../ui/AutoTextarea'
@@ -38,15 +39,10 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
     setPending(true)
     setError('')
     try {
-      const response = await fetch('/api/background', {
+      const response = await apiFetch('/api/background', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          background: d.bg,
-          ink: d.ink,
-          previous: d.backgroundCode || '',
-        }),
+        body: JSON.stringify({ prompt, background: d.bg, ink: d.ink, previous: d.backgroundCode || '' }),
         signal: abort.signal,
       })
       const result: unknown = await response.json()
@@ -57,11 +53,7 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
           'The generator returned an incomplete background. Your current background is unchanged.',
         )
       if (!abort.signal.aborted)
-        ctl.setDraft({
-          backdrop: 'custom',
-          backgroundCode: result.css,
-          backgroundPrompt: prompt,
-        })
+        ctl.setDraft({ backdrop: 'custom', backgroundCode: result.css, backgroundPrompt: prompt })
     } catch (cause) {
       if (!abort.signal.aborted)
         setError(
@@ -106,9 +98,7 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
             sample: (
               <span
                 className="background-study"
-                style={{
-                  background: 'linear-gradient(120deg,#ffffff,#d9d9d9,#f2efe9,#c9ccd2)',
-                }}
+                style={{ background: 'linear-gradient(120deg,#ffffff,#d9d9d9,#f2efe9,#c9ccd2)' }}
               />
             ),
           },
@@ -125,7 +115,12 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
             label: 'Shader',
             selected: d.backdrop === 'shader' && !customOpen,
             choose: () => choose({ backdrop: 'shader' }),
-            sample: <span className="background-study" style={{ background: 'radial-gradient(at 30% 20%,#dccdbc,#becbd2)' }} />,
+            sample: (
+              <span
+                className="background-study"
+                style={{ background: 'radial-gradient(at 30% 20%,#dccdbc,#becbd2)' }}
+              />
+            ),
           },
           ...(d.backdropSrc
             ? [
@@ -147,11 +142,7 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
               <button
                 key={p.name}
                 onClick={() =>
-                  ctl.setDraft({
-                    backgroundFrom: p.from,
-                    backgroundVia: p.via,
-                    backgroundTo: p.to,
-                  })
+                  ctl.setDraft({ backgroundFrom: p.from, backgroundVia: p.via, backgroundTo: p.to })
                 }
               >
                 {p.name}
@@ -243,11 +234,7 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
             <button
               disabled={pending || !code.trim()}
               onClick={() =>
-                ctl.setDraft({
-                  backdrop: 'custom',
-                  backgroundCode: code,
-                  backgroundPrompt: prompt,
-                })
+                ctl.setDraft({ backdrop: 'custom', backgroundCode: code, backgroundPrompt: prompt })
               }
             >
               Preview code

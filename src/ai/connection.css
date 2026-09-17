@@ -1,0 +1,76 @@
+.essay-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.ai-connect {
+  font: inherit;
+  letter-spacing: inherit;
+  opacity: 0.6;
+}
+.ai-connect:hover {
+  opacity: 1;
+}
+.ai-connection {
+  box-sizing: border-box;
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+  padding: 28px;
+  border: 0;
+  background: #f5f2eb;
+  color: #292720;
+  font:
+    400 14px/1.6 'Instrument Sans',
+    sans-serif;
+  letter-spacing: normal;
+}
+.ai-connection::backdrop {
+  background: rgb(0 0 0 / 0.3);
+}
+.ai-connection header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 20px;
+}
+.ai-connection h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+.ai-connection header button {
+  font-size: 22px;
+  line-height: 1;
+}
+.ai-connection p {
+  margin: 20px 0;
+}
+.ai-connection label {
+  display: block;
+  margin-top: 24px;
+}
+.ai-connection input {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 8px 0 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid #a19e97;
+  font: inherit;
+}
+.ai-connection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.ai-connection button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.ai-connection small {
+  display: block;
+  opacity: 0.65;
+}

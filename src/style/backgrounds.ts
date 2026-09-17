@@ -1,4 +1,4 @@
-import type { Style } from '../model/types'
+import type { Style } from '../model/types.js'
 
 export const BACKGROUND_CODE_LIMIT = 24000
 export const GRADIENT_DEFAULTS = {

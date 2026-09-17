@@ -1,4 +1,4 @@
-import type { Attachment } from '../model/types'
+import type { Attachment } from '../model/types.js'
 
 const MB = 1024 * 1024
 export const MAX_ATTACHMENT_BYTES = 20 * MB

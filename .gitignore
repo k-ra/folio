@@ -8,6 +8,7 @@ sync.sh
 !.env.example
 test-results/
 playwright-report/
+.vercel/
 
 # User-supplied visual references; keep originals local, not in published builds.
 /references/local/

@@ -1,6 +1,7 @@
 import type { ChatMessage, Story } from '../model/types'
 import type { FocusLabel } from './index'
 import { currentRevision } from '../magic/state'
+import { apiFetch } from './session'
 
 /** Send only this story's current content, not its saved snapshots or other stories. */
 export function chatContext(story: Story) {
@@ -36,7 +37,7 @@ export async function connectedChat(
   story: Story,
   signal: AbortSignal,
 ) {
-  const response = await fetch('/api/chat', {
+  const response = await apiFetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal,

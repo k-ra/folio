@@ -1,18 +1,14 @@
-# Folio
+# FOLIO
 
-write on paper, play in the margins. stories with images, interactive graphics, data, and moving text.
+for writing and storytelling. my ideal tool for combining writing, revising, and expansive visual exploration on the same page. scribble in the margins. integrate interactive graphics, data visualizations, and moving text with live code blocks in a meditative studio.
 
-your stories live in your browser. the demos are yours to replace. nothing syncs to a cloud account.
+![Folio homepage](docs/images/homepage.png)
+![Inside the Folio studio](docs/images/studio.png)
 
-```bash
-git clone https://github.com/k-ra/folio.git
-cd folio
-npm ci
-npm run dev
-```
+each word will be yours. agents are opt-in, and help with coding visual effects, interactive graphics, or research.
 
-open `http://127.0.0.1:5173`. for live AI, copy `.env.example` to `.env.local`, add your own OpenAI API key, and restart. keys stay on the local server; provider usage is yours. no key is needed to write or try the design samples.
+currently, your stories live in your browser and nothing syncs to a cloud account.
 
-GitHub Pages can host the editor with browser-local saving. live AI needs a private backend; cloud sync is not built yet.
+//
 
 [hosting and storage](docs/hosting.md) · [development](docs/development.md) · [design rules](docs/design-rules.md)

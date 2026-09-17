@@ -1,0 +1,10 @@
+# Vercel / BYOK QA · 17 September 2026
+
+- 101 unit tests and 97 offline browser tests passed, including the deliberate screenshot capture. Production Vite build and TypeScript check passed. Existing local middleware was replaced with an adapter around shared handlers; Vercel has its own Node entry point.
+- Offline unit coverage includes all four API routes, separate simultaneous visitor keys, refusal to use an owner's environment key or Claude login, same-origin checks, missing/malformed credentials, parsed Vercel bodies (including read-only getters), streamed local bodies, UTF-8 request limits and large streamed responses.
+- Offline browser coverage includes opt-in key entry, no generation when connecting, key headers separate from story context, no key in IndexedDB/localStorage/sessionStorage, forgetting on reload/disconnect, focus return, narrow dialogs and static-only hosts. The full rail, centering, orbs, artifact editing and style suites were also run.
+- Vercel's `@vercel/node` builder was run locally with installed dependencies and no deployment credentials. Its emitted ESM function was loaded and invoked with fake provider responses. Status, missing-key rejection and a successful BYOK chat passed. Streaming was enabled and all four allowlisted reference WebPs were present in the output. Explicit `.js` import specifiers are required for the emitted Node modules; Vite resolves them to source TypeScript in development.
+- README screenshots come from a fresh browser's neutral public stories, through the offline browser fixture. Desktop and narrow-mobile output was visually inspected.
+- No live model request was made. Actual Vercel routing, account-specific model access and live output quality still require a deployment smoke check. There is no cloud synchronization or saved credential vault.
+
+Reproduce application checks with `npm test`, `npm run build`, and `FOLIO_QA_PREVIEW=1 npm run test:e2e`. To refresh the README captures deliberately, run `FOLIO_QA_PREVIEW=1 FOLIO_README_SHOTS=1 npm run test:e2e -- tests/browser/readme.spec.ts` after building.

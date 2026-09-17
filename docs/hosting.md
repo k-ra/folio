@@ -1,6 +1,24 @@
 # Hosting and storage
 
-## Bring your own API — works locally today
+## Vercel — editor and opt-in live AI
+
+Import this repository into Vercel, or redeploy your existing connected project. Use the repository root, the **Vite** framework preset, `npm run build`, and output directory `dist`. The checked-in `vercel.json` supplies these settings and a Node function for `/api/*`; no separate backend or database is needed. Enable **Fluid compute** for the configured 300-second function limit. The app's own generation timeouts are shorter.
+
+**No API-key environment variable is required for the public site.** Each visitor opens a story, chooses **Connect AI**, and enters their own OpenAI API key. It is held only in that tab's JavaScript memory, never IndexedDB, localStorage, sessionStorage, a cookie or a URL. Reloading or choosing **Disconnect AI** removes it. Connecting does not validate the key or call a paid model; the first explicit generation/chat request checks access.
+
+On an explicit AI request, the browser sends the key in a header over HTTPS to the same-origin Vercel function. The function forwards the relevant context to OpenAI using that key, with `store: false`, then returns the result. Folio does not log or persist keys. The deployment operator and hosting infrastructure necessarily handle the request: visitors should use only a deployment they trust. Do not enable request-header/body logging in monitoring or log drains. Browser extensions and compromised page scripts can access in-memory secrets; this is not a server-side credential vault.
+
+The hosted function **never falls back to an owner's `OPENAI_API_KEY` or a local Claude sign-in**, even if those variables are set accidentally. The optional `FOLIO_TEXT_MODEL` and `FOLIO_IMAGE_MODEL` variables override the repository's existing defaults; visitors need provider access to the selected models and pay their own API usage. Subscription sign-ins are not shared with visitors. Disconnecting cannot recall a request already sent to the provider.
+
+Generation, artifact edits, chat, fancy text and custom backgrounds use the same request-scoped connection. Writing and saving remain browser-local. Selecting a preset does not contact a model. Large image results use a streamed response; inputs are limited to **4 MB for the complete JSON request** on this host, including base64 overhead, history and the previous artifact. The browser checks this before upload. Larger attached files can stay in a story but require a smaller extract/image for hosted generation, or the local server. This avoids Vercel's [4.5 MB request/buffered-response limit](https://vercel.com/docs/functions/limitations) without adding cloud storage.
+
+Before a wide launch, configure Vercel Firewall rate limits and spend alerts: BYOK prevents visitors spending an owner's OpenAI credits, but function traffic still consumes the deployment's hosting allowance. This prototype has no user accounts or distributed per-user quota service.
+
+After deploying, check `/api/magic/status`: it should report `byok: true` and `configured: false` without revealing any secret. Confirm a story saves across reload, Connect AI opens, and a reload forgets the key. Test one small live chat, graphic, image, text style and background deliberately with your own key; model-quality and account-access checks spend API usage and are not part of automated QA.
+
+References: [Vercel's Vite integration](https://vercel.com/docs/frameworks/frontend/vite), [Node functions](https://vercel.com/docs/functions/runtimes/node-js), [function duration](https://vercel.com/docs/functions/configuring-functions/duration), and [OpenAI authentication](https://developers.openai.com/api/reference/overview#authentication).
+
+## Bring your own API — local development
 
 1. Clone the repo, run `npm ci`, and copy `.env.example` to `.env.local`.
 2. Set `OPENAI_API_KEY` to your own key and start `npm run dev`.
@@ -16,7 +34,7 @@ Build with `npm run build -- --base=./` and publish **only `dist/`**, not the pr
 
 Pages can serve the writing UI, saved artifacts and offline design samples. It cannot run the `server/` Vite middleware, so live generation is unavailable on a Pages-only installation. See [GitHub's static-hosting documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site).
 
-A hosted bring-your-own-key experience is a future integration: use an authenticated private backend, keep credentials server-side, enforce per-user access and usage limits, and provide explicit revocation. Never open the development server to the internet or inject a shared key into GitHub Actions build variables. There is no remote-backend URL setting or browser key-entry form in this release.
+For live AI, use the Vercel deployment above or run the local server. The key-entry control is only offered when Folio detects its backend. A Pages-only site cannot forward AI requests. Never open the development server to the internet or inject a shared key into GitHub Actions build variables. There is no remote-backend URL setting.
 
 No Pages deployment is enabled automatically by this repository.
 

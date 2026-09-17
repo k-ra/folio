@@ -9,6 +9,7 @@ import {
 } from 'react'
 import type { AI } from '../ai'
 import { connectedChat } from '../ai/connected'
+import AIConnection from '../ai/AIConnection'
 import { DEFAULT_FILES, DEF_STYLE, EASE, FONTS, MONO, SANS, SHADOW } from '../model/constants'
 import type { StoryUpdater } from '../model/store'
 import type { Block, BlockType, ChatFocus, Panel as PanelT, Story, Style } from '../model/types'
@@ -512,9 +513,12 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
               ←
             </span>
           </button>
-          <div style={{ ...mono, opacity: 0.45 }}>
-            {wordCount(story).toLocaleString()} WORDS ·{' '}
-            {saveError ? 'NOT SAVED' : saving ? 'SAVING…' : 'SAVED'}
+          <div className="essay-status" style={mono}>
+            <AIConnection />
+            <span style={{ opacity: 0.45 }}>
+              {wordCount(story).toLocaleString()} WORDS ·{' '}
+              {saveError ? 'NOT SAVED' : saving ? 'SAVING…' : 'SAVED'}
+            </span>
           </div>
         </div>
 

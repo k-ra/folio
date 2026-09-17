@@ -1,4 +1,4 @@
-import { fancySchema, type FancyRequest } from '../src/fancy/contract'
+import { fancySchema, type FancyRequest } from '../src/fancy/contract.js'
 
 export function fancyPayload(request: FancyRequest) {
   return {

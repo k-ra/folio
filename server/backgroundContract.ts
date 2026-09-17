@@ -1,4 +1,4 @@
-import { BACKGROUND_CODE_LIMIT } from '../src/style/backgrounds'
+import { BACKGROUND_CODE_LIMIT } from '../src/style/backgrounds.js'
 
 interface BackgroundRequest {
   prompt: string
