@@ -1,0 +1,13 @@
+.DS_Store
+node_modules
+dist
+sync.sh
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+test-results/
+playwright-report/
+
+# User-supplied visual references; keep originals local, not in published builds.
+/references/local/

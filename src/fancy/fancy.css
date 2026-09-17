@@ -1,0 +1,130 @@
+.fancy-block {
+  position: relative;
+  min-width: 0;
+}
+.fancy-surface {
+  min-width: 0;
+}
+.fancy-surface textarea {
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: inherit;
+}
+.fancy-display {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+.fancy-motion-track {
+  display: block;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.fancy-marquee .fancy-motion-track {
+  display: flex;
+  width: max-content;
+  min-width: 200%;
+  animation: fancy-marquee var(--fancy-duration) linear infinite var(--fancy-direction);
+}
+.fancy-marquee .fancy-motion-copy {
+  flex: 0 0 auto;
+  min-width: 50%;
+  box-sizing: border-box;
+  padding-inline-end: 2em;
+  white-space: pre;
+}
+.fancy-float .fancy-motion-track {
+  animation: fancy-float var(--fancy-duration) ease-in-out infinite;
+}
+.fancy-reveal .fancy-motion-track {
+  animation: fancy-reveal var(--fancy-duration) ease-out both;
+}
+.fancy-display.is-paused .fancy-motion-track,
+.fancy-display:hover .fancy-motion-track,
+.fancy-display:focus-visible .fancy-motion-track {
+  animation-play-state: paused;
+}
+.fancy-tools {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  min-height: 24px;
+  font-size: 10px;
+  opacity: 0.65;
+}
+.fancy-versions {
+  position: relative;
+}
+.fancy-versions summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 18px;
+  line-height: 1;
+}
+.fancy-versions summary::-webkit-details-marker {
+  display: none;
+}
+.fancy-versions > div {
+  position: absolute;
+  right: 0;
+  top: 26px;
+  z-index: 3;
+  display: flex;
+  gap: 16px;
+  padding: 14px;
+  white-space: nowrap;
+  box-shadow: 0 6px 20px #00000008;
+}
+.fancy-existing-note {
+  margin-top: 20px;
+}
+@keyframes fancy-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes fancy-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.12em);
+  }
+}
+@keyframes fancy-reveal {
+  from {
+    opacity: 0.15;
+    transform: translateY(0.12em);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fancy-display .fancy-motion-track {
+    animation: none;
+    transform: none;
+    display: block;
+    width: auto;
+    min-width: 0;
+  }
+  .fancy-marquee .fancy-motion-copy {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding: 0;
+  }
+  .fancy-motion-copy[aria-hidden],
+  .fancy-pause {
+    display: none;
+  }
+}

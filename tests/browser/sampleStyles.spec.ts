@@ -1,0 +1,26 @@
+import { test, expect } from './fixtures'
+
+test('sample pages carry their cover treatments into the editor and survive reload', async ({ page }) => {
+  await page.goto('/')
+  await page.getByText('A study in color', { exact: true }).first().click()
+  await expect(page.getByPlaceholder('Untitled', { exact: true })).toHaveValue('A study in color')
+  const backdrop = page.locator('.page-backdrop[data-backdrop="gradient"]')
+  await expect(backdrop).toBeVisible()
+  await expect(backdrop).toHaveCSS('background-image', /linear-gradient/)
+  await expect(page.locator('.essay-sheet')).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)')
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(152, 173, 154)')
+  await expect(page.locator('.writing-page')).toHaveCSS('color', 'rgb(42, 38, 34)')
+  await page.screenshot({ path: 'test-results/sample-tide.png' })
+  await expect(page.getByText(/WORDS · SAVED/)).toBeVisible()
+  await page.reload()
+  await page.getByText('A study in color', { exact: true }).first().click()
+  await expect(backdrop).toBeVisible()
+
+  await page.getByRole('button', { name: /All stories/ }).click()
+  await page.getByText('After the lights dim', { exact: true }).first().click()
+  await expect(page.getByPlaceholder('Untitled', { exact: true })).toHaveValue('After the lights dim')
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(42, 38, 34)')
+  await expect(page.locator('.writing-page')).toHaveCSS('color', 'rgb(244, 239, 228)')
+  await expect(page.getByPlaceholder('Untitled', { exact: true })).toHaveCSS('color', 'rgb(244, 239, 228)')
+  await page.screenshot({ path: 'test-results/sample-alphabet.png' })
+})

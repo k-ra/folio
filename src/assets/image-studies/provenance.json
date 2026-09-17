@@ -1,0 +1,36 @@
+{
+  "tool": "Built-in image generation",
+  "createdOn": "2026-09-17",
+  "inputs": "Original text briefs; no third-party reference pixels or prompts submitted.",
+  "processing": "640px WebP previews; original PNGs retained locally under references/local/generated.",
+  "images": [
+    {
+      "id": "cobalt-atlas",
+      "label": "Cobalt atlas",
+      "path": "src/assets/image-studies/cobalt-atlas.webp",
+      "original": "references/local/generated/cobalt-atlas.png",
+      "prompt": "Use case: stylized-concept. Asset type: original square editorial artwork and image-style preset preview for Folio. Create a single finely engraved blue nautilus shell, showing its elegant spiral chambers in a graceful cutaway, on pale warm ivory paper. Cobalt-blue ink only; delicate etched strokes and stippled shadows with a few solid blue planes. A strong central silhouette occupying most of the square but with generous clean paper around it. Rich tactile print detail that still reads at thumbnail size. This is an evocative illustration, not a measured scientific diagram. No border, poster layout, comparison panel, words, labels, numerals, symbols, pseudo-lettering, signature, logo or watermark. Not a photograph or 3D render."
+    },
+    {
+      "id": "garden-press",
+      "label": "Garden press",
+      "path": "src/assets/image-studies/garden-press.webp",
+      "original": "references/local/generated/garden-press.png",
+      "prompt": "Use case: stylized-concept. Asset type: original square editorial artwork and image-style preset preview for Folio. A leafy branch bearing two ripe purple figs, one split open to reveal coral-red seeds, expressed as waxy crayon and oil pastel on warm fibrous paper. Bold organic shapes, broken hand-rubbed pigment, leaf green, deep plum, coral and a small pale blue rough-edged paper fragment. A beautiful simple diagonal composition with confident large shapes and airy paper around them. Material qualities should be visibly different: waxy pigment versus torn paper. One complete illustration, not a photo or a comparison panel. No words, labels, numerals, pseudo-writing, signature, border, logo or watermark."
+    },
+    {
+      "id": "coastal-halftone",
+      "label": "Coastal halftone",
+      "path": "src/assets/image-studies/coastal-halftone.webp",
+      "original": "references/local/generated/coastal-halftone.png",
+      "prompt": "Use case: stylized-concept. Asset type: original square editorial artwork and image-style preset preview for Folio. An ocean headland and a lone sea stack at low sunset, built entirely from a beautiful two-ink halftone print on warm off-white paper. Charcoal ink describes the dark rock silhouette and water; burnt orange describes the setting sun and its reflection. Variable-sized circular dots and density build atmosphere, merging into bold forms readable at thumbnail size, with plenty of untouched paper in the sky. An original compact balanced landscape, not a photograph, not a lighthouse poster, not a before-and-after. No words, letters, numerals, coordinates, crosshairs, signature, frame, logo or watermark."
+    },
+    {
+      "id": "mist-print",
+      "label": "Mist print",
+      "path": "src/assets/image-studies/mist-print.webp",
+      "original": "references/local/generated/mist-print.png",
+      "prompt": "Use case: stylized-concept. Asset type: original square editorial artwork and image-style preset preview for Folio. A solitary slender heron standing in a quiet tidal pool, with a few reed silhouettes and its subtle reflection. Restrained printmaking illustration on warm ivory paper, muted blue-grey layered shapes that suggest low mist, charcoal and fine stippling for the heron, one tiny muted rust accent. Large spare shapes, slightly off-center bird, atmospheric depth and generous negative space; visually calm and legible at thumbnail size. Tactile handprinted surface, not a photograph, not a poster or diptych. No words, calligraphy, labels, numerals, pseudo-script, signature, border, logo or watermark."
+    }
+  ]
+}

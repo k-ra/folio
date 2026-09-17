@@ -1,0 +1,37 @@
+{
+  "name": "folio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "qa:live": "node scripts/qa-live.mjs --live"
+  },
+  "dependencies": {
+    "@fontsource/instrument-sans": "^5.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/node": "^26.5.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^30.0.1",
+    "prettier": "^3.9.6",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.3",
+    "vitest": "^5.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true
+  }
+}

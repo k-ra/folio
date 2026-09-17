@@ -1,0 +1,33 @@
+# Folio workshop design rules
+
+These are implementation rules, not just visual references. Keep the structure in the grid; use whitespace rather than drawing the grid on screen.
+
+## Alignment
+
+1. **One page-control rail.** Back, Data/Style/Chat orbs, and History share one vertical centerline (the same x-center), relative to the current sheet—not the window. Use `--rail-left` and `.rail-control` inside `.essay-sheet`. Do not add separate left offsets or reconstruct an offset from sidebar width. The shared outer control width includes its border.
+2. **A centered writing column.** The sheet has equal left/right gutter tracks around `--writing-max` (560 px). Title, body, prompts and artifacts use the middle track. Paragraphs remain left-aligned; centering the column does not mean centering its text. Responsive widths change grid tokens, not individual element offsets.
+3. **Content determines vertical alignment.** The title occupies its own row. The first editing orb and first body block share the next row, so wrapped titles, font changes and paragraph spacing stay aligned automatically. History belongs to the same rail, anchored near the viewport bottom while scrolling within the sheet.
+4. **Margins belong to blocks.** Notes and artifact edit instructions anchor to their own block. Below a 992 px sheet width they flow below it, right-aligned, rather than forcing an asymmetric writing column or overflowing. Measure the available sheet, including side panels and floating-paper layouts—not just the viewport.
+5. **Controls follow what they control.** Block removal is vertically centered beside the block. Artifact settings belong to the artifact; chat contains the conversation. Full-page tools use the shared rail instead of finding a new corner.
+6. **Full bleed is sheet-relative.** A magic visual may span all three grid tracks; its caption, prompt and editing controls still use the writing track. Nested subgrids carry these tracks through the body and block—never use viewport-width breakouts or duplicate panel offsets. With no side margin left, edit instructions flow below the visual. The removal control shares the page rail, and settings sit beside the source caption. Column/full-bleed is a reversible layout choice, independent of generated versions; it must not trigger generation.
+
+## Visual restraint
+
+- Use spacing, typography and alignment before adding borders, rules, icons or labels.
+- No decorative/diagonal arrows to advertise clickability. Preserve meaningful navigation (the back arrow), accessible names, hover states and keyboard focus.
+- Prose focus gets a thin grey left rule. Unsubmitted prompts have a full light outline; finished artifacts show a full outline when selected. Do not apply one generic focus box to every object.
+- Chat is CHAT, the conversation and its composer. No quote borders, decorative separators or metadata stack. Sources/settings/history stay discoverable in their relevant controls.
+- Selection sets the chat target: a finished artifact opens its editable conversation from either the rail orb or its margin. Show one quiet, removable reference above the composer. Clearing it returns to story chat; switching targets must keep their drafts and histories separate. Navigation never submits an edit.
+- Fancy text is also an editable chat target. Keep its words separate from its presentation: AI styles the text without replacing it, and style undo must preserve later writing edits. Styling instructions belong in the shared margin, not a ruled prompt row. Animated text needs a direct edit action, pause, and a readable reduced-motion presentation; inherit page font/ink unless explicitly overridden.
+- Library sheets keep a 3:4 aspect ratio regardless of excerpt length. Crop within the paper and adapt the grid's column count instead of stretching sheets or shrinking type into illegibility. Opening/scroll animations measure the actual sheet, not an assumed height.
+- Keep the title clear. Utility controls should be understated, not additional content competing with the writing.
+- Prompt invitations are placeholders, not labels: show them only inside an empty input. Typed and prefilled prompts use identical behavior, with no duplicated heading or reserved heading row.
+- Image-style pills use local visual examples, plain labels and the shared choice-grid selection state. A preview is a style example, not a fixed subject or a promise of identical output. Browsing must not generate or upload anything. Apply/Reset/close retain the existing draft contract; new image output defaults to no words except useful diagram labels or explicitly requested copy.
+
+## Source of truth and checks
+
+The layout tokens and shared rail are defined in `src/style/controls.css`; the rows/subgrid are composed in `src/write/Write.tsx`. History is a grid child, not a viewport-positioned sibling. `tests/browser/rail.spec.ts` checks the actual centerlines on desktop/mobile, during scrolling, beside panels, and on floating sheets. Existing centering, orb, layout and object-state tests protect the other rules.
+
+For any new workshop control, identify its owner (page, block, margin, or panel), place it on that owner's grid, and test its geometry at narrow/wide widths. If the design needs an exception, document the reason here rather than hiding an arbitrary offset in a component.
+
+Reference: the shared Folio notes' Swiss Grid study—small consistent controls, typography doing spatial work, and preserved context—and the body-aligned margin rail approved on 2026-09-15.

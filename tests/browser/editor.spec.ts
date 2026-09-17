@@ -1,0 +1,121 @@
+import { test, expect, type Page } from './fixtures'
+
+async function start(page: Page) {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'New Story' }).click()
+  await page.getByPlaceholder('Untitled', { exact: true }).fill('A study in small things')
+  await page.getByPlaceholder('Begin.', { exact: true }).click()
+  await page.getByTitle('Add a block: magic, upload, padding or fancy text').click()
+  await page.getByRole('button', { name: '✳ magic', exact: true }).click()
+}
+
+test('margin → Send → chat → several edits → margin, undo, redo and reload', async ({ page }) => {
+  await start(page)
+  await page.getByLabel('Magic prompt', { exact: true }).fill('A line becoming a wave')
+  await page.getByRole('button', { name: 'Create', exact: false }).click()
+  await expect(page.getByRole('status', { name: 'Creating artifact' })).toBeVisible()
+  await expect(page.getByLabel('Edit instruction', { exact: true })).toBeVisible()
+  await page.getByLabel('Edit instruction', { exact: true }).fill('caption: A quieter wave')
+  await page.locator('.margin-send').click()
+  await expect(page.getByRole('region', { name: 'Artifact chat', exact: true })).toBeVisible()
+  await expect(page.locator('.artifact-frame')).toHaveAttribute('title', 'A quieter wave')
+  for (const name of ['A different rhythm', 'A final small wave']) {
+    await page.getByLabel('Chat message', { exact: true }).fill('caption: ' + name)
+    await page.locator('.chat-send-row button').click()
+    await expect(page.locator('.artifact-frame')).toHaveAttribute('title', name)
+    await expect(page.getByLabel('Edit instruction', { exact: true })).toHaveValue('caption: ' + name)
+  }
+  await page.getByLabel('Artifact settings', { exact: true }).click()
+  await page.getByText('Versions', { exact: true }).click()
+  await page.getByRole('button', { name: 'Undo edit' }).click()
+  await expect(page.getByLabel('Edit instruction', { exact: true })).toHaveValue('caption: A different rhythm')
+  await page.getByRole('button', { name: 'Redo' }).click()
+  await expect(page.getByLabel('Edit instruction', { exact: true })).toHaveValue('caption: A final small wave')
+  await page.getByRole('button', { name: 'Close chat panel' }).click()
+  await page.screenshot({ path: 'test-results/margin-chat.png', fullPage: true })
+  await page.reload()
+  await page.getByText('A study in small things', { exact: true }).first().click()
+  await expect(page.getByLabel('Edit instruction', { exact: true })).toHaveValue('caption: A final small wave')
+})
+
+test('data toggle draws uploaded values and edits the chart style', async ({ page }) => {
+  await start(page)
+  await page.getByRole('button', { name: 'Data', exact: true }).click()
+  await page.getByLabel('Attach files to data block').setInputFiles({
+    name: 'measurements.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from('Day,Value\nMon,12\nTue,-4\nWed,28'),
+  })
+  await page.getByLabel('Magic prompt', { exact: true }).fill('Show Value by day')
+  await page.getByRole('button', { name: 'Create', exact: false }).click()
+  await expect(page.getByRole('img', { name: 'Tue: -4', exact: true })).toBeVisible()
+  await page.getByLabel('Edit instruction', { exact: true }).fill('use bars')
+  await page.locator('.margin-send').click()
+  await page.getByLabel('Artifact settings', { exact: true }).click()
+  await page.getByText('Versions', { exact: true }).click()
+  await expect(page.locator('.artifact-version')).toContainText('VERSION 2 / 2')
+  await expect(page.getByRole('img', { name: 'Tue: -4', exact: true }).locator('rect').first()).toHaveAttribute(
+    'stroke',
+    'currentColor',
+  )
+})
+
+test('style starts with current choices, then allows theme mixing, reset, apply and save', async ({ page }) => {
+  await start(page)
+  await page.getByRole('button', { name: 'Open style' }).click()
+  const panel = page.getByRole('region', { name: 'Style panel', exact: true })
+  for (const name of ['Text', 'Color', 'Images', 'Graphics', 'Data', 'Background']) {
+    const button = panel.getByRole('button', { name, exact: true })
+    await expect(button).toBeVisible()
+    expect((await button.boundingBox())!.y).toBeLessThan(450)
+    await expect(button.locator('.style-choice')).not.toBeEmpty()
+  }
+  await expect(page.locator('.preset-card')).toHaveCount(0)
+  await expect(page.locator('.panel-slot')).toHaveCSS('width', '380px')
+  await page.screenshot({ path: 'test-results/style-overview.png' })
+  await page.locator('.theme-entry').click()
+  const thumbnail = page.locator('.preset-card .style-sample').first()
+  const thumbnailBox = await thumbnail.boundingBox()
+  const illustrationBox = await thumbnail.locator('.sample-illustration').boundingBox()
+  expect(illustrationBox!.y + illustrationBox!.height).toBeLessThanOrEqual(thumbnailBox!.y + thumbnailBox!.height)
+  await page.locator('.preset-card').filter({ hasText: 'Blueprint' }).click()
+  await expect(page.locator('.control-footer')).toContainText('PREVIEWING')
+  await page.getByRole('button', { name: 'Reset', exact: true }).click()
+  await expect(page.locator('.control-footer')).toContainText('APPLIED')
+  await page.locator('.preset-card').filter({ hasText: 'Folio' }).first().click()
+  await panel.getByRole('button', { name: 'Back to Style' }).click()
+  await panel.getByRole('button', { name: 'Data', exact: true }).click()
+  await page.getByRole('button', { name: 'Bars', exact: true }).click()
+  await panel.getByRole('button', { name: 'Back to Style' }).click()
+  await page.locator('.theme-entry').click()
+  await page.getByRole('button', { name: 'Save your mix' }).click()
+  await page.getByLabel('Preset name').fill('Folio in bars')
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+  await expect(page.locator('.preset-card').filter({ hasText: 'Folio in bars' })).toBeVisible()
+  await page.getByRole('button', { name: 'Apply', exact: true }).click()
+  await page.screenshot({ path: 'test-results/style-themes.png' })
+  await panel.getByRole('button', { name: 'Back to Style' }).click()
+  await expect(panel.getByRole('button', { name: 'Data', exact: true })).toContainText('Bars')
+  await page.getByRole('button', { name: 'Close style' }).click()
+  await page.getByLabel('Magic prompt', { exact: true }).fill('Draw a shape')
+  await page.getByRole('button', { name: 'Create', exact: false }).click()
+  await expect(page.locator('.magic-loading.loading-weave')).toBeVisible()
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click()
+  await expect(page.getByLabel('Magic prompt', { exact: true })).toHaveValue('Draw a shape')
+})
+
+test('mobile controls fit the viewport and reduced motion remains visible', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await start(page)
+  await page.getByRole('button', { name: 'Image', exact: true }).click()
+  await page.getByLabel('Magic prompt', { exact: true }).fill('An ink landscape')
+  await page.getByRole('button', { name: 'Create', exact: false }).click()
+  await expect(page.locator('.magic-loading path').first()).toHaveCSS('animation-name', 'none')
+  await expect(page.getByLabel('Edit instruction', { exact: true })).toBeVisible()
+  await expect(page.getByRole('img', { name: 'An ink landscape', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Open style' }).click()
+  const box = await page.getByRole('region', { name: 'Style panel' }).boundingBox()
+  expect(box!.width).toBeLessThanOrEqual(390)
+  await page.screenshot({ path: 'test-results/mobile-controls.png' })
+})
