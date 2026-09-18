@@ -117,6 +117,22 @@ export default function MagicBlock({ b, ctl }: { b: Magic; ctl: WriteCtl }) {
                 className="magic-prompt"
               />
               <Attachments b={b} ctl={ctl} />
+              {b.mode === 'image' && (
+                <button
+                  className="image-background-toggle"
+                  aria-pressed={(b.imageBackground || ctl.V.imageBackground) === 'transparent'}
+                  onClick={() =>
+                    ctl.magic.setImageBackground(
+                      b.id,
+                      (b.imageBackground || ctl.V.imageBackground) === 'transparent'
+                        ? 'opaque'
+                        : 'transparent',
+                    )
+                  }
+                >
+                  Remove background
+                </button>
+              )}
               <div className="magic-composer-footer">
                 <div className="mode-toggle" role="group" aria-label="Artifact type">
                   {MODES.map((m) => (

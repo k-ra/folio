@@ -89,6 +89,15 @@ export default function ArtifactControls({ b, ctl }: { b: MagicBlock; ctl: Write
   return (
     <div className="artifact-details">
       <LayoutSelect b={b} ctl={ctl} />
+      {b.mode === 'image' && (
+        <button
+          disabled={working || !ctl.magic.imagesConnected}
+          title="Generate a transparent version; the original stays in Versions"
+          onClick={() => void ctl.magic.removeBackground(b.id)}
+        >
+          Remove background
+        </button>
+      )}
       <details>
         <summary>Sources & generation</summary>
         <Attachments b={b} ctl={ctl} />

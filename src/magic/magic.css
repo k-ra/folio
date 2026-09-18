@@ -541,3 +541,5 @@ summary::-webkit-details-marker {
     transform: translateY(0);
   }
 }
+.image-background-toggle { font-size: 12px; opacity: .55; margin-top: 12px; }
+.image-background-toggle[aria-pressed='true'] { opacity: 1; text-decoration: underline; text-underline-offset: 4px; }

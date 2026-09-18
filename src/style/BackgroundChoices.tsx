@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
-import { apiFetch } from '../ai/session'
+import { useEffect, useState } from 'react'
 import type { Style } from '../model/types'
 import type { WriteCtl } from '../write/ctl'
-import AutoTextarea from '../ui/AutoTextarea'
 import ChoiceGrid from './ChoiceGrid'
 import {
   BACKGROUND_CODE_LIMIT,
@@ -10,62 +8,17 @@ import {
   GRADIENTS,
   STARTER_BACKGROUND,
   gradientCss,
-  validBackgroundResult,
 } from './backgrounds'
 import './backgrounds.css'
 
 export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
   const d = ctl.draft || ctl.S
   const [customOpen, setCustomOpen] = useState(d.backdrop === 'custom')
-  const [prompt, setPrompt] = useState(d.backgroundPrompt || '')
   const [code, setCode] = useState(d.backgroundCode || STARTER_BACKGROUND)
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState('')
-  const request = useRef<AbortController | null>(null)
   useEffect(() => {
-    request.current?.abort()
-    setPending(false)
-    setError('')
     setCode(d.backgroundCode || STARTER_BACKGROUND)
-    setPrompt(d.backgroundPrompt || '')
     setCustomOpen(d.backdrop === 'custom')
-    return () => request.current?.abort()
   }, [d])
-
-  const generate = async () => {
-    if (!prompt.trim() || pending) return
-    const abort = new AbortController()
-    request.current = abort
-    setPending(true)
-    setError('')
-    try {
-      const response = await apiFetch('/api/background', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, background: d.bg, ink: d.ink, previous: d.backgroundCode || '' }),
-        signal: abort.signal,
-      })
-      const result: unknown = await response.json()
-      if (!response.ok)
-        throw new Error((result as { error?: string })?.error || 'Background generation did not finish.')
-      if (!validBackgroundResult(result))
-        throw new Error(
-          'The generator returned an incomplete background. Your current background is unchanged.',
-        )
-      if (!abort.signal.aborted)
-        ctl.setDraft({ backdrop: 'custom', backgroundCode: result.css, backgroundPrompt: prompt })
-    } catch (cause) {
-      if (!abort.signal.aborted)
-        setError(
-          cause instanceof Error ? cause.message : 'Could not connect. Your current background is unchanged.',
-        )
-    } finally {
-      if (request.current === abort) {
-        request.current = null
-        setPending(false)
-      }
-    }
-  }
 
   const choose = (patch: Partial<Style>) => {
     setCustomOpen(false)
@@ -105,7 +58,7 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
           {
             id: 'custom',
             label: 'Custom code',
-            detail: 'Describe it or write it',
+            detail: 'Write or inspect CSS',
             selected: customOpen,
             choose: () => setCustomOpen(true),
             sample: <span className="background-study background-code-study">{'{ }'}</span>,
@@ -185,56 +138,19 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
       )}
       {customOpen && (
         <div className="custom-background-controls">
-          <label className="background-field">
-            <span className="eyebrow">Describe the background</span>
-            <AutoTextarea
-              aria-label="Background direction"
-              maxLength={3000}
-              disabled={pending}
-              value={prompt}
-              onChange={(e) => setPrompt(e.currentTarget.value)}
-              placeholder="A soft tide of blue and warm sand. Still enough to read on…"
-            />
-          </label>
-          <div className="background-actions">
-            <button disabled={pending || !prompt.trim() || !ctl.magic.connected} onClick={generate}>
-              {pending ? 'Writing the background…' : 'Generate background'}
-            </button>
-            {pending && (
-              <button
-                onClick={() => {
-                  request.current?.abort()
-                  setPending(false)
-                }}
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-          <p className="control-help">
-            {ctl.magic.connected
-              ? 'Uses the connected text model. Only Generate makes a model request; Apply keeps the result.'
-              : 'GPT generation needs the server connection. You can still write or paste CSS below.'}
-          </p>
-          {error && (
-            <p className="background-error" role="alert">
-              {error}
-            </p>
-          )}
           <details className="background-code">
             <summary>Edit the CSS</summary>
             <textarea
               aria-label="Background CSS"
               spellCheck={false}
-              disabled={pending}
               value={code}
               maxLength={BACKGROUND_CODE_LIMIT}
               onChange={(e) => setCode(e.currentTarget.value)}
             />
             <button
-              disabled={pending || !code.trim()}
+              disabled={!code.trim()}
               onClick={() =>
-                ctl.setDraft({ backdrop: 'custom', backgroundCode: code, backgroundPrompt: prompt })
+                ctl.setDraft({ backdrop: 'custom', backgroundCode: code })
               }
             >
               Preview code

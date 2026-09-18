@@ -10,7 +10,7 @@ import {
 import type { AI } from '../ai'
 import { connectedChat } from '../ai/connected'
 import AIConnection from '../ai/AIConnection'
-import { DEFAULT_FILES, DEF_STYLE, EASE, FONTS, MONO, SANS, SHADOW } from '../model/constants'
+import { DEFAULT_FILES, DEF_STYLE, EASE, FONTS, MONO, SANS } from '../model/constants'
 import type { StoryUpdater } from '../model/store'
 import type { Block, BlockType, ChatFocus, Panel as PanelT, Story, Style } from '../model/types'
 import { hexToRgb, textBlock as T, wordCount } from '../model/util'
@@ -472,7 +472,7 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
       </div>
 
       <div
-        className="essay-sheet"
+        className={`essay-sheet ${card ? 'floating-paper' : ''}`}
         style={{
           flex: 1,
           minWidth: 0,
@@ -481,12 +481,8 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
           display: 'grid',
           gridTemplateRows: 'auto auto',
           alignContent: 'start',
-          background: card ? V.bg : 'transparent',
-          maxWidth: card ? 1060 : 'none',
-          margin: card ? '84px auto 120px' : 0,
-          boxShadow: card ? SHADOW.card : 'none',
+          background: 'transparent',
           boxSizing: 'border-box',
-          transition: 'max-width .5s, margin .5s',
         }}
       >
         <div
@@ -500,7 +496,7 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
             top: 0,
             zIndex: 5,
             background:
-              bdOn && !card ? 'transparent' : `linear-gradient(${V.bg} 70%, rgba(${r},${g},${b},0))`,
+              bdOn || card ? 'transparent' : `linear-gradient(${V.bg} 70%, rgba(${r},${g},${b},0))`,
           }}
         >
           <button
@@ -523,6 +519,7 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
         </div>
 
         <div className="essay-main" style={{ rowGap: V.gap }}>
+          {card && <div className="floating-paper-surface" aria-hidden="true" style={{ background: V.bg }} />}
           <div className="essay-title">
             <AutoTextarea
               className="prose-input"

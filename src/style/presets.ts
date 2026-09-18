@@ -2,6 +2,29 @@ import { DEF_STYLE } from '../model/constants'
 import type { Style, StylePreset } from '../model/types'
 import { GRADIENT_DEFAULTS } from './backgrounds'
 
+export const GRAPHIC_STYLES = [
+  {
+    name: 'Folio',
+    stroke: 1,
+    detail: 'Diagram & detail',
+    direction: 'Precise fine-line diagrams, generous negative space, restrained labels and focus details.',
+  },
+  {
+    name: 'Living field',
+    stroke: 0.5,
+    detail: 'Particles & motion',
+    direction:
+      'A field of organic particles with gentle spring motion, subtle depth, and connections revealed by pointer or keyboard focus. Pause motion and honor reduced motion.',
+  },
+  {
+    name: 'Orbital',
+    stroke: 1,
+    detail: 'Radial & interactive',
+    direction:
+      'Radial constellations of fine marks, layered orbital geometry, atmospheric color and a scrubber that reveals successive states. Hover and keyboard focus reveal details.',
+  },
+]
+
 export const FOLIO_STYLE: Style = {
   ...DEF_STYLE,
   ink: '#111111',
@@ -67,6 +90,9 @@ function appearance(style: Style): Style {
     backgroundMotion,
     backgroundCode,
     backgroundPrompt: _prompt,
+    customStyles: _custom,
+    dataDirection: _dataDirection,
+    imageBackground: _imageBackground,
     ...rest
   } = style
   return {

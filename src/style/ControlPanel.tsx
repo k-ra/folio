@@ -1,12 +1,13 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { FONTS, BACKDROP_NAMES } from '../model/constants'
 import type { WriteCtl } from '../write/ctl'
-import AutoTextarea from '../ui/AutoTextarea'
 import StyleSample from './StyleSample'
 import StyleCategories, { type Category } from './StyleCategories'
-import { PRESETS, sameStyle, sameAppearance } from './presets'
+import { GRAPHIC_STYLES, PRESETS, sameStyle, sameAppearance } from './presets'
 import { imageStyleLabel } from './imageStudies'
 import { IMAGE_MODELS } from '../magic/models'
+import StyleChat from './StyleChat'
+import type { CustomStyleCategory } from '../model/types'
 
 const CATEGORIES: { id: Category; name: string }[] = [
   { id: 'type', name: 'Text' },
@@ -21,6 +22,7 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
   const [category, setCategory] = useState<Category | 'theme' | null>(null)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [styleInputs, setStyleInputs] = useState<Partial<Record<CustomStyleCategory, string>>>({})
   const panel = useRef<HTMLElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
   const previousCategory = useRef<string | null>(null)
@@ -43,10 +45,18 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
       value: imageStyleLabel(d),
       detail: IMAGE_MODELS.find((m) => m.id === d.imageModel)?.name || 'Server default',
     },
-    graphics: { value: `${d.strokeWidth}px lines`, detail: d.graphicDirection || 'No extra direction' },
+    graphics: {
+      value:
+        d.customStyles?.graphics?.name ||
+        GRAPHIC_STYLES.find((p) => p.direction === d.graphicDirection)?.name ||
+        'Your direction',
+      detail: d.graphicDirection || 'No extra direction',
+    },
     data: {
-      value: d.chartStyle === 'bar' ? 'Bars' : d.chartStyle === 'area' ? 'Area' : 'Lines',
-      detail: `${d.strokeWidth}px stroke`,
+      value:
+        d.customStyles?.data?.name ||
+        (d.chartStyle === 'bar' ? 'Bars' : d.chartStyle === 'area' ? 'Area' : 'Lines'),
+      detail: d.dataDirection || 'Explore your data',
     },
     page: {
       value: d.paper === 'full' ? 'Full page' : 'Floating sheet',
@@ -110,28 +120,15 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
               <summary>Live sample</summary>
               <StyleSample style={d} />
             </details>
-            <details className="style-by-prompt">
-              <summary>Describe a feeling</summary>
-              <AutoTextarea
-                aria-label="Style direction"
-                value={ctl.chatInput}
-                onChange={(e) => ctl.setChatInput(e.currentTarget.value)}
-                placeholder="A little warmer, a little more air…"
-              />
-              <button disabled={ctl.busy || !ctl.chatInput.trim()} onClick={ctl.sendChat}>
-                Preview direction
-              </button>
-              {ctl.story.chats.style?.slice(-1).map((m, i) => (
-                <p key={i}>{m.text}</p>
-              ))}
-            </details>
           </>
         )}
         {category && (
           <div id="style-detail">
             {category === 'theme' ? (
               <div className="category-detail">
-                <p className="control-help">A starting point for everything. Keep it as it is, or make it yours.</p>
+                <p className="control-help">
+                  A starting point for everything. Keep it as it is, or make it yours.
+                </p>
                 <div className="preset-grid">
                   {presets.map((p) => (
                     <button
@@ -184,6 +181,14 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
             ) : (
               category && (
                 <div className="category-detail" key={category}>
+                  {(['graphics', 'data', 'palette', 'page'] as string[]).includes(category) && (
+                    <StyleChat
+                      category={category as CustomStyleCategory}
+                      ctl={ctl}
+                      input={styleInputs[category as CustomStyleCategory] || ''}
+                      setInput={(value) => setStyleInputs((old) => ({ ...old, [category]: value }))}
+                    />
+                  )}
                   <StyleCategories category={category} ctl={ctl} />
                 </div>
               )

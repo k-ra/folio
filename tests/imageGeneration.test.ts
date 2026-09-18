@@ -23,30 +23,28 @@ async function send(request: GenerateRequest) {
     headers: { host: 'localhost:5173', origin: 'http://localhost:5173' },
   }) as IncomingMessage
   const res = { destroyed: false, writableEnded: false, on: vi.fn(), writeHead: vi.fn(), end: vi.fn() }
-  const fetch = vi
-    .fn()
-    .mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        output:
-          request.mode === 'image'
-            ? [{ type: 'image_generation_call', result: 'aW1hZ2U=' }]
-            : [
-                {
-                  content: [
-                    {
-                      type: 'output_text',
-                      text: JSON.stringify({
-                        html: '<svg></svg>',
-                        caption: 'Offline test',
-                        reply: 'Updated',
-                      }),
-                    },
-                  ],
-                },
-              ],
-      }),
-    })
+  const fetch = vi.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      output:
+        request.mode === 'image'
+          ? [{ type: 'image_generation_call', result: 'aW1hZ2U=' }]
+          : [
+              {
+                content: [
+                  {
+                    type: 'output_text',
+                    text: JSON.stringify({
+                      html: '<svg></svg>',
+                      caption: 'Offline test',
+                      reply: 'Updated',
+                    }),
+                  },
+                ],
+              },
+            ],
+    }),
+  })
   vi.stubGlobal('fetch', fetch)
   await handler(req, res as unknown as ServerResponse)
   expect(res.writeHead).toHaveBeenCalledWith(200, expect.anything())
@@ -55,6 +53,46 @@ async function send(request: GenerateRequest) {
 }
 
 describe('image generation direction', () => {
+  it('requests real PNG transparency for a reversible background edit', async () => {
+    const src = 'data:image/png;base64,aW1hZ2U='
+    const payload = await send({
+      mode: 'image',
+      instruction: 'Remove the background',
+      originalPrompt: 'A heron',
+      attachments: [],
+      history: ['A heron'],
+      style: DEF_STYLE,
+      imageBackground: 'transparent',
+      previous: { kind: 'image', src, caption: 'A heron' },
+    })
+    expect(payload.tools[0]).toMatchObject({ background: 'transparent', output_format: 'png' })
+    expect(payload.input[0].content).toContainEqual({ type: 'input_image', image_url: src })
+  })
+
+  it('passes the custom data direction but excludes style chat history and sample code', async () => {
+    const payload = await send({
+      mode: 'data',
+      instruction: 'Visualize these observations',
+      originalPrompt: '',
+      attachments: [],
+      history: [],
+      style: {
+        ...DEF_STYLE,
+        dataDirection: 'Radial rays with focus tooltips.',
+        customStyles: {
+          data: {
+            name: 'Reef',
+            direction: 'Radial rays',
+            history: [{ me: true, text: 'private-style-chat' }],
+            sample: 'sample-only-code',
+          },
+        },
+      },
+    })
+    expect(payload.input[0].content[0].text).toContain('Radial rays with focus tooltips.')
+    expect(JSON.stringify(payload)).not.toContain('private-style-chat')
+    expect(JSON.stringify(payload)).not.toContain('sample-only-code')
+  })
   for (const study of IMAGE_STUDIES.filter((s) => s.preview)) {
     it(`sends ${study.label}'s short direction and actual allowlisted reference pixels`, async () => {
       const payload = await send({

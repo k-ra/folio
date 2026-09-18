@@ -26,7 +26,10 @@ for (const width of [1440, 390]) {
     }
     await expect(panel.locator('.theme-entry')).toHaveCSS('border-bottom-width', '1px')
     await panel.getByRole('button', { name: 'Images', exact: true }).click()
-    await expect(panel.getByRole('button', { name: 'Etching', exact: true })).toHaveAttribute('aria-pressed', 'true')
+    await expect(panel.getByRole('button', { name: 'Etching', exact: true })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
     await expect(panel.getByLabel('Image model')).toHaveValue('gpt-image-2.5-flare')
     await panel.getByRole('button', { name: 'Reset', exact: true }).click()
     await expect(panel.getByLabel('Image model')).toHaveValue('default')
@@ -40,7 +43,11 @@ for (const width of [1440, 390]) {
 test('image model and style persist; navigation makes no generation calls, and Create sends the selected model', async ({
   page,
 }) => {
-  const requests: { style: { imageModel: string; imageStyle: string } }[] = []
+  const requests: {
+    style: { imageModel: string; imageStyle: string }
+    imageBackground?: string
+    previous?: { kind: string }
+  }[] = []
   await page.route('**/api/magic/status', (route) => route.fulfill({ json: { configured: true } }))
   await page.route('**/api/magic', (route) => {
     requests.push(route.request().postDataJSON())
@@ -75,7 +82,10 @@ test('image model and style persist; navigation makes no generation calls, and C
   await page.getByRole('button', { name: 'Open style' }).click()
   await panel.getByRole('button', { name: 'Images', exact: true }).click()
   await expect(panel.getByLabel('Image model')).toHaveValue('gpt-image-2.5-flare')
-  await expect(panel.getByRole('button', { name: 'Grain', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(panel.getByRole('button', { name: 'Grain', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
   // Closing without Apply revokes subsequent configuration edits.
   await panel.getByLabel('Image model').selectOption('gpt-image-2.5-sunburst')
   await panel.getByRole('button', { name: 'Close style' }).click()
@@ -93,4 +103,13 @@ test('image model and style persist; navigation makes no generation calls, and C
   expect(requests).toHaveLength(1)
   expect(requests[0].style.imageModel).toBe('gpt-image-2.5-flare')
   expect(requests[0].style.imageStyle).toBe('grain')
+  await page.getByLabel('Artifact settings', { exact: true }).click()
+  await page.getByRole('button', { name: 'Remove background', exact: true }).click()
+  await expect.poll(() => requests.length).toBe(2)
+  expect(requests[1].imageBackground).toBe('transparent')
+  expect(requests[1].previous?.kind).toBe('image')
+  await page.getByText('Versions', { exact: true }).click()
+  await expect(page.locator('.artifact-version')).toContainText('VERSION 2 / 2')
+  await page.getByRole('button', { name: 'Undo edit', exact: true }).click()
+  await expect(page.locator('.artifact-version')).toContainText('VERSION 1 / 2')
 })

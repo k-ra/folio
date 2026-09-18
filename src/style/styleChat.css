@@ -1,0 +1,76 @@
+.style-chat {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 30px;
+}
+.style-chat form {
+  display: grid;
+  gap: 14px;
+}
+.style-chat textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  line-height: 1.65;
+  min-height: 80px;
+}
+.style-chat-actions {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+  font-size: 12px;
+}
+.style-chat button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.style-chat-log {
+  max-height: 230px;
+  overflow: auto;
+  display: grid;
+  gap: 18px;
+}
+.style-chat-log p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+.style-chat-log small {
+  display: block;
+  font: 9px/2 monospace;
+  letter-spacing: 1px;
+  opacity: 0.5;
+}
+.style-chat-log p:not(.from-you) {
+  opacity: 0.75;
+}
+.style-chat-study iframe {
+  width: 100%;
+}
+.style-chat-study > small {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+  opacity: 0.5;
+}
+.style-chat summary {
+  font-size: 11px;
+  opacity: 0.6;
+  cursor: pointer;
+}
+.style-chat .control-help {
+  margin: 0;
+}
+.style-chat [role='alert'] {
+  font-size: 12px;
+}
+.style-fine-tuning {
+  margin-top: 24px;
+}
+.style-fine-tuning summary {
+  font-size: 12px;
+  opacity: 0.6;
+  cursor: pointer;
+}

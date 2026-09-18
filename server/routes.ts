@@ -3,6 +3,7 @@ import { createMagicHandler } from './magic.js'
 import { createBackgroundHandler } from './background.js'
 import { createChatHandler } from './chat.js'
 import { createFancyHandler } from './fancy.js'
+import { createStyleHandler } from './style.js'
 import { connectionStatus } from './textModel.js'
 import { HOSTED_REQUEST_BYTES, HttpError, jsonResponse, readBody, requestEnv, type Env } from './http.js'
 
@@ -17,7 +18,10 @@ export function apiHandler(base: Env, root: string, hosted = false) {
         maxRequestBytes: hosted ? HOSTED_REQUEST_BYTES : 64 * 1024 * 1024,
       })
     }
-    if (req.method !== 'POST' || !['/api/magic', '/api/chat', '/api/background', '/api/fancy'].includes(path))
+    if (
+      req.method !== 'POST' ||
+      !['/api/magic', '/api/chat', '/api/background', '/api/fancy', '/api/style'].includes(path)
+    )
       return jsonResponse(res, 404, { error: 'Not found' })
     const sameOrigin =
       req.headers.origin === `https://${req.headers.host}` ||
@@ -40,7 +44,9 @@ export function apiHandler(base: Env, root: string, hosted = false) {
             ? createChatHandler(env)
             : path === '/api/background'
               ? createBackgroundHandler(env)
-              : createFancyHandler(env)
+              : path === '/api/style'
+                ? createStyleHandler(env)
+                : createFancyHandler(env)
       const originalUrl = req.url
       req.url = '/'
       try {

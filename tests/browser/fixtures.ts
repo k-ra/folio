@@ -4,7 +4,7 @@ import { test as base, expect } from '@playwright/test'
 export const test = base.extend({
   page: async ({ page }, use) => {
     await page.route('**/api/magic/status', (route) => route.fulfill({ json: { configured: false } }))
-    await page.route(/\/api\/(magic|chat|background|fancy)$/, (route) =>
+    await page.route(/\/api\/(magic|chat|background|fancy|style)$/, (route) =>
       route.fulfill({
         status: 503,
         json: { error: 'Live generation is disabled during automated QA.' },

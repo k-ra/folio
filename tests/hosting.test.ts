@@ -57,7 +57,7 @@ describe('hosted BYOK boundary', () => {
     expect(JSON.stringify(result)).not.toContain(owner)
     expect(JSON.stringify(result)).not.toContain(key)
   })
-  it.each(['/api/magic', '/api/chat', '/api/fancy', '/api/background'])(
+  it.each(['/api/magic', '/api/chat', '/api/fancy', '/api/background', '/api/style'])(
     'refuses missing keys before provider work on %s',
     async (path) => {
       const fetch = vi.fn()
@@ -83,12 +83,10 @@ describe('hosted BYOK boundary', () => {
     expect((await request('/api/chat', {}, {}, false, 'GET')).status).toBe(404)
   })
   it('uses each visitor key independently, including simultaneous requests', async () => {
-    const fetch = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ output: [{ content: [{ type: 'output_text', text: 'A reply' }] }] }),
-      })
+    const fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ output: [{ content: [{ type: 'output_text', text: 'A reply' }] }] }),
+    })
     vi.stubGlobal('fetch', fetch)
     const body = { instruction: 'Discuss this', history: [], story: { title: 'Test' } }
     const results = await Promise.all([
@@ -106,12 +104,10 @@ describe('hosted BYOK boundary', () => {
     }
   })
   it('bundles the allowlisted style pixels into hosted image requests', async () => {
-    const fetch = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({ output: [{ type: 'image_generation_call', result: 'aW1hZ2U=' }] }),
-      })
+    const fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ output: [{ type: 'image_generation_call', result: 'aW1hZ2U=' }] }),
+    })
     vi.stubGlobal('fetch', fetch)
     const result = await request(
       '/api/magic',
@@ -138,6 +134,24 @@ describe('hosted BYOK boundary', () => {
     )
   })
   it.each([
+    [
+      '/api/style',
+      {
+        category: 'data',
+        instruction: 'A radial field',
+        history: [],
+        current: { direction: '', background: '#ffffff', ink: '#111111', css: '' },
+      },
+      {
+        name: 'Radial field',
+        direction: 'Radial marks with hover details.',
+        reply: 'A radial study.',
+        background: '#ffffff',
+        ink: '#111111',
+        css: '',
+        sample: '<svg></svg>',
+      },
+    ],
     [
       '/api/magic',
       {
@@ -167,14 +181,12 @@ describe('hosted BYOK boundary', () => {
       { fancy: DEFAULT_FANCY, reply: 'Kept your words.' },
     ],
   ] as const)('serves %s with the same visitor connection', async (path, body, output) => {
-    const fetch = vi
-      .fn()
-      .mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          output: [{ content: [{ type: 'output_text', text: JSON.stringify(output) }] }],
-        }),
-      })
+    const fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        output: [{ content: [{ type: 'output_text', text: JSON.stringify(output) }] }],
+      }),
+    })
     vi.stubGlobal('fetch', fetch)
     expect((await request(path, body, {}, true)).status).toBe(200)
     expect(fetch.mock.calls[0][1].headers.Authorization).toBe(`Bearer ${key}`)

@@ -10,4 +10,5 @@ export interface GenerateRequest {
   previous?: ArtifactOutput
   history: string[]
   style: Style
+  imageBackground?: 'opaque' | 'transparent'
 }

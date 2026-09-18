@@ -19,7 +19,7 @@ export function setRequestLimit(bytes: unknown) {
   if (typeof bytes === 'number' && Number.isFinite(bytes) && bytes > 0) maxRequestBytes = bytes
 }
 export async function apiFetch(
-  path: '/api/magic' | '/api/chat' | '/api/background' | '/api/fancy',
+  path: '/api/magic' | '/api/chat' | '/api/background' | '/api/fancy' | '/api/style',
   init: RequestInit,
 ) {
   if (typeof init.body === 'string' && new TextEncoder().encode(init.body).byteLength > maxRequestBytes)

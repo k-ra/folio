@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useConnection } from './connection'
 import { hasApiKey, setApiKey } from './session'
 import './connection.css'
@@ -11,6 +11,7 @@ interface Props {
 /** An explicit opt-in; connecting itself never calls a paid model. */
 export default function AIConnection({ disconnectedLabel = 'Connect AI', connectedLabel = 'AI settings' }: Props) {
   const connection = useConnection()
+  const id = useId()
   const dialog = useRef<HTMLDialogElement>(null)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
@@ -22,13 +23,13 @@ export default function AIConnection({ disconnectedLabel = 'Connect AI', connect
   }
   return (
     <>
-      <button className="ai-connect" onClick={() => dialog.current?.showModal()}>
+      <button type="button" className="ai-connect" onClick={() => dialog.current?.showModal()}>
         {hasApiKey() ? connectedLabel : disconnectedLabel}
       </button>
       <dialog
         ref={dialog}
         className="ai-connection"
-        aria-labelledby="ai-connection-title"
+        aria-labelledby={`${id}-title`}
         onClose={() => {
           setDraft('')
           setError('')
@@ -47,7 +48,7 @@ export default function AIConnection({ disconnectedLabel = 'Connect AI', connect
           }}
         >
           <header>
-            <h2 id="ai-connection-title">Your AI, when you want it.</h2>
+            <h2 id={`${id}-title`}>Your AI, when you want it.</h2>
             <button type="button" aria-label="Close AI settings" onClick={close}>
               ×
             </button>
@@ -61,9 +62,9 @@ export default function AIConnection({ disconnectedLabel = 'Connect AI', connect
             instructions and attachments to OpenAI. Only use a deployment you trust. API charges apply;
             connecting alone makes no model request.
           </p>
-          <label htmlFor="folio-api-key">OpenAI API key</label>
+          <label htmlFor={`${id}-key`}>OpenAI API key</label>
           <input
-            id="folio-api-key"
+            id={`${id}-key`}
             type="password"
             autoComplete="off"
             spellCheck={false}

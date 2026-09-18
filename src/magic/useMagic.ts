@@ -42,10 +42,12 @@ export function useMagic(
   const cancelAll = () => {
     for (const id of requests.current.keys()) cancel(id)
   }
-  const generate = async (id: string, text?: string, fromMargin = false) => {
-    const { story: s, style: view, openChat: open } = latest.current
+  const generate = async (id: string, text?: string, fromMargin = false, removeBackground = false) => {
+    const { story: s, style, openChat: open } = latest.current
     const b = s.blocks.find((b) => b.id === id)
     if (!b || b.type !== 'magic' || requests.current.has(id)) return
+    const imageBackground = removeBackground ? 'transparent' : b.imageBackground || style.imageBackground
+    const view = { ...style, ...(imageBackground ? { imageBackground } : {}) }
     const instruction = (text ?? (b.revision >= 0 ? marginInstruction(b) : b.prompt)).trim()
     if (!instruction) return
     const requestId = newId(),
@@ -58,12 +60,13 @@ export function useMagic(
       requestId,
       error: undefined,
       ...(x.revision >= 0 ? { editDraft: instruction } : {}),
+      ...(removeBackground ? { imageBackground: 'transparent', provider: 'connected' } : {}),
     }))
     try {
       const configured =
         connection ?? (overrideProvider ? { configured: false } : await readConnection(controller.signal))
       controller.signal.throwIfAborted()
-      const mode = generationMode(b.provider, configured.configured)
+      const mode = removeBackground ? 'connected' : generationMode(b.provider, configured.configured)
       const provider = overrideProvider || (mode === 'connected' ? connectedProvider : previewProvider)
       const output = await provider.generate(
         {
@@ -75,6 +78,7 @@ export function useMagic(
           previous: currentRevision(b)?.output,
           history: b.revisions.slice(0, b.revision + 1).map((r) => r.instruction),
           style: view,
+          ...(b.mode === 'image' && imageBackground ? { imageBackground } : {}),
         },
         controller.signal,
       )
@@ -105,6 +109,15 @@ export function useMagic(
     cancelAll,
     connected,
     imagesConnected: connection?.images === true,
+    setImageBackground: (id: string, imageBackground: 'opaque' | 'transparent') =>
+      patch(id, (b) => (b.status === 'rendering' ? b : { ...b, imageBackground })),
+    removeBackground: (id: string) =>
+      generate(
+        id,
+        'Remove the background. Preserve the subject, its details, colors, and composition. Return a true transparent PNG with clean edges, no matte or checkerboard.',
+        false,
+        true,
+      ),
     setLayout: (id: string, layout: MagicLayout) =>
       latest.current.update((s) => updateMagic(s, id, (b) => ({ ...b, layout })), 'Artifact layout'),
     setProvider: (id: string, provider: 'preview' | 'connected') =>

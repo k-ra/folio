@@ -81,10 +81,11 @@ export const previewProvider: ArtifactProvider = {
 
 export const connectedProvider: ArtifactProvider = {
   async generate(request, signal) {
+    const { customStyles: _studies, ...style } = request.style
     const response = await apiFetch('/api/magic', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
+      body: JSON.stringify({ ...request, style }),
       signal,
     })
     if (!response.ok) {

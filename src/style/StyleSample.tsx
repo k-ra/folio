@@ -78,17 +78,25 @@ export default function StyleSample({ style, miniature = false }: { style: Style
         <ArtifactView
           compact
           style={style}
-          output={{
-            kind: 'chart',
-            chartStyle: style.chartStyle,
-            points: [14, 30, 24, 48, 40, 62].map((value, i) => ({
-              label: String(i + 1),
-              value,
-            })),
-            caption: 'Style specimen',
-            xLabel: 'Day',
-            yLabel: 'Value',
-          }}
+          output={
+            style.customStyles?.data?.sample
+              ? {
+                  kind: 'html',
+                  html: style.customStyles.data.sample,
+                  caption: 'Data style study · sample data',
+                }
+              : {
+                  kind: 'chart',
+                  chartStyle: style.chartStyle,
+                  points: [14, 30, 24, 48, 40, 62].map((value, i) => ({
+                    label: String(i + 1),
+                    value,
+                  })),
+                  caption: 'Style specimen',
+                  xLabel: 'Day',
+                  yLabel: 'Value',
+                }
+          }
         />
       </div>
       {!miniature && <div className="sample-footnote">01 — TEXT, IMAGE & DATA IN CONVERSATION</div>}

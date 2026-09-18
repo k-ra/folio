@@ -3,6 +3,13 @@ import type { ImageModel } from '../magic/models.js'
 export type FontName = 'Instrument Sans' | 'Libre Caslon Text' | 'Newsreader' | 'Archivo' | 'IBM Plex Mono'
 export type Backdrop = 'none' | 'gradient' | 'custom' | 'drift' | 'shader' | 'image'
 export type Paper = 'full' | 'card'
+export type CustomStyleCategory = 'graphics' | 'data' | 'palette' | 'page'
+export interface CustomStyle {
+  name: string
+  direction: string
+  history: ChatMessage[]
+  sample?: string
+}
 
 export interface Style {
   bodyFont: FontName
@@ -28,6 +35,9 @@ export interface Style {
   imageDirection: string
   imageModel: ImageModel
   graphicDirection: string
+  dataDirection?: string
+  imageBackground?: 'opaque' | 'transparent'
+  customStyles?: Partial<Record<CustomStyleCategory, CustomStyle>>
   linkStyle: 'underline' | 'quiet' | 'highlight'
   loading: 'contour' | 'weave' | 'script'
 }
@@ -69,6 +79,7 @@ export interface MagicBlock {
   id: string
   type: 'magic'
   mode: MagicMode
+  imageBackground?: 'opaque' | 'transparent'
   /** Presentation only; changing width does not regenerate or replace an artifact. */
   layout?: MagicLayout
   provider?: 'preview' | 'connected'

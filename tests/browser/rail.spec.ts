@@ -55,6 +55,12 @@ for (const width of [1440, 1280, 1100, 766, 600, 390, 320]) {
     await style.getByRole('button', { name: 'Close style', exact: true }).click()
     await expect(page.locator('.panel-slot')).toHaveCSS('width', '0px')
     await expectRail(page)
+    const paper = (await page.locator('.floating-paper-surface').boundingBox())!
+    const title = (await page.locator('.essay-title').boundingBox())!
+    const orb = (await page.locator('.essay-orbs .rail-control').first().boundingBox())!
+    expect(paper.width).toBeLessThan(title.width + 42)
+    expect(paper.x).toBeGreaterThan(orb.x + orb.width)
+    expect(Math.abs(paper.x + paper.width / 2 - title.x - title.width / 2)).toBeLessThan(1)
     await page.screenshot({ path: `test-results/shared-rail-${width}.png` })
     await page.setViewportSize({ width: width === 390 ? 1440 : 390, height: 800 })
     await expectRail(page)

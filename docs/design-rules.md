@@ -10,6 +10,7 @@ These are implementation rules, not just visual references. Keep the structure i
 4. **Margins belong to blocks.** Notes and artifact edit instructions anchor to their own block. Below a 992 px sheet width they flow below it, right-aligned, rather than forcing an asymmetric writing column or overflowing. Measure the available sheet, including side panels and floating-paper layouts—not just the viewport.
 5. **Controls follow what they control.** Block removal is vertically centered beside the block. Artifact settings belong to the artifact; chat contains the conversation. Full-page tools use the shared rail instead of finding a new corner.
 6. **Full bleed is sheet-relative.** A magic visual may span all three grid tracks; its caption, prompt and editing controls still use the writing track. Nested subgrids carry these tracks through the body and block—never use viewport-width breakouts or duplicate panel offsets. With no side margin left, edit instructions flow below the visual. The removal control shares the page rail, and settings sit beside the source caption. Column/full-bleed is a reversible layout choice, independent of generated versions; it must not trigger generation.
+7. **Floating paper is a surface, not a second workshop.** Its background and shadow occupy the middle writing track, with a small shared padding token. Keep the rail and desktop margin notes outside it. Do not resize or offset the whole workshop to create the paper effect. Full-bleed visuals may extend beyond the paper using the same grid.
 
 ## Visual restraint
 
@@ -24,6 +25,8 @@ These are implementation rules, not just visual references. Keep the structure i
 - AI connection is an optional page utility in the homepage header and beside the story save status. Both entries open the same native dialog, which traps focus and holds keys only in tab memory; connecting must not generate or rewrite anything. It is absent on static-only hosts.
 - Prompt invitations are placeholders, not labels: show them only inside an empty input. Typed and prefilled prompts use identical behavior, with no duplicated heading or reserved heading row.
 - Image-style pills use local visual examples, plain labels and the shared choice-grid selection state. A preview is a style example, not a fixed subject or a promise of identical output. Browsing must not generate or upload anything. Apply/Reset/close retain the existing draft contract; new image output defaults to no words except useful diagram labels or explicitly requested copy.
+- Data, Graphics, Color and Background start with a custom-style conversation. Preserve each category's context independently. Generated directions and isolated studies remain drafts until Apply; Reset, category navigation and close must cancel pending work. Data studies explicitly use sample data. Keep fine tuning secondary. A style conversation configures future generations; editing an existing artifact still uses its own conversation.
+- Remove background is a generation choice for new images and a versioned edit for finished ones. Request real PNG transparency; never simulate transparency with a white or checkerboard fill.
 
 ## Source of truth and checks
 

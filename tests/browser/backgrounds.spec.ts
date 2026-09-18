@@ -65,9 +65,9 @@ test('only explicit generation requests a background; errors and cancellation pr
   let attempts = 0
   let release: (() => void) | undefined
   await page.route('**/api/magic/status', (route) => route.fulfill({ json: { configured: true } }))
-  await page.route('**/api/background', async (route) => {
+  await page.route('**/api/style', async (route) => {
     attempts++
-    expect(route.request().postDataJSON().prompt).toBe('An underwater glow')
+    expect(route.request().postDataJSON().instruction).toBe('An underwater glow')
     if (attempts === 1)
       return route.fulfill({
         status: 502,
@@ -79,26 +79,37 @@ test('only explicit generation requests a background; errors and cancellation pr
       await new Promise<void>((resolve) => {
         release = resolve
       })
-    await route.fulfill({ json: { css: 'body{background:#abcdef}' } }).catch(() => {})
+    await route
+      .fulfill({
+        json: {
+          name: 'Underwater',
+          direction: 'An underwater glow',
+          reply: 'A gentle glow.',
+          background: '#fdfbf6',
+          ink: '#111111',
+          css: 'body{background:#abcdef}',
+          sample: '',
+        },
+      })
+      .catch(() => {})
   })
   await page.goto('/?qa=essay')
   const panel = await openBackgrounds(page)
   await panel.getByRole('button', { name: 'Gradient', exact: true }).click()
   await panel.getByRole('button', { name: 'Custom code', exact: true }).click()
-  await panel.getByLabel('Background direction').fill('An underwater glow')
+  await panel.getByLabel('Custom style message').fill('An underwater glow')
   expect(attempts).toBe(0)
-  await panel.getByRole('button', { name: 'Generate background', exact: true }).click()
+  await panel.getByRole('button', { name: 'Create custom style', exact: true }).click()
   await expect(panel.getByRole('alert')).toContainText('Test generator unavailable')
   await expect(page.locator('.page-backdrop')).toHaveAttribute('data-backdrop', 'gradient')
-  await panel.getByRole('button', { name: 'Generate background', exact: true }).click()
+  await panel.getByRole('button', { name: 'Create custom style', exact: true }).click()
   await expect.poll(() => attempts).toBe(2)
-  await expect(panel.getByLabel('Background direction')).toBeDisabled()
-  await expect(panel.getByLabel('Background CSS', { exact: true })).toBeDisabled()
+  await expect(panel.getByLabel('Custom style message')).toBeDisabled()
   await panel.getByRole('button', { name: 'Cancel', exact: true }).click()
-  await expect(panel.getByLabel('Background direction')).toBeEnabled()
+  await expect(panel.getByLabel('Custom style message')).toBeEnabled()
   release?.()
   await expect(page.locator('.page-backdrop')).toHaveAttribute('data-backdrop', 'gradient')
-  await panel.getByRole('button', { name: 'Generate background', exact: true }).click()
+  await panel.getByRole('button', { name: 'Create custom style', exact: true }).click()
   await expect(page.locator('.page-backdrop')).toHaveAttribute('data-backdrop', 'custom')
   await page.screenshot({ path: 'test-results/background-custom.png' })
   await panel.getByRole('button', { name: 'Reset', exact: true }).click()

@@ -3,7 +3,7 @@ import { FONTS, FONT_NAMES } from '../model/constants'
 import type { FontName, Style } from '../model/types'
 import type { WriteCtl } from '../write/ctl'
 import AutoTextarea from '../ui/AutoTextarea'
-import { PRESETS } from './presets'
+import { GRAPHIC_STYLES, PRESETS } from './presets'
 import ChoiceGrid from './ChoiceGrid'
 import ImageChoices from './ImageChoices'
 import BackgroundChoices from './BackgroundChoices'
@@ -140,8 +140,26 @@ export default function StyleCategories({ category, ctl }: { category: Category;
       {category === 'image' && (
         <>
           <ImageChoices style={d} change={ctl.setDraft} />
+          <div className="control-options">
+            <button
+              aria-pressed={d.imageBackground === 'transparent'}
+              onClick={() =>
+                ctl.setDraft({
+                  imageBackground: d.imageBackground === 'transparent' ? 'opaque' : 'transparent',
+                })
+              }
+            >
+              Remove background
+            </button>
+          </div>
           <p className="control-help">
-            References guide new images when you generate. No words unless you ask for them or need diagram labels.
+            {d.imageBackground === 'transparent'
+              ? 'New images will be generated with a transparent background.'
+              : 'Keep the scene, or isolate the subject on transparency.'}
+          </p>
+          <p className="control-help">
+            References guide new images when you generate. No words unless you ask for them or need diagram
+            labels.
           </p>
           <Field name="Generation model">
             <select
@@ -176,43 +194,74 @@ export default function StyleCategories({ category, ctl }: { category: Category;
         <>
           <ChoiceGrid
             label="Graphic styles"
-            choices={[
-              { n: 'Fine', v: 1 },
-              { n: 'Light', v: 0.5 },
-              { n: 'Bold', v: 2.5 },
-            ].map((p) => ({
-              id: p.n,
-              label: p.n,
-              detail: `${p.v}px stroke`,
-              selected: d.strokeWidth === p.v,
-              choose: () => ctl.setDraft({ strokeWidth: p.v }),
+            choices={GRAPHIC_STYLES.map((p) => ({
+              id: p.name,
+              label: p.name,
+              detail: p.detail,
+              selected: d.graphicDirection === p.direction,
+              choose: () =>
+                ctl.setDraft({
+                  strokeWidth: p.stroke,
+                  graphicDirection: p.direction,
+                  customStyles: { ...d.customStyles, graphics: undefined },
+                }),
               sample: (
-                <svg viewBox="0 0 160 110" fill="none" stroke="currentColor" strokeWidth={p.v}>
-                  <circle cx="80" cy="54" r="30" />
-                  <path d="M15 54 H145 M80 10 V98 M28 90 L132 20" />
+                <svg viewBox="0 0 160 110" fill="none" stroke="currentColor" strokeWidth={p.stroke}>
+                  {p.name === 'Folio' ? (
+                    <>
+                      <circle cx="80" cy="54" r="30" />
+                      <path d="M15 54 H145 M80 10 V98 M28 90 L132 20" />
+                    </>
+                  ) : p.name === 'Living field' ? (
+                    Array.from({ length: 28 }, (_, i) => (
+                      <circle
+                        key={i}
+                        cx={18 + ((i * 37) % 126)}
+                        cy={15 + ((i * 23) % 80)}
+                        r={1 + (i % 4)}
+                        opacity={0.25 + (i % 3) * 0.25}
+                      />
+                    ))
+                  ) : (
+                    Array.from({ length: 48 }, (_, i) => (
+                      <path
+                        key={i}
+                        transform={`rotate(${i * 7.5} 80 55)`}
+                        d={`M80 30 v-${8 + Math.sin(i * 0.7) * 7}`}
+                      />
+                    ))
+                  )}
                 </svg>
               ),
             }))}
           />
-          <Field name={`Stroke · ${d.strokeWidth}px`}>
-            <input
-              aria-label="Stroke width"
-              type="range"
-              min=".5"
-              max="4"
-              step=".25"
-              value={d.strokeWidth}
-              onChange={(e) => ctl.setDraft({ strokeWidth: Number(e.currentTarget.value) })}
-            />
-          </Field>
-          <Field name="Your own direction">
-            <AutoTextarea
-              aria-label="Graphics direction"
-              placeholder="A spare diagram. Labels that explain just enough."
-              value={d.graphicDirection}
-              onChange={(e) => ctl.setDraft({ graphicDirection: e.currentTarget.value })}
-            />
-          </Field>
+          <details className="style-fine-tuning">
+            <summary>Fine tuning</summary>
+            <Field name={`Stroke · ${d.strokeWidth}px`}>
+              <input
+                aria-label="Stroke width"
+                type="range"
+                min=".5"
+                max="4"
+                step=".25"
+                value={d.strokeWidth}
+                onChange={(e) => ctl.setDraft({ strokeWidth: Number(e.currentTarget.value) })}
+              />
+            </Field>
+            <Field name="Your own direction">
+              <AutoTextarea
+                aria-label="Graphics direction"
+                placeholder="A spare diagram. Labels that explain just enough."
+                value={d.graphicDirection}
+                onChange={(e) =>
+                  ctl.setDraft({
+                    graphicDirection: e.currentTarget.value,
+                    customStyles: { ...d.customStyles, graphics: undefined },
+                  })
+                }
+              />
+            </Field>
+          </details>
         </>
       )}
       {category === 'data' && (
@@ -228,8 +277,13 @@ export default function StyleCategories({ category, ctl }: { category: Category;
             ).map((p) => ({
               id: p.value,
               label: p.label,
-              selected: d.chartStyle === p.value,
-              choose: () => ctl.setDraft({ chartStyle: p.value }),
+              selected: !d.dataDirection && d.chartStyle === p.value,
+              choose: () =>
+                ctl.setDraft({
+                  chartStyle: p.value,
+                  dataDirection: '',
+                  customStyles: { ...d.customStyles, data: undefined },
+                }),
               sample: (
                 <ArtifactView
                   compact
@@ -247,19 +301,23 @@ export default function StyleCategories({ category, ctl }: { category: Category;
             }))}
           />
           <p className="control-help">
-            New data artifacts start here. You can change an individual chart in its margin: “use bars” or “use a line.”
+            Simple starting points. A custom direction can go beyond these forms: radial fields, networks,
+            maps, timelines.
           </p>
-          <Field name={`Stroke · ${d.strokeWidth}px`}>
-            <input
-              aria-label="Data stroke width"
-              type="range"
-              min=".5"
-              max="4"
-              step=".25"
-              value={d.strokeWidth}
-              onChange={(e) => ctl.setDraft({ strokeWidth: Number(e.currentTarget.value) })}
-            />
-          </Field>
+          <details className="style-fine-tuning">
+            <summary>Fine tuning</summary>
+            <Field name={`Stroke · ${d.strokeWidth}px`}>
+              <input
+                aria-label="Data stroke width"
+                type="range"
+                min=".5"
+                max="4"
+                step=".25"
+                value={d.strokeWidth}
+                onChange={(e) => ctl.setDraft({ strokeWidth: Number(e.currentTarget.value) })}
+              />
+            </Field>
+          </details>
         </>
       )}
       {category === 'page' && <BackgroundChoices ctl={ctl} />}
