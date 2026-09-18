@@ -8,11 +8,11 @@ import { normalizeImageDirection } from '../src/model/imageStudies'
 import { imageStyleReference } from '../server/imageReference'
 
 describe('image reference styles', () => {
-  it('has twelve distinct visual recipes with concise directions', () => {
+  it('has eight distinct visual recipes with concise directions', () => {
     const references = IMAGE_STUDIES.filter((p) => p.reference)
-    expect(references).toHaveLength(12)
-    expect(new Set(references.map((p) => p.id)).size).toBe(12)
-    expect(new Set(references.map((p) => p.direction)).size).toBe(12)
+    expect(references).toHaveLength(8)
+    expect(new Set(references.map((p) => p.id)).size).toBe(8)
+    expect(new Set(references.map((p) => p.direction)).size).toBe(8)
     for (const p of references) {
       expect(p.preview).toBeTruthy()
       expect(p.direction.length).toBeLessThan(110)
@@ -55,6 +55,18 @@ describe('image reference styles', () => {
       expect(screen.getByAltText(`${study.label} style reference`).getAttribute('src')).toBe(study.preview)
     })
   }
+
+  it('preserves retired directions as custom styles without requesting a removed reference', async () => {
+    const saved = {
+      ...DEF_STYLE,
+      imageStyle: 'natural' as const,
+      imageDirection: 'Vivid cyan and indigo illustration, crisp ink contours, warm accents and sparkling white marks.',
+    }
+    expect(normalizeImageDirection(saved)).toBe(saved)
+    expect(imageStudy(saved)).toBeUndefined()
+    expect(imageStyleLabel(saved)).toBe('Custom natural')
+    expect(await imageStyleReference(saved, '/missing-folio-root')).toEqual([])
+  })
 
   it('fails clearly when an expected reference asset is missing', async () => {
     const study = IMAGE_STUDIES[0]

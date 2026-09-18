@@ -8,10 +8,6 @@ import springContours from '../assets/image-studies/spring-contours.webp'
 import signalCity from '../assets/image-studies/signal-city.webp'
 import waterInk from '../assets/image-studies/water-ink.webp'
 import citrusSketch from '../assets/image-studies/citrus-sketch.webp'
-import paperMiniature from '../assets/image-studies/paper-miniature.webp'
-import tornPaper from '../assets/image-studies/torn-paper.webp'
-import electricGrain from '../assets/image-studies/electric-grain.webp'
-import summerCoast from '../assets/image-studies/summer-coast.webp'
 
 const previews: Record<string, string> = {
   'cobalt-atlas': cobaltAtlas,
@@ -22,10 +18,6 @@ const previews: Record<string, string> = {
   'signal-city': signalCity,
   'water-ink': waterInk,
   'citrus-sketch': citrusSketch,
-  'paper-miniature': paperMiniature,
-  'torn-paper': tornPaper,
-  'electric-grain': electricGrain,
-  'summer-coast': summerCoast,
 }
 
 export const IMAGE_STUDIES = catalog.map((study) => ({ ...study, preview: previews[study.id] }))

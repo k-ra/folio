@@ -1,7 +1,7 @@
 {
   "tool": "Built-in image generation",
   "createdOn": "2026-09-18",
-  "inputs": "Original text briefs interpreting the user's eight visual references. No third-party reference pixels or poster lettering submitted or bundled.",
+  "inputs": "Original text briefs interpreting the user's selected visual references. No third-party reference pixels or poster lettering submitted or bundled.",
   "processing": "640px WebP reference previews, resized without creative alteration. Generated originals retained locally (not published).",
   "images": [
     {
@@ -31,34 +31,6 @@
       "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A sunlit terracotta pot with a lemon tree beside a simple wrought-iron chair, a distant sliver of blue sea. Loose black pen gestures and translucent yellow and olive watercolor on warm ivory paper, lively imperfect brushwork, airy travel sketch. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
       "path": "src/assets/image-studies/citrus-sketch.webp",
       "original": "references/local/generated/citrus-sketch.png"
-    },
-    {
-      "id": "paper-miniature",
-      "label": "Paper miniature",
-      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. An original small mountain village with three tiny houses nestled under a sculpted snowy peak, all built as a physical ivory paper maquette on a square plinth. One butter-yellow house, delicate folded trees, warm grazing sunlight and soft real shadows, isometric three-quarter view against warm cream. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
-      "path": "src/assets/image-studies/paper-miniature.webp",
-      "original": "references/local/generated/paper-miniature.png"
-    },
-    {
-      "id": "torn-paper",
-      "label": "Torn paper",
-      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A figure with short dark hair in a blue summer dress beside tall pink cosmos flowers. Entire scene made of visibly torn fibrous colored paper, overlapping flat shapes, sky-blue circular backdrop and dusty rose ground on ivory. Tactile uneven edges, quiet editorial composition. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
-      "path": "src/assets/image-studies/torn-paper.webp",
-      "original": "references/local/generated/torn-paper.png"
-    },
-    {
-      "id": "electric-grain",
-      "label": "Electric grain",
-      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A graceful black silhouette of a dancer with raised arms amid a sweeping magenta cloud of sprayed pigment on rough white paper. Extreme coarse risograph grain, soft overspray, high contrast, asymmetrical bold composition and generous white space. No star icons. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
-      "path": "src/assets/image-studies/electric-grain.webp",
-      "original": "references/local/generated/electric-grain.png"
-    },
-    {
-      "id": "summer-coast",
-      "label": "Summer coast",
-      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. Two small people sitting on a dark rocky ledge fishing into an immense sparkling turquoise sea, distant tiny white sailing boats. Hand-drawn editorial illustration with crisp dark ink contours, flattened vivid cyan and deep indigo shapes, warm orange clothing, thousands of small white glints on the water, lightly textured pigment. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
-      "path": "src/assets/image-studies/summer-coast.webp",
-      "original": "references/local/generated/summer-coast.png"
     }
   ]
 }

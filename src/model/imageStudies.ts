@@ -76,36 +76,6 @@ export const IMAGE_STUDIES: ImageStudy[] = [
     reference: true,
     direction: 'Loose black pen and sunlit watercolor; lemon yellow, olive and sea blue on warm ivory.',
   },
-  {
-    id: 'paper-miniature',
-    label: 'Paper miniature',
-    treatment: 'natural',
-    reference: true,
-    direction:
-      'A tactile ivory paper maquette, folded details, a butter-yellow accent and warm grazing light.',
-  },
-  {
-    id: 'torn-paper',
-    label: 'Torn paper',
-    treatment: 'natural',
-    reference: true,
-    direction: 'Fibrous torn-paper collage, uneven layered edges, sky blue and dusty rose on ivory.',
-  },
-  {
-    id: 'electric-grain',
-    label: 'Electric grain',
-    treatment: 'natural',
-    reference: true,
-    direction: 'Bold black silhouettes and magenta overspray; coarse risograph grain on rough white paper.',
-  },
-  {
-    id: 'summer-coast',
-    label: 'Summer coast',
-    treatment: 'natural',
-    reference: true,
-    direction:
-      'Vivid cyan and indigo illustration, crisp ink contours, warm accents and sparkling white marks.',
-  },
   { id: 'folio', label: 'Folio', treatment: 'linework', direction: '' },
   {
     id: 'etching',

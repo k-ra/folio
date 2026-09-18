@@ -9,10 +9,6 @@ const references = [
   'Signal city',
   'Water ink',
   'Citrus sketch',
-  'Paper miniature',
-  'Torn paper',
-  'Electric grain',
-  'Summer coast',
 ]
 
 for (const width of [1440, 390, 320]) {
@@ -48,6 +44,9 @@ for (const width of [1440, 390, 320]) {
     await panel.getByRole('button', { name: 'Images', exact: true }).click()
     const choices = panel.getByRole('group', { name: 'Image styles' })
     await expect(choices.locator('img')).toHaveCount(references.length)
+    for (const name of ['Paper miniature', 'Torn paper', 'Electric grain', 'Summer coast']) {
+      await expect(choices.getByRole('button', { name, exact: true })).toHaveCount(0)
+    }
     for (const name of references) {
       const pill = choices.getByRole('button', { name, exact: true })
       await pill.scrollIntoViewIfNeeded()
