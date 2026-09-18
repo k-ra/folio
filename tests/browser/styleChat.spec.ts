@@ -111,11 +111,11 @@ for (const width of [1440, 390]) {
   })
 }
 
-test('color conversation previews, resets, and closing revokes its changes', async ({ page }) => {
+test('unified background and ink conversation previews, resets, and closing revokes its changes', async ({ page }) => {
   await page.route('**/api/magic/status', (r) => r.fulfill({ json: { configured: true } }))
   await page.route('**/api/style', (r) => r.fulfill({ json: { ...result, sample: '', css: '' } }))
   await page.goto('/?qa=essay')
-  const panel = await category(page, 'Color')
+  const panel = await category(page, 'Background')
   await panel.getByLabel('Custom style message').fill('Sea ink on warm paper')
   await panel.getByRole('button', { name: 'Make a preview' }).click()
   await expect(page.locator('.writing-page')).toHaveCSS('color', 'rgb(34, 51, 68)')

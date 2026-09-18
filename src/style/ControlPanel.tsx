@@ -11,11 +11,10 @@ import type { CustomStyleCategory } from '../model/types'
 
 const CATEGORIES: { id: Category; name: string }[] = [
   { id: 'type', name: 'Text' },
-  { id: 'palette', name: 'Color' },
+  { id: 'page', name: 'Background' },
   { id: 'image', name: 'Images' },
   { id: 'graphics', name: 'Graphics' },
   { id: 'data', name: 'Data' },
-  { id: 'page', name: 'Background' },
 ]
 
 export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
@@ -40,7 +39,6 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
   const dirty = !sameStyle(d, ctl.S)
   const summaries: Record<Category, { value: string; detail: string }> = {
     type: { value: d.bodyFont, detail: `${d.size}px · ${d.headerFont} headings` },
-    palette: { value: d.customStyles?.palette?.name || d.ink, detail: `${d.bg} · ${d.linkStyle} links` },
     image: {
       value: imageStyleLabel(d),
       detail: IMAGE_MODELS.find((m) => m.id === d.imageModel)?.name || 'Server default',
@@ -59,8 +57,8 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
       detail: d.dataDirection || 'Explore your data',
     },
     page: {
-      value: d.customStyles?.page?.name || (d.paper === 'full' ? 'Full page' : 'Floating sheet'),
-      detail: `${BACKDROP_NAMES[d.backdrop]} backdrop`,
+      value: d.customStyles?.page?.name || d.customStyles?.palette?.name || BACKDROP_NAMES[d.backdrop],
+      detail: `${d.paper === 'full' ? 'Full page' : 'Floating sheet'} · ${d.ink} ink`,
     },
   }
   const title = category === 'theme' ? 'Themes' : CATEGORIES.find((c) => c.id === category)?.name || 'Style'
@@ -100,7 +98,7 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
                 >
                   <span className="eyebrow">{c.name}</span>
                   <span className="style-choice" title={summaries[c.id].value}>
-                    {c.id === 'palette' && (
+                    {c.id === 'page' && (
                       <span className="color-swatches" aria-hidden="true">
                         <i style={{ background: d.ink }} />
                         <i style={{ background: d.bg }} />
@@ -181,9 +179,9 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
             ) : (
               category && (
                 <div className="category-detail" key={category}>
-                  {(['graphics', 'data', 'palette', 'page'] as string[]).includes(category) ? (
+                  {(['graphics', 'data', 'page'] as string[]).includes(category) ? (
                     <StyleWorkspace
-                      category={category as CustomStyleCategory}
+                      category={category as Exclude<CustomStyleCategory, 'palette'>}
                       ctl={ctl}
                       input={styleInputs[category as CustomStyleCategory] || ''}
                       setInput={(value) => setStyleInputs((old) => ({ ...old, [category]: value }))}

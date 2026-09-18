@@ -49,11 +49,14 @@ export function validStyleResult(value: unknown, category: CustomStyleCategory):
     color(r.background) &&
     color(r.ink) &&
     text(r.css, BACKGROUND_CODE_LIMIT) &&
-    (category !== 'page' || !!r.css.trim()) &&
     text(r.sample, 80000) &&
     (!['graphics', 'data'].includes(category) || !!r.sample.trim())
   )
 }
+/** Keep legacy Color conversations accessible in the unified Background workspace. */
+export const categoryStyle = (style: Style, category: CustomStyleCategory) =>
+  style.customStyles?.[category] || (category === 'page' ? style.customStyles?.palette : undefined)
+
 export function styleContext(style: Style, category: CustomStyleCategory): StyleRequest['current'] {
   return {
     direction:
@@ -63,8 +66,8 @@ export function styleContext(style: Style, category: CustomStyleCategory): Style
           ? style.dataDirection || `${style.chartStyle} chart with ${style.strokeWidth}px strokes`
           : category === 'page'
             ? style.backdrop === 'custom'
-              ? style.backgroundPrompt || ''
-              : `${style.backdrop} background`
+              ? style.backgroundPrompt || categoryStyle(style, category)?.direction || ''
+              : categoryStyle(style, category)?.direction || `${style.backdrop} background`
             : style.customStyles?.palette?.direction || '',
     background: style.bg,
     ink: style.ink,
@@ -87,7 +90,7 @@ export function styleResultPatch(
 ): Partial<Style> {
   if (!validStyleResult(result, category)) throw new Error('The style response was incomplete. Please retry.')
   const history: ChatMessage[] = [
-    ...(style.customStyles?.[category]?.history || []).slice(-14),
+    ...(categoryStyle(style, category)?.history || []).slice(-14),
     { me: true, text: instruction },
     { me: false, text: result.reply },
   ]
@@ -108,7 +111,13 @@ export function styleResultPatch(
                   }
                 : {}),
             }
-          : { backdrop: 'custom', backgroundCode: result.css, backgroundPrompt: result.direction }),
+          : {
+              bg: result.background,
+              ink: result.ink,
+              backdrop: result.css.trim() ? 'custom' : 'none',
+              backgroundCode: result.css,
+              backgroundPrompt: result.direction,
+            }),
     customStyles: {
       ...style.customStyles,
       [category]: { name: result.name, direction: result.direction, history, sample: result.sample },

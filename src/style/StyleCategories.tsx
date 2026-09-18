@@ -3,7 +3,7 @@ import { FONTS, FONT_NAMES } from '../model/constants'
 import type { FontName, Style } from '../model/types'
 import type { WriteCtl } from '../write/ctl'
 import AutoTextarea from '../ui/AutoTextarea'
-import { GRAPHIC_STYLES, PRESETS } from './presets'
+import { GRAPHIC_STYLES } from './presets'
 import ChoiceGrid from './ChoiceGrid'
 import ImageChoices from './ImageChoices'
 import GraphicStudy from './GraphicStudy'
@@ -11,7 +11,7 @@ import BackgroundChoices from './BackgroundChoices'
 import ArtifactView from '../magic/ArtifactView'
 import { IMAGE_MODELS, type ImageModel } from '../magic/models'
 
-export type Category = 'type' | 'palette' | 'image' | 'graphics' | 'data' | 'page'
+export type Category = 'type' | 'image' | 'graphics' | 'data' | 'page'
 
 export default function StyleCategories({ category, ctl }: { category: Category; ctl: WriteCtl }) {
   const d = ctl.draft || ctl.S
@@ -96,45 +96,6 @@ export default function StyleCategories({ category, ctl }: { category: Category;
               onChange={(e) => ctl.setDraft({ gap: Number(e.currentTarget.value) })}
             />
           </Field>
-        </>
-      )}
-      {category === 'palette' && (
-        <>
-          <Field name="Palettes">
-            <div className="palette-presets">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.id}
-                  title={p.name}
-                  aria-label={`${p.name} colors`}
-                  onClick={() =>
-                    ctl.setDraft({
-                      bg: p.style.bg,
-                      ink: p.style.ink,
-                      customStyles: { ...d.customStyles, palette: undefined },
-                    })
-                  }
-                  style={{ background: p.style.bg, color: p.style.ink }}
-                >
-                  <span>◐</span>
-                  {p.name}
-                </button>
-              ))}
-            </div>
-          </Field>
-          {(['bg', 'ink'] as const).map((k) => (
-            <Field name={k === 'bg' ? 'Paper color' : 'Ink color'} key={k}>
-              <div className="color-field">
-                <input
-                  type="color"
-                  aria-label={k === 'bg' ? 'Paper color' : 'Ink color'}
-                  value={d[k]}
-                  onChange={(e) => ctl.setDraft({ [k]: e.currentTarget.value })}
-                />
-                <span>{d[k]}</span>
-              </div>
-            </Field>
-          ))}
           <Field name="Links">
             {option('linkStyle', [
               { value: 'underline', label: 'Underline' },

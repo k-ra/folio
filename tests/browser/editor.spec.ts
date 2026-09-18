@@ -64,7 +64,7 @@ test('style starts with current choices, then allows theme mixing, reset, apply 
   await start(page)
   await page.getByRole('button', { name: 'Open style' }).click()
   const panel = page.getByRole('region', { name: 'Style panel', exact: true })
-  for (const name of ['Text', 'Color', 'Images', 'Graphics', 'Data', 'Background']) {
+  for (const name of ['Text', 'Background', 'Images', 'Graphics', 'Data']) {
     const button = panel.getByRole('button', { name, exact: true })
     await expect(button).toBeVisible()
     expect((await button.boundingBox())!.y).toBeLessThan(450)

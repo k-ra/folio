@@ -8,12 +8,26 @@ for (const width of [1440, 390]) {
     await page.goto('/?qa=essay')
     await page.getByRole('button', { name: 'Open style' }).click()
     const panel = page.getByRole('region', { name: 'Style panel', exact: true })
-    for (const name of ['Text', 'Color', 'Images', 'Graphics', 'Data', 'Background']) {
+    await expect(panel.getByRole('button', { name: 'Color', exact: true })).toHaveCount(0)
+    await expect(panel.locator('.style-category')).toHaveCount(5)
+    for (const name of ['Text', 'Background', 'Images', 'Graphics', 'Data']) {
       const category = panel.getByRole('button', { name, exact: true })
       await expect(category).toHaveCSS('border-bottom-width', '0px')
       await category.click()
       await expect(panel.getByRole('heading', { name, exact: true })).toBeFocused()
       await expect(panel.locator('.style-categories, .theme-entry, .style-preview')).toHaveCount(0)
+      if (name === 'Background') {
+        await expect(panel.getByRole('button', { name: 'Folio colors', exact: true })).toBeVisible()
+        await expect(panel.getByRole('button', { name: 'Gradient', exact: true })).toBeVisible()
+        await panel.getByText('Adjust colors', { exact: true }).click()
+        await expect(panel.getByLabel('Paper color', { exact: true })).toBeVisible()
+        await expect(panel.getByLabel('Ink color', { exact: true })).toBeVisible()
+        expect(await panel.evaluate((el) => el.scrollWidth <= el.clientWidth)).toBe(true)
+        await panel.screenshot({ path: `test-results/background-panel-${width}.png` })
+      }
+      if (name === 'Text') {
+        await expect(panel.getByRole('button', { name: 'Underline', exact: true })).toBeVisible()
+      }
       if (name === 'Images') {
         await expect(panel.getByRole('group', { name: 'Image styles' }).getByRole('button')).toHaveCount(14)
         await panel.getByRole('button', { name: 'Etching', exact: true }).click()

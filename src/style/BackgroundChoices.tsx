@@ -1,16 +1,49 @@
 import type { Style } from '../model/types'
 import type { WriteCtl } from '../write/ctl'
 import ChoiceGrid from './ChoiceGrid'
+import { PRESETS } from './presets'
 import { GRADIENT_DEFAULTS, GRADIENTS, gradientCss } from './backgrounds'
 import './backgrounds.css'
 
 export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
   const d = ctl.draft || ctl.S
   const choose = (patch: Partial<Style>) => {
-    ctl.setDraft({ ...patch, customStyles: { ...d.customStyles, page: undefined } })
+    ctl.setDraft({ ...patch, customStyles: { ...d.customStyles, page: undefined, palette: undefined } })
   }
   return (
     <>
+      <div className="control-field">
+        <div className="eyebrow">Palette</div>
+        <div className="palette-presets">
+          {PRESETS.map((p) => (
+            <button
+              key={p.id}
+              aria-label={`${p.name} colors`}
+              aria-pressed={d.bg === p.style.bg && d.ink === p.style.ink}
+              onClick={() => choose({ bg: p.style.bg, ink: p.style.ink })}
+              style={{ background: p.style.bg, color: p.style.ink }}
+            >
+              <span aria-hidden="true">◐</span>
+              {p.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <details className="style-fine-tuning">
+        <summary>Adjust colors</summary>
+        {(['bg', 'ink'] as const).map((key) => (
+          <label className="color-field" key={key}>
+            <span>{key === 'bg' ? 'Paper color' : 'Ink color'}</span>
+            <input
+              type="color"
+              aria-label={key === 'bg' ? 'Paper color' : 'Ink color'}
+              value={d[key]}
+              onChange={(e) => choose({ [key]: e.currentTarget.value })}
+            />
+            <span>{d[key]}</span>
+          </label>
+        ))}
+      </details>
       <ChoiceGrid
         label="Background styles"
         choices={[

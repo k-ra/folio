@@ -65,7 +65,7 @@ export default function StyleStudy({ style, category }: { style: Style; category
           ? 'Preview · fictional sample data'
           : visual
             ? 'Preview · style study'
-            : 'Preview · your page colors'}
+            : 'Preview · your page'}
       </figcaption>
     </figure>
   )

@@ -15,7 +15,7 @@ The gallery + maker keeps **Choose a look** and **Make your own** in the categor
 
 After generation, the composer asks what to change. The most recent response sits beside the preview; older conversation stays collapsed. Undo last refinement rolls back the latest local step; Apply commits the draft, while Reset or closing discards uncommitted changes. Leaving the maker cancels a pending request without losing its unsent instruction. AI connection never submits the prompt.
 
-Data and graphics studies configure future generations, not existing artifacts. Fictional preview data is labeled. Background/color previews also update the page while drafting. Browsing choices never invokes a model.
+Data and graphics studies configure future generations, not existing artifacts. Fictional preview data is labeled. Background is one workspace for paper and ink colors, gradients, atmosphere and paper layout, with one maker conversation. Link styling belongs to Text. Its previews update the page while drafting. Browsing choices never invokes a model.
 
 ## Iterations and checks
 

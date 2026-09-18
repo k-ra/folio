@@ -4,6 +4,7 @@ import type { WriteCtl } from '../write/ctl'
 import StyleCategories from './StyleCategories'
 import StyleChat from './StyleChat'
 import StyleStudy from './StyleStudy'
+import { categoryStyle } from './chatContract'
 
 /** Choose a visual starting point OR work on a custom look, never two competing editors. */
 export default function StyleWorkspace({
@@ -12,7 +13,7 @@ export default function StyleWorkspace({
   input,
   setInput,
 }: {
-  category: CustomStyleCategory
+  category: Exclude<CustomStyleCategory, 'palette'>
   ctl: WriteCtl
   input: string
   setInput: (value: string) => void
@@ -20,7 +21,7 @@ export default function StyleWorkspace({
   const [making, setMaking] = useState(false)
   const workspace = useRef<HTMLDivElement>(null)
   const d = ctl.draft || ctl.S
-  const custom = d.customStyles?.[category]
+  const custom = categoryStyle(d, category)
   useLayoutEffect(() => {
     const scroll = workspace.current?.closest('.control-scroll')
     if (scroll) scroll.scrollTop = 0

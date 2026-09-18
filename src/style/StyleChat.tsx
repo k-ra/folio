@@ -5,6 +5,7 @@ import { apiFetch } from '../ai/session'
 import AIConnection from '../ai/AIConnection'
 import AutoTextarea from '../ui/AutoTextarea'
 import StyleStudy from './StyleStudy'
+import { categoryStyle } from './chatContract'
 import { styleContext, styleResultPatch, validStyleResult } from './chatContract'
 import './styleChat.css'
 
@@ -13,7 +14,7 @@ const invitations = {
     'A little living world: drifting particles, delicate connections, something that responds to touch…',
   data: 'A reef of radial marks. Let me scrub through time and inspect each observation…',
   palette: 'Warm paper, deep sea ink, the feeling of late afternoon…',
-  page: 'Soft pools of light behind the writing. A slow underwater glow…',
+  page: 'Warm paper and deep blue ink, or soft pools of light behind the writing…',
 }
 
 export default function StyleChat({
@@ -28,7 +29,7 @@ export default function StyleChat({
   setInput: (value: string) => void
 }) {
   const d = ctl.draft || ctl.S
-  const custom = d.customStyles?.[category]
+  const custom = categoryStyle(d, category)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const [previous, setPrevious] = useState<Style | null>(null)
