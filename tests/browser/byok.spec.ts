@@ -1,7 +1,7 @@
 import { test, expect } from './fixtures'
 
 for (const width of [1440, 390, 320]) {
-  test(`homepage Configure opens the visitor key dialog at ${width}px`, async ({ page }) => {
+  test(`homepage menu exposes the visitor key field directly at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
     await page.route('**/api/magic/status', (route) =>
       route.fulfill({
@@ -15,25 +15,30 @@ for (const width of [1440, 390, 320]) {
     })
     await page.goto('/')
     const configure = page.getByRole('button', {
-      name: 'Configure',
+      name: 'Homepage settings',
       exact: true,
     })
     await expect(configure).toBeVisible()
     await configure.click()
-    const dialog = page.getByRole('dialog')
-    await expect(dialog).toBeVisible()
-    const rect = (await dialog.boundingBox())!
+    const menu = page.getByRole('region', { name: 'Homepage settings' })
+    await expect(menu.getByLabel('OpenAI API key', { exact: true })).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    const rect = (await menu.boundingBox())!
     expect(rect.x).toBeGreaterThanOrEqual(0)
     expect(rect.x + rect.width).toBeLessThanOrEqual(width)
     await page.getByLabel('OpenAI API key', { exact: true }).fill('sk-offline-browser-test')
-    await dialog.getByRole('button', { name: 'Use this key' }).click()
-    await expect(page.getByRole('button', { name: 'Configured', exact: true })).toBeVisible()
+    await menu.getByRole('button', { name: 'Use this key' }).click()
+    await expect(menu.getByRole('status')).toHaveText('Key added for this tab.')
+    await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveValue('')
     expect(paid).toBe(0)
     const storage = await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))
     expect(storage).not.toContain('sk-offline-browser-test')
     await page.screenshot({ path: `test-results/byok-home-${width}.png` })
     await page.reload()
     await expect(configure).toBeVisible()
+    await configure.click()
+    await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveValue('')
+    await expect(menu.getByRole('button', { name: 'Disconnect AI' })).toHaveCount(0)
     expect(paid).toBe(0)
   })
 }
@@ -99,6 +104,10 @@ test('visitor key goes in the request header, not saved story context; disconnec
     return route.fulfill({ json: { reply: 'Offline test reply.' } })
   })
   await page.goto('/')
+  await page.getByRole('button', { name: 'Homepage settings', exact: true }).click()
+  await page.getByLabel('OpenAI API key', { exact: true }).fill('sk-offline-browser-test')
+  await page.getByRole('button', { name: 'Use this key', exact: true }).click()
+  await page.getByRole('button', { name: 'Homepage settings', exact: true }).click()
   await page
     .getByRole('button', {
       name: 'Open Listening before translating',
@@ -106,9 +115,7 @@ test('visitor key goes in the request header, not saved story context; disconnec
     })
     .first()
     .click()
-  await page.getByRole('button', { name: 'Connect AI', exact: true }).click()
-  await page.getByLabel('OpenAI API key', { exact: true }).fill('sk-offline-browser-test')
-  await page.getByRole('button', { name: 'Use this key', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'AI settings', exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Open chat', exact: true }).click()
   await page.getByLabel('Chat message').fill('Discuss this essay')
   await page.getByRole('button', { name: 'Send', exact: true }).click()
@@ -144,7 +151,9 @@ test('visitor key goes in the request header, not saved story context; disconnec
 test('a static-only installation does not offer a nonfunctional key form', async ({ page }) => {
   await page.route('**/api/magic/status', (route) => route.fulfill({ status: 404, body: 'Not found' }))
   await page.goto('/')
-  await expect(page.getByRole('button', { name: 'Configure', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Homepage settings', exact: true }).click()
+  await expect(page.getByText('AI is unavailable on this host.', { exact: false })).toBeVisible()
+  await expect(page.getByLabel('OpenAI API key', { exact: true })).toHaveCount(0)
   await page.goto('/?qa=essay')
   await expect(page.getByPlaceholder('Untitled', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Connect AI', exact: true })).toHaveCount(0)

@@ -502,11 +502,12 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
             ...mono,
           }}
         >
-          <AIConnection disconnectedLabel="Configure" connectedLabel="Configured" />
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setStyleOpen((v) => !v)}
               title="Style this page"
+              aria-label="Homepage settings"
+              aria-expanded={styleOpen}
               className="hover-full"
               style={{
                 width: 16,
@@ -520,6 +521,8 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
             />
             {styleOpen && (
               <div
+                role="region"
+                aria-label="Homepage settings"
                 style={{
                   position: 'absolute',
                   right: 0,
@@ -533,6 +536,8 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                   flexDirection: 'column',
                   gap: 14,
                   animation: 'fadein .2s ease both',
+                  maxHeight: 'calc(100dvh - 110px)',
+                  overflowY: 'auto',
                 }}
               >
                 <div style={{ ...mono, opacity: 0.55 }}>YOUR HOMEPAGE</div>
@@ -564,6 +569,7 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                     boxSizing: 'border-box',
                   }}
                 />
+                <AIConnection inline />
               </div>
             )}
           </div>
