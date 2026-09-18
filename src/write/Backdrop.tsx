@@ -8,7 +8,15 @@ import { gradientCss } from '../style/backgrounds'
  * The layer behind the paper. `style.backdrop` decides what it is; the
  * essay's fallback colour decides whether it is a light or dark field.
  */
-export default function Backdrop({ view, base }: { view: Style; base: Style }) {
+export default function Backdrop({
+  view,
+  base,
+  contained = false,
+}: {
+  view: Style
+  base: Style
+  contained?: boolean
+}) {
   const on = view.backdrop && view.backdrop !== 'none'
   if (!on) return null
   const dark = isDark(base.bg)
@@ -25,10 +33,10 @@ export default function Backdrop({ view, base }: { view: Style; base: Style }) {
       : base.bg
   return (
     <div
-      className="page-backdrop"
+      className={contained ? 'style-study-backdrop' : 'page-backdrop'}
       data-backdrop={view.backdrop}
       style={{
-        position: 'fixed',
+        position: contained ? 'absolute' : 'fixed',
         inset: 0,
         zIndex: 0,
         pointerEvents: 'none',

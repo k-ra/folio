@@ -1,0 +1,64 @@
+{
+  "tool": "Built-in image generation",
+  "createdOn": "2026-09-18",
+  "inputs": "Original text briefs interpreting the user's eight visual references. No third-party reference pixels or poster lettering submitted or bundled.",
+  "processing": "640px WebP reference previews, resized without creative alteration. Generated originals retained locally (not published).",
+  "images": [
+    {
+      "id": "spring-contours",
+      "label": "Spring contours",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A winding stream through low rolling hills, drawn in many delicate parallel contour lines. Sage green, pale peach and stone grey on luminous white fibrous paper. Tiny new leaves emerging near the stream, spacious airy composition, gently worn printed strokes. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/spring-contours.webp",
+      "original": "references/local/generated/spring-contours.png"
+    },
+    {
+      "id": "signal-city",
+      "label": "Signal city",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. An imaginary compact city woven from extremely fine parallel graphite contour lines, buildings rising isometrically from a flowing terrain. A single acid-yellow current threads through the city. Pale icy blue paper, precise architectural linework and generous negative space. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/signal-city.webp",
+      "original": "references/local/generated/signal-city.png"
+    },
+    {
+      "id": "water-ink",
+      "label": "Water ink",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A quiet lake and distant mountain ridges in very pale blue-green ink wash on absorbent white paper. A small dark boat near a reed island, watery pigment blooms, soft reflections, edges dissolving into mist. Sparse, spacious, asymmetric. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/water-ink.webp",
+      "original": "references/local/generated/water-ink.png"
+    },
+    {
+      "id": "citrus-sketch",
+      "label": "Citrus sketch",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A sunlit terracotta pot with a lemon tree beside a simple wrought-iron chair, a distant sliver of blue sea. Loose black pen gestures and translucent yellow and olive watercolor on warm ivory paper, lively imperfect brushwork, airy travel sketch. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/citrus-sketch.webp",
+      "original": "references/local/generated/citrus-sketch.png"
+    },
+    {
+      "id": "paper-miniature",
+      "label": "Paper miniature",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. An original small mountain village with three tiny houses nestled under a sculpted snowy peak, all built as a physical ivory paper maquette on a square plinth. One butter-yellow house, delicate folded trees, warm grazing sunlight and soft real shadows, isometric three-quarter view against warm cream. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/paper-miniature.webp",
+      "original": "references/local/generated/paper-miniature.png"
+    },
+    {
+      "id": "torn-paper",
+      "label": "Torn paper",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A figure with short dark hair in a blue summer dress beside tall pink cosmos flowers. Entire scene made of visibly torn fibrous colored paper, overlapping flat shapes, sky-blue circular backdrop and dusty rose ground on ivory. Tactile uneven edges, quiet editorial composition. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/torn-paper.webp",
+      "original": "references/local/generated/torn-paper.png"
+    },
+    {
+      "id": "electric-grain",
+      "label": "Electric grain",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. A graceful black silhouette of a dancer with raised arms amid a sweeping magenta cloud of sprayed pigment on rough white paper. Extreme coarse risograph grain, soft overspray, high contrast, asymmetrical bold composition and generous white space. No star icons. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/electric-grain.webp",
+      "original": "references/local/generated/electric-grain.png"
+    },
+    {
+      "id": "summer-coast",
+      "label": "Summer coast",
+      "prompt": "Use case: stylized-concept. Asset type: original square image-style preset preview for Folio. Single standalone artwork, not a poster, not a split comparison. Two small people sitting on a dark rocky ledge fishing into an immense sparkling turquoise sea, distant tiny white sailing boats. Hand-drawn editorial illustration with crisp dark ink contours, flattened vivid cyan and deep indigo shapes, warm orange clothing, thousands of small white glints on the water, lightly textured pigment. No text, lettering, typography, numbers, symbols, logos, signatures or watermark. Make the distinctive material readable at small thumbnail size.",
+      "path": "src/assets/image-studies/summer-coast.webp",
+      "original": "references/local/generated/summer-coast.png"
+    }
+  ]
+}

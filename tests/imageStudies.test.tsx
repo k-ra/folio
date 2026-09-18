@@ -8,21 +8,32 @@ import { normalizeImageDirection } from '../src/model/imageStudies'
 import { imageStyleReference } from '../server/imageReference'
 
 describe('image reference styles', () => {
+  it('has twelve distinct visual recipes with concise directions', () => {
+    const references = IMAGE_STUDIES.filter((p) => p.reference)
+    expect(references).toHaveLength(12)
+    expect(new Set(references.map((p) => p.id)).size).toBe(12)
+    expect(new Set(references.map((p) => p.direction)).size).toBe(12)
+    for (const p of references) {
+      expect(p.preview).toBeTruthy()
+      expect(p.direction.length).toBeLessThan(110)
+    }
+  })
   it('keeps legacy styles identifiable and custom directions editable', () => {
     expect(imageStudy(DEF_STYLE)?.id).toBe('folio')
     expect(imageStyleLabel({ ...DEF_STYLE, imageDirection: 'My own drawing style' })).toBe('Custom linework')
   })
 
   for (const study of IMAGE_STUDIES.filter((p) => p.preview)) {
-    it(`${study.label} shortens only its exact legacy wording`, () => {
-      const old = { ...DEF_STYLE, imageStyle: study.treatment, imageDirection: study.legacyDirection! }
-      expect(imageStyleLabel(old)).toBe(study.label)
-      expect(normalizeImageDirection(old).imageDirection).toBe(study.direction)
-      expect(study.direction.length).toBeLessThan(110)
-      const custom = { ...old, imageDirection: old.imageDirection + ' With pink ink.' }
-      expect(normalizeImageDirection(custom)).toBe(custom)
-      expect(imageStudy(custom)).toBeUndefined()
-    })
+    if (study.legacyDirection)
+      it(`${study.label} shortens only its exact legacy wording`, () => {
+        const old = { ...DEF_STYLE, imageStyle: study.treatment, imageDirection: study.legacyDirection! }
+        expect(imageStyleLabel(old)).toBe(study.label)
+        expect(normalizeImageDirection(old).imageDirection).toBe(study.direction)
+        expect(study.direction.length).toBeLessThan(110)
+        const custom = { ...old, imageDirection: old.imageDirection + ' With pink ink.' }
+        expect(normalizeImageDirection(custom)).toBe(custom)
+        expect(imageStudy(custom)).toBeUndefined()
+      })
     it(`${study.label} selects its real recipe and survives serialization without a color filter`, () => {
       const change = vi.fn()
       render(<ImageChoices style={DEF_STYLE} change={change} />)

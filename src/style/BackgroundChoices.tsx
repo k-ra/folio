@@ -1,28 +1,13 @@
-import { useEffect, useState } from 'react'
 import type { Style } from '../model/types'
 import type { WriteCtl } from '../write/ctl'
 import ChoiceGrid from './ChoiceGrid'
-import {
-  BACKGROUND_CODE_LIMIT,
-  GRADIENT_DEFAULTS,
-  GRADIENTS,
-  STARTER_BACKGROUND,
-  gradientCss,
-} from './backgrounds'
+import { GRADIENT_DEFAULTS, GRADIENTS, gradientCss } from './backgrounds'
 import './backgrounds.css'
 
 export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
   const d = ctl.draft || ctl.S
-  const [customOpen, setCustomOpen] = useState(d.backdrop === 'custom')
-  const [code, setCode] = useState(d.backgroundCode || STARTER_BACKGROUND)
-  useEffect(() => {
-    setCode(d.backgroundCode || STARTER_BACKGROUND)
-    setCustomOpen(d.backdrop === 'custom')
-  }, [d])
-
   const choose = (patch: Partial<Style>) => {
-    setCustomOpen(false)
-    ctl.setDraft(patch)
+    ctl.setDraft({ ...patch, customStyles: { ...d.customStyles, page: undefined } })
   }
   return (
     <>
@@ -32,21 +17,21 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
           {
             id: 'none',
             label: 'Plain',
-            selected: d.backdrop === 'none' && !customOpen,
+            selected: d.backdrop === 'none',
             choose: () => choose({ backdrop: 'none' }),
             sample: <span className="background-study" style={{ background: d.bg }} />,
           },
           {
             id: 'gradient',
             label: 'Gradient',
-            selected: d.backdrop === 'gradient' && !customOpen,
+            selected: d.backdrop === 'gradient',
             choose: () => choose({ backdrop: 'gradient' }),
             sample: <span className="background-study" style={{ background: gradientCss(d) }} />,
           },
           {
             id: 'drift',
             label: 'Drift',
-            selected: d.backdrop === 'drift' && !customOpen,
+            selected: d.backdrop === 'drift',
             choose: () => choose({ backdrop: 'drift' }),
             sample: (
               <span
@@ -56,17 +41,9 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
             ),
           },
           {
-            id: 'custom',
-            label: 'Custom code',
-            detail: 'Write or inspect CSS',
-            selected: customOpen,
-            choose: () => setCustomOpen(true),
-            sample: <span className="background-study background-code-study">{'{ }'}</span>,
-          },
-          {
             id: 'shader',
             label: 'Shader',
-            selected: d.backdrop === 'shader' && !customOpen,
+            selected: d.backdrop === 'shader',
             choose: () => choose({ backdrop: 'shader' }),
             sample: (
               <span
@@ -80,7 +57,7 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
                 {
                   id: 'image',
                   label: 'Your image',
-                  selected: d.backdrop === 'image' && !customOpen,
+                  selected: d.backdrop === 'image',
                   choose: () => choose({ backdrop: 'image' }),
                   sample: <img className="background-study" src={d.backdropSrc} alt="" />,
                 },
@@ -88,7 +65,7 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
             : []),
         ]}
       />
-      {d.backdrop === 'gradient' && !customOpen && (
+      {d.backdrop === 'gradient' && (
         <div className="gradient-controls">
           <div className="control-options" aria-label="Gradient presets">
             {GRADIENTS.map((p) => (
@@ -134,32 +111,6 @@ export default function BackgroundChoices({ ctl }: { ctl: WriteCtl }) {
             />
             Let it move, slowly
           </label>
-        </div>
-      )}
-      {customOpen && (
-        <div className="custom-background-controls">
-          <details className="background-code">
-            <summary>Edit the CSS</summary>
-            <textarea
-              aria-label="Background CSS"
-              spellCheck={false}
-              value={code}
-              maxLength={BACKGROUND_CODE_LIMIT}
-              onChange={(e) => setCode(e.currentTarget.value)}
-            />
-            <button
-              disabled={!code.trim()}
-              onClick={() =>
-                ctl.setDraft({ backdrop: 'custom', backgroundCode: code })
-              }
-            >
-              Preview code
-            </button>
-            <p className="control-help">
-              Style body and its ::before / ::after layers. No scripts or external resources. Reduced motion
-              shows the plain paper color.
-            </p>
-          </details>
         </div>
       )}
       <div className="control-field">

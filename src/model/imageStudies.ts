@@ -47,6 +47,65 @@ export const IMAGE_STUDIES: ImageStudy[] = [
       'Quiet printmaking on warm ivory paper, muted blue-grey and charcoal, fine stippling and large overlapping shapes that suggest mist and depth. Sparse accent color, an asymmetric focal subject and generous negative space. Preserve the requested subject and its relationships; do not insert birds, reeds or calligraphy merely because this is a print treatment. Standalone artwork unless a comparison is requested.',
     reference: true,
   },
+  {
+    id: 'spring-contours',
+    label: 'Spring contours',
+    treatment: 'natural',
+    reference: true,
+    direction: 'Delicate sage and peach contour lines on white fibrous paper; airy, worn print texture.',
+  },
+  {
+    id: 'signal-city',
+    label: 'Signal city',
+    treatment: 'natural',
+    reference: true,
+    direction:
+      'Fine graphite isometric contours on icy blue; flowing geometry and a single electric-yellow accent.',
+  },
+  {
+    id: 'water-ink',
+    label: 'Water ink',
+    treatment: 'natural',
+    reference: true,
+    direction: 'Pale blue-green ink wash, watery pigment blooms and mist-soft edges on spacious white paper.',
+  },
+  {
+    id: 'citrus-sketch',
+    label: 'Citrus sketch',
+    treatment: 'natural',
+    reference: true,
+    direction: 'Loose black pen and sunlit watercolor; lemon yellow, olive and sea blue on warm ivory.',
+  },
+  {
+    id: 'paper-miniature',
+    label: 'Paper miniature',
+    treatment: 'natural',
+    reference: true,
+    direction:
+      'A tactile ivory paper maquette, folded details, a butter-yellow accent and warm grazing light.',
+  },
+  {
+    id: 'torn-paper',
+    label: 'Torn paper',
+    treatment: 'natural',
+    reference: true,
+    direction: 'Fibrous torn-paper collage, uneven layered edges, sky blue and dusty rose on ivory.',
+  },
+  {
+    id: 'electric-grain',
+    label: 'Electric grain',
+    treatment: 'natural',
+    reference: true,
+    direction: 'Bold black silhouettes and magenta overspray; coarse risograph grain on rough white paper.',
+  },
+  {
+    id: 'summer-coast',
+    label: 'Summer coast',
+    treatment: 'natural',
+    reference: true,
+    direction:
+      'Vivid cyan and indigo illustration, crisp ink contours, warm accents and sparkling white marks.',
+  },
   { id: 'folio', label: 'Folio', treatment: 'linework', direction: '' },
   {
     id: 'etching',

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import type { CustomStyleCategory } from '../model/types'
+import type { CustomStyleCategory, Style } from '../model/types'
 import type { WriteCtl } from '../write/ctl'
 import { apiFetch } from '../ai/session'
 import AIConnection from '../ai/AIConnection'
 import AutoTextarea from '../ui/AutoTextarea'
-import ArtifactView from '../magic/ArtifactView'
+import StyleStudy from './StyleStudy'
 import { styleContext, styleResultPatch, validStyleResult } from './chatContract'
 import './styleChat.css'
 
@@ -31,11 +31,14 @@ export default function StyleChat({
   const custom = d.customStyles?.[category]
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
+  const [previous, setPrevious] = useState<Style | null>(null)
+  const accepted = useRef(custom)
   const request = useRef<AbortController | null>(null)
   const log = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    if (custom !== accepted.current) setPrevious(null)
     if (log.current) log.current.scrollTop = log.current.scrollHeight
-  }, [custom?.history])
+  }, [custom])
   // Reset, preset changes, category navigation and closing cannot receive a late response.
   useEffect(() => {
     request.current?.abort()
@@ -69,7 +72,10 @@ export default function StyleChat({
       if (!validStyleResult(result, category))
         throw new Error('The style response was incomplete. Please retry.')
       if (!controller.signal.aborted) {
-        ctl.setDraft(styleResultPatch(d, category, instruction, result))
+        const patch = styleResultPatch(d, category, instruction, result)
+        accepted.current = patch.customStyles?.[category]
+        setPrevious(d)
+        ctl.setDraft(patch)
         setInput('')
       }
     } catch (cause) {
@@ -84,26 +90,19 @@ export default function StyleChat({
   }
   return (
     <section className="style-chat" aria-label="Custom style conversation">
-      <div className="eyebrow">{custom?.name || 'Make it yours'}</div>
-      {custom?.sample && (
-        <div className="style-chat-study">
-          <ArtifactView
-            compact
-            style={d}
-            output={{ kind: 'html', html: custom.sample, caption: 'Style study' }}
-          />
-          <small>{category === 'data' ? 'Style study · sample data' : 'Style study'}</small>
-        </div>
-      )}
-      {!!custom?.history.length && (
-        <div ref={log} className="style-chat-log" role="log" aria-label="Style conversation">
-          {custom.history.map((m, i) => (
-            <p key={i} className={m.me ? 'from-you' : ''}>
-              <small>{m.me ? 'YOU' : 'FOLIO'}</small>
-              {m.text}
-            </p>
-          ))}
-        </div>
+      <StyleStudy style={d} category={category} />
+      <div>
+        <h3 className="style-custom-name">{custom?.name || 'What do you have in mind?'}</h3>
+        <p className="control-help">
+          {category === 'graphics' || category === 'data'
+            ? 'Design a look for your next generation. Existing artifacts stay as they are.'
+            : 'Describe the atmosphere. Preview it here and on your page.'}
+        </p>
+      </div>
+      {custom && (
+        <p className="style-reply" role="status">
+          {custom.history.filter((m) => !m.me).slice(-1)[0]?.text}
+        </p>
       )}
       <form
         onSubmit={(e) => {
@@ -113,7 +112,7 @@ export default function StyleChat({
       >
         <AutoTextarea
           aria-label="Custom style message"
-          placeholder={invitations[category]}
+          placeholder={custom ? 'What would you change?' : invitations[category]}
           value={input}
           maxLength={3000}
           disabled={pending}
@@ -127,7 +126,7 @@ export default function StyleChat({
         />
         <div className="style-chat-actions">
           <button disabled={!ctl.magic.connected || pending || !input.trim()}>
-            {pending ? 'Shaping your style…' : custom ? 'Refine style' : 'Create custom style'}
+            {pending ? 'Making a preview…' : custom ? 'Refine preview' : 'Make a preview'}
           </button>
           {pending && (
             <button
@@ -141,6 +140,21 @@ export default function StyleChat({
               Cancel
             </button>
           )}
+          {!pending && previous && (
+            <button
+              type="button"
+              onClick={() => {
+                // setDraft merges: clear fields absent from the checkpoint as well.
+                ctl.setDraft({
+                  ...Object.fromEntries(Object.keys(d).map((key) => [key, undefined])),
+                  ...previous,
+                })
+                setPrevious(null)
+              }}
+            >
+              Undo last refinement
+            </button>
+          )}
         </div>
       </form>
       {!ctl.magic.connected && (
@@ -150,15 +164,19 @@ export default function StyleChat({
       )}
       {error && <p role="alert">{error}</p>}
       <p className="control-help">
-        {!ctl.magic.connected ? 'Connect AI to develop a custom style. ' : ''}
-        {category === 'graphics' || category === 'data'
-          ? 'Apply saves this direction for your next generation. Existing artifacts keep their own edits.'
-          : 'Preview it on the page, then Apply to keep it.'}
+        {!ctl.magic.connected ? 'Connect AI to make a preview. ' : ''}Nothing is saved until you Apply.
       </p>
-      {custom && (
-        <details>
-          <summary>Saved direction</summary>
-          <p className="control-help">{custom.direction}</p>
+      {!!custom?.history.length && (
+        <details className="style-history">
+          <summary>Earlier refinements</summary>
+          <div ref={log} className="style-chat-log" role="log" aria-label="Style conversation">
+            {custom.history.map((m, i) => (
+              <p key={i} className={m.me ? 'from-you' : ''}>
+                <small>{m.me ? 'YOU' : 'FOLIO'}</small>
+                {m.text}
+              </p>
+            ))}
+          </div>
         </details>
       )}
     </section>

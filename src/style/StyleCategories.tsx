@@ -6,6 +6,7 @@ import AutoTextarea from '../ui/AutoTextarea'
 import { GRAPHIC_STYLES, PRESETS } from './presets'
 import ChoiceGrid from './ChoiceGrid'
 import ImageChoices from './ImageChoices'
+import GraphicStudy from './GraphicStudy'
 import BackgroundChoices from './BackgroundChoices'
 import ArtifactView from '../magic/ArtifactView'
 import { IMAGE_MODELS, type ImageModel } from '../magic/models'
@@ -106,7 +107,13 @@ export default function StyleCategories({ category, ctl }: { category: Category;
                   key={p.id}
                   title={p.name}
                   aria-label={`${p.name} colors`}
-                  onClick={() => ctl.setDraft({ bg: p.style.bg, ink: p.style.ink })}
+                  onClick={() =>
+                    ctl.setDraft({
+                      bg: p.style.bg,
+                      ink: p.style.ink,
+                      customStyles: { ...d.customStyles, palette: undefined },
+                    })
+                  }
                   style={{ background: p.style.bg, color: p.style.ink }}
                 >
                   <span>◐</span>
@@ -205,34 +212,7 @@ export default function StyleCategories({ category, ctl }: { category: Category;
                   graphicDirection: p.direction,
                   customStyles: { ...d.customStyles, graphics: undefined },
                 }),
-              sample: (
-                <svg viewBox="0 0 160 110" fill="none" stroke="currentColor" strokeWidth={p.stroke}>
-                  {p.name === 'Folio' ? (
-                    <>
-                      <circle cx="80" cy="54" r="30" />
-                      <path d="M15 54 H145 M80 10 V98 M28 90 L132 20" />
-                    </>
-                  ) : p.name === 'Living field' ? (
-                    Array.from({ length: 28 }, (_, i) => (
-                      <circle
-                        key={i}
-                        cx={18 + ((i * 37) % 126)}
-                        cy={15 + ((i * 23) % 80)}
-                        r={1 + (i % 4)}
-                        opacity={0.25 + (i % 3) * 0.25}
-                      />
-                    ))
-                  ) : (
-                    Array.from({ length: 48 }, (_, i) => (
-                      <path
-                        key={i}
-                        transform={`rotate(${i * 7.5} 80 55)`}
-                        d={`M80 30 v-${8 + Math.sin(i * 0.7) * 7}`}
-                      />
-                    ))
-                  )}
-                </svg>
-              ),
+              sample: <GraphicStudy name={p.name} stroke={p.stroke} />,
             }))}
           />
           <details className="style-fine-tuning">

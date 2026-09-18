@@ -6,7 +6,7 @@ import StyleCategories, { type Category } from './StyleCategories'
 import { GRAPHIC_STYLES, PRESETS, sameStyle, sameAppearance } from './presets'
 import { imageStyleLabel } from './imageStudies'
 import { IMAGE_MODELS } from '../magic/models'
-import StyleChat from './StyleChat'
+import StyleWorkspace from './StyleWorkspace'
 import type { CustomStyleCategory } from '../model/types'
 
 const CATEGORIES: { id: Category; name: string }[] = [
@@ -40,7 +40,7 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
   const dirty = !sameStyle(d, ctl.S)
   const summaries: Record<Category, { value: string; detail: string }> = {
     type: { value: d.bodyFont, detail: `${d.size}px · ${d.headerFont} headings` },
-    palette: { value: d.ink, detail: `${d.bg} · ${d.linkStyle} links` },
+    palette: { value: d.customStyles?.palette?.name || d.ink, detail: `${d.bg} · ${d.linkStyle} links` },
     image: {
       value: imageStyleLabel(d),
       detail: IMAGE_MODELS.find((m) => m.id === d.imageModel)?.name || 'Server default',
@@ -59,7 +59,7 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
       detail: d.dataDirection || 'Explore your data',
     },
     page: {
-      value: d.paper === 'full' ? 'Full page' : 'Floating sheet',
+      value: d.customStyles?.page?.name || (d.paper === 'full' ? 'Full page' : 'Floating sheet'),
       detail: `${BACKDROP_NAMES[d.backdrop]} backdrop`,
     },
   }
@@ -181,15 +181,16 @@ export default function ControlPanel({ ctl }: { ctl: WriteCtl }) {
             ) : (
               category && (
                 <div className="category-detail" key={category}>
-                  {(['graphics', 'data', 'palette', 'page'] as string[]).includes(category) && (
-                    <StyleChat
+                  {(['graphics', 'data', 'palette', 'page'] as string[]).includes(category) ? (
+                    <StyleWorkspace
                       category={category as CustomStyleCategory}
                       ctl={ctl}
                       input={styleInputs[category as CustomStyleCategory] || ''}
                       setInput={(value) => setStyleInputs((old) => ({ ...old, [category]: value }))}
                     />
+                  ) : (
+                    <StyleCategories category={category} ctl={ctl} />
                   )}
-                  <StyleCategories category={category} ctl={ctl} />
                 </div>
               )
             )}

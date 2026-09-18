@@ -21,7 +21,7 @@ export default function ImageChoices({
         selected: imageStudy(style)?.id === p.id,
         choose: () => change({ imageStyle: p.treatment, imageDirection: p.direction }),
         sample: p.preview ? (
-          <img src={p.preview} alt="" width="640" height="640" decoding="async" />
+          <img src={p.preview} alt="" width="640" height="640" decoding="async" loading="lazy" />
         ) : (
           <ImageStudy kind={p.id} />
         ),

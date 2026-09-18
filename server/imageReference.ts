@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { imageStudy } from '../src/model/imageStudies.js'
 import type { Style } from '../src/model/types.js'
 
-/** Only our four allowlisted assets can be read; no client path or URL is accepted. */
+/** Only catalog-allowlisted assets can be read; no client path or URL is accepted. */
 export async function imageStyleReference(style: Style, root: string) {
   const study = imageStudy(style)
   if (!study?.reference) return []

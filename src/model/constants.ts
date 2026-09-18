@@ -36,7 +36,7 @@ export const DEF_STYLE: Style = {
 export const BACKDROP_NAMES = {
   none: 'Plain',
   gradient: 'Gradient',
-  custom: 'Custom code',
+  custom: 'Custom',
   drift: 'Drift',
   shader: 'Shader',
   image: 'Image',

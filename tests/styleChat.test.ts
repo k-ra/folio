@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { DEF_STYLE } from '../src/model/constants'
+import { sameStyle } from '../src/style/presets'
 import {
   STYLE_CATEGORIES,
   styleResultPatch,
+  styleContext,
   validStyleRequest,
   validStyleResult,
 } from '../src/style/chatContract'
@@ -17,6 +19,28 @@ const result = {
   sample: '<svg></svg>',
 }
 describe('custom style boundaries', () => {
+  it('treats cleared optional fields as the original style after undo', () => {
+    expect(sameStyle({ ...DEF_STYLE, customStyles: undefined, dataDirection: undefined }, DEF_STYLE)).toBe(
+      true,
+    )
+    expect(sameStyle({ ...DEF_STYLE, dataDirection: 'Radial' }, DEF_STYLE)).toBe(false)
+  })
+  it('refines the selected preset, not dormant background code', () => {
+    const style = {
+      ...DEF_STYLE,
+      backdrop: 'gradient' as const,
+      backgroundFrom: '#123456',
+      backgroundCode: 'body{background:red}',
+      backgroundPrompt: 'Old red style',
+    }
+    const context = styleContext(style, 'page')
+    expect(context.direction).toBe('gradient background')
+    expect(context.css).toContain('linear-gradient')
+    expect(context.css).toContain('#123456')
+    expect(context.css).not.toContain('red')
+    expect(styleContext({ ...style, backdrop: 'none' }, 'palette').css).toBe('')
+    expect(styleContext({ ...DEF_STYLE, chartStyle: 'bar' }, 'data').direction).toContain('bar chart')
+  })
   it('only changes the requested category and keeps a bounded shared conversation', () => {
     for (const category of STYLE_CATEGORIES) {
       const patch = styleResultPatch(DEF_STYLE, category, 'Make it calmer', result)

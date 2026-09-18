@@ -32,6 +32,20 @@ test('gradient controls preview, reset, apply and reopen without losing the chos
 })
 
 test('custom CSS is scriptless, network-isolated and static with reduced motion', async ({ page }) => {
+  await page.route('**/api/magic/status', (r) => r.fulfill({ json: { configured: true } }))
+  await page.route('**/api/style', (r) =>
+    r.fulfill({
+      json: {
+        name: 'Isolated atmosphere',
+        direction: 'A blue glow',
+        reply: 'A blue glow behind your writing.',
+        background: '#fdfbf6',
+        ink: '#111111',
+        sample: '',
+        css: 'body{background:#abcdef;background-image:url(https://background-leak.invalid/a)} body::before{content:"";animation:pulse 1s infinite}@keyframes pulse{to{opacity:0}}</style><script>parent.backgroundHacked=true</script>',
+      },
+    }),
+  )
   const leaks: string[] = []
   // Chromium can emit a request event even for a CSP-blocked attempt. A route
   // intercept records only requests that would actually reach the network.
@@ -41,14 +55,11 @@ test('custom CSS is scriptless, network-isolated and static with reduced motion'
   })
   await page.goto('/?qa=essay')
   const panel = await openBackgrounds(page)
-  await panel.getByRole('button', { name: 'Custom code', exact: true }).click()
-  await panel.getByText('Edit the CSS', { exact: true }).click()
-  await panel
-    .getByLabel('Background CSS', { exact: true })
-    .fill(
-      'body{background:#abcdef;background-image:url(https://background-leak.invalid/a)} body::before{content:"";animation:pulse 1s infinite}@keyframes pulse{to{opacity:0}}</style><script>parent.backgroundHacked=true</script>',
-    )
-  await panel.getByRole('button', { name: 'Preview code', exact: true }).click()
+  await expect(panel.getByRole('button', { name: 'Custom code', exact: true })).toHaveCount(0)
+  await panel.getByRole('button', { name: 'Make your own' }).click()
+  await panel.getByLabel('Custom style message').fill('A blue glow')
+  await panel.getByRole('button', { name: 'Make a preview', exact: true }).click()
+  await expect(panel.getByLabel('Background CSS', { exact: true })).toHaveCount(0)
   const frame = page.locator('.page-backdrop iframe')
   await expect(frame).toHaveAttribute('sandbox', '')
   await expect(frame.contentFrame().locator('body')).toHaveCSS('background-color', 'rgb(171, 205, 239)')
@@ -96,20 +107,20 @@ test('only explicit generation requests a background; errors and cancellation pr
   await page.goto('/?qa=essay')
   const panel = await openBackgrounds(page)
   await panel.getByRole('button', { name: 'Gradient', exact: true }).click()
-  await panel.getByRole('button', { name: 'Custom code', exact: true }).click()
+  await panel.getByRole('button', { name: 'Make your own', exact: true }).click()
   await panel.getByLabel('Custom style message').fill('An underwater glow')
   expect(attempts).toBe(0)
-  await panel.getByRole('button', { name: 'Create custom style', exact: true }).click()
+  await panel.getByRole('button', { name: 'Make a preview', exact: true }).click()
   await expect(panel.getByRole('alert')).toContainText('Test generator unavailable')
   await expect(page.locator('.page-backdrop')).toHaveAttribute('data-backdrop', 'gradient')
-  await panel.getByRole('button', { name: 'Create custom style', exact: true }).click()
+  await panel.getByRole('button', { name: 'Make a preview', exact: true }).click()
   await expect.poll(() => attempts).toBe(2)
   await expect(panel.getByLabel('Custom style message')).toBeDisabled()
   await panel.getByRole('button', { name: 'Cancel', exact: true }).click()
   await expect(panel.getByLabel('Custom style message')).toBeEnabled()
   release?.()
   await expect(page.locator('.page-backdrop')).toHaveAttribute('data-backdrop', 'gradient')
-  await panel.getByRole('button', { name: 'Create custom style', exact: true }).click()
+  await panel.getByRole('button', { name: 'Make a preview', exact: true }).click()
   await expect(page.locator('.page-backdrop')).toHaveAttribute('data-backdrop', 'custom')
   await page.screenshot({ path: 'test-results/background-custom.png' })
   await panel.getByRole('button', { name: 'Reset', exact: true }).click()

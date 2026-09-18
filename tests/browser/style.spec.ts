@@ -15,7 +15,7 @@ for (const width of [1440, 390]) {
       await expect(panel.getByRole('heading', { name, exact: true })).toBeFocused()
       await expect(panel.locator('.style-categories, .theme-entry, .style-preview')).toHaveCount(0)
       if (name === 'Images') {
-        await expect(panel.getByRole('group', { name: 'Image styles' }).getByRole('button')).toHaveCount(10)
+        await expect(panel.getByRole('group', { name: 'Image styles' }).getByRole('button')).toHaveCount(18)
         await panel.getByRole('button', { name: 'Etching', exact: true }).click()
         await panel.getByLabel('Image model', { exact: true }).selectOption('gpt-image-2.5-flare')
         await panel.screenshot({ path: `test-results/images-panel-${width}.png` })

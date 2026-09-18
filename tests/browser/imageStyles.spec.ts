@@ -1,6 +1,19 @@
 import { test, expect } from './fixtures'
 
-const references = ['Cobalt atlas', 'Garden press', 'Coastal halftone', 'Mist print']
+const references = [
+  'Cobalt atlas',
+  'Garden press',
+  'Coastal halftone',
+  'Mist print',
+  'Spring contours',
+  'Signal city',
+  'Water ink',
+  'Citrus sketch',
+  'Paper miniature',
+  'Torn paper',
+  'Electric grain',
+  'Summer coast',
+]
 
 for (const width of [1440, 390, 320]) {
   test(`image reference pills select, preview, reset and send their direction at ${width}px`, async ({
@@ -34,9 +47,10 @@ for (const width of [1440, 390, 320]) {
     })
     await panel.getByRole('button', { name: 'Images', exact: true }).click()
     const choices = panel.getByRole('group', { name: 'Image styles' })
-    await expect(choices.locator('img')).toHaveCount(4)
+    await expect(choices.locator('img')).toHaveCount(references.length)
     for (const name of references) {
       const pill = choices.getByRole('button', { name, exact: true })
+      await pill.scrollIntoViewIfNeeded()
       await expect
         .poll(() =>
           pill.locator('img').evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),

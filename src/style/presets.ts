@@ -77,8 +77,7 @@ export const PRESETS: StylePreset[] = [
   },
 ]
 export const sameStyle = (a: Style, b: Style) =>
-  Object.keys(a).every((k) => a[k as keyof Style] === b[k as keyof Style]) &&
-  Object.keys(a).length === Object.keys(b).length
+  Object.keys({ ...a, ...b }).every((k) => a[k as keyof Style] === b[k as keyof Style])
 
 /** Dormant background controls and generation directions are configuration, not a visible theme. */
 function appearance(style: Style): Style {

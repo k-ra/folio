@@ -1,5 +1,5 @@
 import type { ChatMessage, CustomStyleCategory, Style } from '../model/types.js'
-import { BACKGROUND_CODE_LIMIT } from './backgrounds.js'
+import { BACKGROUND_CODE_LIMIT, gradientCss } from './backgrounds.js'
 
 export const STYLE_CATEGORIES = ['graphics', 'data', 'palette', 'page'] as const
 export interface StyleRequest {
@@ -60,13 +60,22 @@ export function styleContext(style: Style, category: CustomStyleCategory): Style
       category === 'graphics'
         ? style.graphicDirection
         : category === 'data'
-          ? style.dataDirection || ''
+          ? style.dataDirection || `${style.chartStyle} chart with ${style.strokeWidth}px strokes`
           : category === 'page'
-            ? style.backgroundPrompt || ''
+            ? style.backdrop === 'custom'
+              ? style.backgroundPrompt || ''
+              : `${style.backdrop} background`
             : style.customStyles?.palette?.direction || '',
     background: style.bg,
     ink: style.ink,
-    css: category === 'page' || category === 'palette' ? style.backgroundCode || '' : '',
+    css:
+      category === 'page' || category === 'palette'
+        ? style.backdrop === 'custom'
+          ? style.backgroundCode || ''
+          : style.backdrop === 'gradient'
+            ? `body{background:${gradientCss(style)}}`
+            : ''
+        : '',
   }
 }
 /** A model can only change the chosen category; writing and unrelated settings never enter the patch. */

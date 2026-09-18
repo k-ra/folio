@@ -4,16 +4,6 @@
   height: 110px;
   object-fit: cover;
 }
-.background-code-study {
-  display: grid;
-  place-items: center;
-  font:
-    28px/1.2 'IBM Plex Mono',
-    monospace;
-  background:
-    radial-gradient(ellipse at 20% 10%, #f4e1cf, transparent 65%), linear-gradient(160deg, #eef0e4, #b9ceca);
-  color: #354c49;
-}
 .gradient-colors {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -46,57 +36,15 @@
 .background-motion input {
   accent-color: currentColor;
 }
-.background-field textarea {
-  font-size: 14px;
-  line-height: 1.6;
-  min-height: 60px;
-}
 .background-motion {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 12px;
 }
-.background-actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  font-size: 12px;
-}
-.background-actions button:first-child {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-.background-actions button:disabled {
-  opacity: 0.4;
-}
-.background-code {
-  margin: 24px 0;
-  font-size: 12px;
-}
-.background-code summary {
-  cursor: pointer;
-  opacity: 0.6;
-}
-.background-code textarea {
-  display: block;
-  width: 100%;
-  min-height: 200px;
-  box-sizing: border-box;
-  margin: 15px 0;
-  padding: 12px;
-  resize: vertical;
-  background: color-mix(in srgb, currentColor 4%, transparent);
-  font:
-    11px/1.6 'IBM Plex Mono',
-    monospace;
-}
-.background-error {
-  font-size: 12px;
-  line-height: 1.5;
-}
 @media (prefers-reduced-motion: reduce) {
-  .page-backdrop {
+  .page-backdrop,
+  .style-study-backdrop {
     animation: none !important;
   }
 }
