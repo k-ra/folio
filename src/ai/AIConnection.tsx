@@ -3,8 +3,13 @@ import { useConnection } from './connection'
 import { hasApiKey, setApiKey } from './session'
 import './connection.css'
 
+interface Props {
+  disconnectedLabel?: string
+  connectedLabel?: string
+}
+
 /** An explicit opt-in; connecting itself never calls a paid model. */
-export default function AIConnection() {
+export default function AIConnection({ disconnectedLabel = 'Connect AI', connectedLabel = 'AI settings' }: Props) {
   const connection = useConnection()
   const dialog = useRef<HTMLDialogElement>(null)
   const [draft, setDraft] = useState('')
@@ -18,7 +23,7 @@ export default function AIConnection() {
   return (
     <>
       <button className="ai-connect" onClick={() => dialog.current?.showModal()}>
-        {hasApiKey() ? 'AI settings' : 'Connect AI'}
+        {hasApiKey() ? connectedLabel : disconnectedLabel}
       </button>
       <dialog
         ref={dialog}

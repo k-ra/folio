@@ -9,6 +9,7 @@ import {
   type SetStateAction,
 } from 'react'
 import type { AI } from '../ai'
+import AIConnection from '../ai/AIConnection'
 import { DEF_STYLE, EASE_PULL, HOME_THEMES, MONO, SANS, SHADOW, SHEET_BACK } from '../model/constants'
 import { blankStory } from '../model/seed'
 import type { HomeThemeKey, Story } from '../model/types'
@@ -492,69 +493,80 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
         >
           <div style={{ font: `400 13px/1 ${SANS}` }}>All stories</div>
         </div>
-        <div style={{ position: 'relative', pointerEvents: 'auto' }}>
-          <button
-            onClick={() => setStyleOpen((v) => !v)}
-            title="Style this page"
-            className="hover-full"
-            style={{
-              width: 16,
-              height: 16,
-              borderRadius: '50%',
-              border: '1px solid currentColor',
-              background: styleOpen ? 'currentColor' : 'conic-gradient(currentColor 0 50%, transparent 50%)',
-              display: 'block',
-              opacity: 0.7,
-            }}
-          />
-          {styleOpen && (
-            <div
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 18,
+            pointerEvents: 'auto',
+            ...mono,
+          }}
+        >
+          <AIConnection disconnectedLabel="Configure" connectedLabel="Configured" />
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setStyleOpen((v) => !v)}
+              title="Style this page"
+              className="hover-full"
               style={{
-                position: 'absolute',
-                right: 0,
-                top: 30,
-                width: 220,
-                padding: 16,
-                background: hb.panel,
-                color: hb.ink,
-                boxShadow: '0 20px 40px -20px rgba(0,0,0,.5)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 14,
-                animation: 'fadein .2s ease both',
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                border: '1px solid currentColor',
+                background: styleOpen ? 'currentColor' : 'conic-gradient(currentColor 0 50%, transparent 50%)',
+                display: 'block',
+                opacity: 0.7,
               }}
-            >
-              <div style={{ ...mono, opacity: 0.55 }}>YOUR HOMEPAGE</div>
-              <div style={{ display: 'flex', gap: 10 }}>
-                {(Object.keys(HOME_THEMES) as HomeThemeKey[]).map((k) => (
-                  <button
-                    key={k}
-                    onClick={() => pickTheme(k)}
-                    title={HOME_THEMES[k].name}
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: '50%',
-                      background: HOME_THEMES[k].bg,
-                      outline: k === theme ? '1px solid currentColor' : '1px solid transparent',
-                      outlineOffset: 3,
-                    }}
-                  />
-                ))}
-              </div>
-              <input
-                placeholder="or describe it: fog, dusk, a dark room…"
-                onKeyDown={homeStyleKey}
+            />
+            {styleOpen && (
+              <div
                 style={{
-                  font: `400 12px/1.5 ${SANS}`,
-                  borderBottom: '1px solid currentColor',
-                  padding: '4px 0',
-                  width: '100%',
-                  boxSizing: 'border-box',
+                  position: 'absolute',
+                  right: 0,
+                  top: 30,
+                  width: 220,
+                  padding: 16,
+                  background: hb.panel,
+                  color: hb.ink,
+                  boxShadow: '0 20px 40px -20px rgba(0,0,0,.5)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 14,
+                  animation: 'fadein .2s ease both',
                 }}
-              />
-            </div>
-          )}
+              >
+                <div style={{ ...mono, opacity: 0.55 }}>YOUR HOMEPAGE</div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  {(Object.keys(HOME_THEMES) as HomeThemeKey[]).map((k) => (
+                    <button
+                      key={k}
+                      onClick={() => pickTheme(k)}
+                      title={HOME_THEMES[k].name}
+                      style={{
+                        width: 26,
+                        height: 26,
+                        borderRadius: '50%',
+                        background: HOME_THEMES[k].bg,
+                        outline: k === theme ? '1px solid currentColor' : '1px solid transparent',
+                        outlineOffset: 3,
+                      }}
+                    />
+                  ))}
+                </div>
+                <input
+                  placeholder="or describe it: fog, dusk, a dark room…"
+                  onKeyDown={homeStyleKey}
+                  style={{
+                    font: `400 12px/1.5 ${SANS}`,
+                    borderBottom: '1px solid currentColor',
+                    padding: '4px 0',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
