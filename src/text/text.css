@@ -1,0 +1,105 @@
+.folio-markdown {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.folio-markdown > :first-child {
+  margin-top: 0;
+}
+.folio-markdown > :last-child {
+  margin-bottom: 0;
+}
+.folio-markdown p {
+  white-space: pre-wrap;
+  margin: 0 0 1em;
+}
+.folio-markdown h1,
+.folio-markdown h2,
+.folio-markdown h3,
+.folio-markdown h4,
+.folio-markdown h5,
+.folio-markdown h6 {
+  font: inherit;
+  font-weight: 600;
+  margin: 1.4em 0 0.6em;
+}
+.folio-markdown ul,
+.folio-markdown ol {
+  padding-left: 1.4em;
+  margin: 0.7em 0 1em;
+}
+.folio-markdown li {
+  margin: 0.35em 0;
+}
+.folio-markdown li > p {
+  margin: 0;
+}
+.folio-markdown blockquote {
+  margin: 1em 0;
+  padding-left: 1em;
+  font-style: italic;
+}
+.folio-markdown code,
+.rich-input code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: color-mix(in srgb, currentColor 6%, transparent);
+}
+.folio-markdown pre {
+  white-space: pre;
+  overflow: auto;
+  padding: 12px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+}
+.folio-markdown pre code {
+  background: none;
+}
+.folio-markdown a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.folio-markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+.folio-markdown td,
+.folio-markdown th {
+  padding: 0.4em 0.7em;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+.rich-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  outline: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  color: inherit;
+}
+.rich-input p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.rich-field {
+  width: 100%;
+  min-width: 0;
+}
+.rich-field[data-empty='true'] .rich-input::before {
+  content: attr(data-placeholder);
+  opacity: 0.35;
+  pointer-events: none;
+  position: absolute;
+}
+.rich-input strong,
+.folio-markdown strong {
+  font-weight: 700;
+}
+.rich-input em,
+.folio-markdown em {
+  font-style: italic;
+}

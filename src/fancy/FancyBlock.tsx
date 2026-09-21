@@ -3,6 +3,7 @@ import type { FancyBlock as Fancy } from '../model/types'
 import { FONTS, MONO } from '../model/constants'
 import type { WriteCtl } from '../write/ctl'
 import AutoTextarea from '../ui/AutoTextarea'
+import FormattedText from '../text/FormattedText'
 import MarginNote from '../write/MarginNote'
 import { fancyStyle } from './contract'
 import { fancyInstruction, hasFancyDraft } from './state'
@@ -61,11 +62,11 @@ export default function FancyBlock({ b, ctl }: { b: Fancy; ctl: WriteCtl }) {
           >
             <span className="fancy-motion-track">
               <span className="fancy-motion-copy" id={`fancy-words-${b.id}`}>
-                {b.text}
+                <FormattedText text={b.text} marks={ctl.story.formatting?.[b.id]} />
               </span>
               {f.motion === 'marquee' && (
                 <span className="fancy-motion-copy" aria-hidden="true">
-                  {b.text}
+                  <FormattedText text={b.text} marks={ctl.story.formatting?.[b.id]} />
                 </span>
               )}
             </span>
@@ -78,6 +79,10 @@ export default function FancyBlock({ b, ctl }: { b: Fancy; ctl: WriteCtl }) {
             aria-label="Fancy text"
             placeholder="something worth setting apart"
             value={b.text}
+            rich={{
+              marks: ctl.story.formatting?.[b.id],
+              onChange: (v, m) => ctl.setBlockText(b.id, v, m),
+            }}
             onChange={(e) => ctl.setBlockText(b.id, e.currentTarget.value)}
             onFocus={() => {
               setEditing(true)
@@ -161,6 +166,10 @@ export default function FancyBlock({ b, ctl }: { b: Fancy; ctl: WriteCtl }) {
               value={ctl.story.notes[b.id]}
               placeholder="a note in the margin"
               onChange={(e) => ctl.setNote(b.id, e.currentTarget.value)}
+              rich={{
+                marks: ctl.story.formatting?.['n-' + b.id],
+                onChange: (v, m) => ctl.setNote(b.id, v, m),
+              }}
               onBlur={() => ctl.noteBlur(b.id)}
             />
           )}

@@ -142,6 +142,10 @@ function BlockRow({ ctl, b, i }: { ctl: WriteCtl; b: Block; i: number }) {
           data-id={b.id}
           placeholder={placeholder}
           value={b.text}
+          rich={{
+            marks: story.formatting?.[b.id],
+            onChange: (v, m) => ctl.setBlockText(b.id, v, m),
+          }}
           onChange={(e) => ctl.setBlockText(b.id, e.currentTarget.value)}
           onKeyDown={(e) => ctl.blockKey(e, b.id)}
           onFocus={() => ctl.focusBlock(b.id)}
@@ -199,6 +203,10 @@ function BlockRow({ ctl, b, i }: { ctl: WriteCtl; b: Block; i: number }) {
             <div style={{ ...hairline, gap: 14, paddingTop: 8, marginTop: 10 }}>
               <span style={{ ...mono, opacity: 0.5, flex: 'none' }}>CAPTION</span>
               <AutoTextarea
+                rich={{
+                  marks: story.formatting?.[b.id],
+                  onChange: (v, m) => ctl.setBlockText(b.id, v, m),
+                }}
                 data-id={b.id}
                 placeholder="what the reader should know about this image"
                 value={b.text}
@@ -263,6 +271,10 @@ function BlockRow({ ctl, b, i }: { ctl: WriteCtl; b: Block; i: number }) {
             placeholder="a note in the margin"
             value={story.notes[b.id]}
             onChange={(e) => ctl.setNote(b.id, e.currentTarget.value)}
+            rich={{
+              marks: story.formatting?.['n-' + b.id],
+              onChange: (v, m) => ctl.setNote(b.id, v, m),
+            }}
             onBlur={() => ctl.noteBlur(b.id)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {

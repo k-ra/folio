@@ -110,7 +110,7 @@
   display: grid;
   gap: 18px;
 }
-.style-chat-log p {
+.style-chat-log > div {
   margin: 0;
   font-size: 13px;
   line-height: 1.7;
@@ -122,7 +122,7 @@
   letter-spacing: 1px;
   opacity: 0.5;
 }
-.style-chat-log p:not(.from-you) {
+.style-chat-log > div:not(.from-you) {
   opacity: 0.75;
 }
 .style-chat summary {

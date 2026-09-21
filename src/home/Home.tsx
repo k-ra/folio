@@ -14,6 +14,8 @@ import { DEF_STYLE, EASE_PULL, HOME_THEMES, MONO, SANS, SHADOW, SHEET_BACK } fro
 import { blankStory } from '../model/seed'
 import type { HomeThemeKey, Story } from '../model/types'
 import { clamp, easeInOut, excerptOf, newId, wordCount } from '../model/util'
+import FormattedText from '../text/FormattedText'
+import type { TextMark } from '../text/formatting'
 import StoryOpening, { openingSurface, type OpeningSurface } from './StoryOpening'
 import { gradientCss } from '../style/backgrounds'
 import './home.css'
@@ -67,7 +69,11 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
   const [hover, setHover] = useState<string | null>(null)
   const [ctx, setCtx] = useState<Ctx | null>(null)
   const [styleOpen, setStyleOpen] = useState(false)
-  const [opening, setOpening] = useState<{ id: string; fresh?: Story; surface: OpeningSurface } | null>(null)
+  const [opening, setOpening] = useState<{
+    id: string
+    fresh?: Story
+    surface: OpeningSurface
+  } | null>(null)
   const openingRef = useRef(false)
   const openedRef = useRef(false)
   const [tiles, setTiles] = useState<TileRect[]>([])
@@ -133,11 +139,16 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
   const H = Math.max(360, vh * 0.62)
   const cx = vw / 2
   const baseTop = vh * 1.3 - H
-  const slots = [-2, -1, 0, 1, 2].map((k) => ({ x: cx - W / 2 + k * step, z: k + 3 }))
+  const slots = [-2, -1, 0, 1, 2].map((k) => ({
+    x: cx - W / 2 + k * step,
+    z: k + 3,
+  }))
   const skew = `skewY(${-SHEET_LEAN * (1 - e)}deg)`
   const rest = p === 0 ? `transform .5s ${EASE_PULL}` : 'none'
 
   interface SheetVals {
+    titleMarks?: TextMark[]
+    excerptMarks?: TextMark[]
     id: string
     isNew: boolean
     title: string
@@ -169,6 +180,8 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
       isNew: false,
       title: s.title || 'Untitled',
       excerpt: excerptOf(s),
+      titleMarks: s.formatting?.title,
+      excerptMarks: s.formatting?.[s.blocks.find((b) => b.type === 'text' && b.text.trim())?.id || ''],
       bg: th.bg,
       ink: th.ink,
       left: L(slot.x, tx) + 'px',
@@ -299,7 +312,10 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
     }
   }
 
-  const mono: CSSProperties = { font: `400 10px ${MONO}`, letterSpacing: '1.5px' }
+  const mono: CSSProperties = {
+    font: `400 10px ${MONO}`,
+    letterSpacing: '1.5px',
+  }
 
   return (
     <div
@@ -324,7 +340,14 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
           overflow: 'hidden',
         }}
       >
-        <div style={{ position: 'absolute', inset: 0, opacity: heroFade, transition: 'opacity .3s' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            opacity: heroFade,
+            transition: 'opacity .3s',
+          }}
+        >
           <div
             style={{
               position: 'absolute',
@@ -345,10 +368,20 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                 onClick={() => openStory('new', sheetRefs.current.get('new'), true)}
                 onMouseEnter={() => setHover('new')}
                 onMouseLeave={() => setHover(null)}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
               >
                 <span
-                  style={{ height: 56, display: 'flex', alignItems: 'center', font: `300 40px/1 ${SANS}` }}
+                  style={{
+                    height: 56,
+                    display: 'flex',
+                    alignItems: 'center',
+                    font: `300 40px/1 ${SANS}`,
+                  }}
                 >
                   +
                 </span>
@@ -439,7 +472,7 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                   transition: 'opacity .3s',
                 }}
               >
-                {s.title}
+                <FormattedText text={s.title} marks={s.titleMarks} />
               </div>
               <div
                 style={{
@@ -451,7 +484,7 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                   transition: 'opacity .3s',
                 }}
               >
-                {s.excerpt}
+                <FormattedText text={s.excerpt} marks={s.excerptMarks} />
               </div>
             </div>
             <div
@@ -517,7 +550,9 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                 height: 16,
                 borderRadius: '50%',
                 border: '1px solid currentColor',
-                background: styleOpen ? 'currentColor' : 'conic-gradient(currentColor 0 50%, transparent 50%)',
+                background: styleOpen
+                  ? 'currentColor'
+                  : 'conic-gradient(currentColor 0 50%, transparent 50%)',
                 display: 'block',
                 opacity: 0.7,
               }}
@@ -615,10 +650,15 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                   }}
                 >
                   <div className="library-paper-title" style={{ font: `500 12px/1.25 ${SANS}` }}>
-                    {s.title || 'Untitled'}
+                    <FormattedText text={s.title || 'Untitled'} marks={s.formatting?.title} />
                   </div>
                   <div className="library-paper-excerpt" style={{ font: `400 11px/1.6 ${SANS}` }}>
-                    {excerptOf(s)}
+                    <FormattedText
+                      text={excerptOf(s)}
+                      marks={
+                        s.formatting?.[s.blocks.find((b) => b.type === 'text' && b.text.trim())?.id || '']
+                      }
+                    />
                   </div>
                 </div>
                 <div

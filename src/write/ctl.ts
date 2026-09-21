@@ -2,6 +2,7 @@ import type { KeyboardEvent, MouseEvent } from 'react'
 import type { Block, BlockType, ChatFocus, Panel, Story, Style } from '../model/types'
 import type { MagicCtl } from '../magic/useMagic'
 import type { FancyCtl } from '../fancy/useFancy'
+import type { TextMark } from '../text/formatting'
 
 /** Everything the block renderer and panel need from the writing page. */
 export interface WriteCtl {
@@ -32,7 +33,7 @@ export interface WriteCtl {
   selText: (id: string, quote: string) => void
   togglePicker: (id: string) => void
   pickType: (id: string, t: Exclude<BlockType, 'text' | 'graphic'>) => void
-  setBlockText: (id: string, v: string) => void
+  setBlockText: (id: string, v: string, marks?: TextMark[]) => void
   setBlockPrompt: (id: string, v: string) => void
   blockKey: (e: KeyboardEvent<HTMLTextAreaElement>, id: string) => void
   openArtifactChat: (id: string) => void
@@ -40,7 +41,7 @@ export interface WriteCtl {
   deleteBlock: (id: string) => void
   padDown: (e: MouseEvent, id: string, block: Extract<Block, { type: 'padding' }>) => void
   addNote: (id: string) => void
-  setNote: (id: string, v: string) => void
+  setNote: (id: string, v: string, marks?: TextMark[]) => void
   noteBlur: (id: string) => void
 
   togglePanel: (kind: 'data' | 'style' | 'chat') => void

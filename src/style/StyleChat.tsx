@@ -4,6 +4,7 @@ import type { WriteCtl } from '../write/ctl'
 import { apiFetch } from '../ai/session'
 import AIConnection from '../ai/AIConnection'
 import AutoTextarea from '../ui/AutoTextarea'
+import Markdown from '../text/Markdown'
 import StyleStudy from './StyleStudy'
 import { categoryStyle } from './chatContract'
 import { styleContext, styleResultPatch, validStyleResult } from './chatContract'
@@ -101,9 +102,9 @@ export default function StyleChat({
         </p>
       </div>
       {custom && (
-        <p className="style-reply" role="status">
-          {custom.history.filter((m) => !m.me).slice(-1)[0]?.text}
-        </p>
+        <div className="style-reply" role="status">
+          <Markdown>{custom.history.filter((m) => !m.me).slice(-1)[0]?.text || ''}</Markdown>
+        </div>
       )}
       <form
         onSubmit={(e) => {
@@ -112,6 +113,7 @@ export default function StyleChat({
         }}
       >
         <AutoTextarea
+          markdown
           aria-label="Custom style message"
           placeholder={custom ? 'What would you change?' : invitations[category]}
           value={input}
@@ -172,10 +174,10 @@ export default function StyleChat({
           <summary>Earlier refinements</summary>
           <div ref={log} className="style-chat-log" role="log" aria-label="Style conversation">
             {custom.history.map((m, i) => (
-              <p key={i} className={m.me ? 'from-you' : ''}>
+              <div key={i} className={m.me ? 'from-you' : ''}>
                 <small>{m.me ? 'YOU' : 'FOLIO'}</small>
-                {m.text}
-              </p>
+                <Markdown>{m.text}</Markdown>
+              </div>
             ))}
           </div>
         </details>

@@ -154,6 +154,18 @@ const block = z.discriminatedUnion('type', [
   }),
 ])
 const snapshot = z.object({
+  formatting: z
+    .record(
+      text,
+      z.array(
+        z.object({
+          from: z.number().int().nonnegative(),
+          to: z.number().int().nonnegative(),
+          kind: z.enum(['bold', 'italic', 'underline', 'strike', 'code']),
+        }),
+      ),
+    )
+    .optional(),
   title: text,
   blocks: z.array(block),
   style,

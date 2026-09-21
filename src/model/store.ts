@@ -65,6 +65,7 @@ export function withHistory(s: Story, fn: StoryUpdater, why?: string): Story {
         chats: s.chats,
         notes: s.notes,
         presets: s.presets,
+        formatting: s.formatting,
       }),
     })
   } else {

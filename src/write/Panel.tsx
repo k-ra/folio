@@ -5,6 +5,7 @@ import type { WriteCtl } from './ctl'
 import { focusLabel } from './focus'
 import ControlPanel from '../style/ControlPanel'
 import { currentRevision } from '../magic/state'
+import Markdown from '../text/Markdown'
 
 export default function Panel({ ctl }: { ctl: WriteCtl }) {
   const { panel, story, S } = ctl
@@ -70,7 +71,7 @@ export default function Panel({ ctl }: { ctl: WriteCtl }) {
           <div key={i} className={'chat-message ' + (m.me ? 'from-me' : '')}>
             {m.focus && <div className="eyebrow">{m.focus}</div>}
             <span className="eyebrow">{m.me ? 'YOU' : 'FOLIO'}</span>
-            <p>{m.text}</p>
+            <Markdown>{m.text}</Markdown>
           </div>
         ))}
         {working && (
@@ -105,6 +106,7 @@ export default function Panel({ ctl }: { ctl: WriteCtl }) {
           </div>
         )}
         <AutoTextarea
+          markdown
           data-id="chat"
           aria-label="Chat message"
           placeholder={

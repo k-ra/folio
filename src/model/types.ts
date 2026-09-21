@@ -1,4 +1,5 @@
 import type { ImageModel } from '../magic/models.js'
+import type { Formatting } from '../text/formatting'
 
 export type FontName = 'Instrument Sans' | 'Libre Caslon Text' | 'Newsreader' | 'Archivo' | 'IBM Plex Mono'
 export type Backdrop = 'none' | 'gradient' | 'custom' | 'drift' | 'shader' | 'image'
@@ -171,6 +172,8 @@ export interface Version {
 export type ThumbKind = 'lines' | 'bars' | 'gradient' | 'aa' | 'mono' | 'photo'
 
 export interface Story {
+  /** Inline presentation ranges keyed by title, block ID, or n-<block ID> for a margin note. */
+  formatting?: Formatting
   id: string
   title: string
   date: string

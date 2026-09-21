@@ -30,6 +30,7 @@ import { newId } from '../model/util'
 import { useFancy } from '../fancy/useFancy'
 import { mergeParagraph } from '../model/paragraphs'
 import FullscreenButton from '../ui/FullscreenButton'
+import { withFormatting, sliceMarks, type TextMark } from '../text/formatting'
 
 interface Props {
   story: Story
@@ -101,7 +102,7 @@ export default function Write({
   // Focus requests: after the render that creates a textarea, put the caret at its end.
   useLayoutEffect(() => {
     if (!focusId) return
-    const el = document.querySelector<HTMLTextAreaElement>(`textarea[data-id="${focusId}"]`)
+    const el = document.querySelector<HTMLTextAreaElement>(`[data-folio-input][data-id="${focusId}"]`)
     if (el) {
       el.focus()
       const pos = caret.current ?? el.value.length
@@ -224,11 +225,20 @@ export default function Write({
   }
 
   // ---- blocks
-  const setTitle = (v: string) => upStory((s) => ({ ...s, title: v }))
-  const setBlockText = (bid: string, v: string) => {
+  const setTitle = (v: string, marks: TextMark[] = []) =>
+    upStory((s) => ({
+      ...s,
+      title: v,
+      formatting: withFormatting(s.formatting, 'title', v, marks),
+    }))
+  const setBlockText = (bid: string, v: string, marks: TextMark[] = []) => {
     const block = storyRef.current.blocks.find((b) => b.id === bid)
     if (block?.type === 'fancy' && block.status === 'rendering') fancy.cancel(bid)
-    upBlock(bid, (x) => ('text' in x ? { ...x, text: v } : x))
+    upStory((s) => ({
+      ...s,
+      blocks: s.blocks.map((x) => (x.id === bid && 'text' in x ? { ...x, text: v } : x)),
+      formatting: withFormatting(s.formatting, bid, v, marks),
+    }))
     if (picker === bid && v) setPicker(null)
   }
   const setBlockPrompt = (bid: string, v: string) =>
@@ -297,7 +307,8 @@ export default function Write({
       if (
         JSON.stringify(s.blocks) === JSON.stringify(undo.after.blocks) &&
         JSON.stringify(s.notes) === JSON.stringify(undo.after.notes) &&
-        JSON.stringify(s.chats) === JSON.stringify(undo.after.chats)
+        JSON.stringify(s.chats) === JSON.stringify(undo.after.chats) &&
+        JSON.stringify(s.formatting) === JSON.stringify(undo.after.formatting)
       ) {
         e.preventDefault()
         upStory(
@@ -306,6 +317,7 @@ export default function Write({
             blocks: undo.before.blocks,
             notes: undo.before.notes,
             chats: undo.before.chats,
+            formatting: undo.before.formatting,
           }),
           'Merge undone',
         )
@@ -320,13 +332,21 @@ export default function Write({
       e.preventDefault()
       const pos = el.selectionStart
       const before = el.value.slice(0, pos)
-      const after = el.value.slice(pos)
+      const end = el.selectionEnd
+      const after = el.value.slice(end)
       const nb = T(after)
       upStory((st) => {
         const blocks = [...st.blocks]
         blocks[i] = 'text' in blk ? { ...blk, text: before } : blk
         blocks.splice(i + 1, 0, nb)
-        return { ...st, blocks }
+        const marks = st.formatting?.[bid]
+        const formatting = withFormatting(
+          withFormatting(st.formatting, bid, before, sliceMarks(marks, 0, pos)),
+          nb.id,
+          after,
+          sliceMarks(marks, end, el.value.length),
+        )
+        return { ...st, blocks, formatting }
       })
       setFocusId(nb.id)
       setSel(nb.id)
@@ -383,7 +403,8 @@ export default function Write({
     fancy.cancel(bid)
     upStory((s) => {
       const blocks = s.blocks.filter((x) => x.id !== bid)
-      return { ...s, blocks: blocks.length ? blocks : [T('')] }
+      const formatting = withFormatting(withFormatting(s.formatting, bid, '', []), 'n-' + bid, '', [])
+      return { ...s, blocks: blocks.length ? blocks : [T('')], formatting }
     })
     setSel(null)
     setChatFocus((f) => (f?.id === bid ? null : f))
@@ -399,13 +420,22 @@ export default function Write({
     upStory((s) => ({ ...s, notes: { ...s.notes, [bid]: '' } }))
     setFocusId('n-' + bid)
   }
-  const setNote = (bid: string, v: string) => upStory((s) => ({ ...s, notes: { ...s.notes, [bid]: v } }))
+  const setNote = (bid: string, v: string, marks: TextMark[] = []) =>
+    upStory((s) => ({
+      ...s,
+      notes: { ...s.notes, [bid]: v },
+      formatting: withFormatting(s.formatting, 'n-' + bid, v, marks),
+    }))
   const noteBlur = (bid: string) => {
     if ((storyRef.current.notes[bid] || '').trim()) return
     upStory((s) => {
       const n = { ...s.notes }
       delete n[bid]
-      return { ...s, notes: n }
+      return {
+        ...s,
+        notes: n,
+        formatting: withFormatting(s.formatting, 'n-' + bid, '', []),
+      }
     })
   }
   const restoreVersion = (t: number) => {
@@ -414,7 +444,12 @@ export default function Write({
     upStory((s) => {
       const v = (s.history || []).find((x) => x.t === t)
       if (!v) return s
-      return migrateStory({ ...s, ...JSON.parse(v.snap) })
+      const snapshot = JSON.parse(v.snap)
+      return migrateStory({
+        ...s,
+        ...snapshot,
+        formatting: snapshot.formatting,
+      })
     }, 'Restored')
     setHistoryOpen(false)
   }
@@ -602,6 +637,7 @@ export default function Write({
               placeholder="Untitled"
               value={story.title}
               onChange={(e) => setTitle(e.currentTarget.value)}
+              rich={{ marks: story.formatting?.title, onChange: setTitle }}
               onFocus={clearFocus}
               style={{
                 fontFamily: FONTS[V.headerFont],

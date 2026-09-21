@@ -4,6 +4,8 @@ import { FONTS, MONO } from '../model/constants'
 import ArtifactView from '../magic/ArtifactView'
 import Backdrop from '../write/Backdrop'
 import { fancyStyle } from '../fancy/contract'
+import FormattedText from '../text/FormattedText'
+import type { Formatting, TextMark } from '../text/formatting'
 
 type ReadingBlock =
   | { id: string; type: 'text'; text: string }
@@ -23,6 +25,7 @@ export interface Publication {
   blocks: ReadingBlock[]
   notes: Record<string, string>
   sources: Story['sources']
+  formatting?: Formatting
 }
 
 export default function PublishedStory({ story }: { story: Publication }) {
@@ -47,27 +50,37 @@ export default function PublishedStory({ story }: { story: Publication }) {
           } as CSSProperties
         }
       >
-        <h1 style={{ fontFamily: FONTS[s.headerFont], fontWeight: 400 }}>{story.title}</h1>
+        <h1 style={{ fontFamily: FONTS[s.headerFont], fontWeight: 400 }}>
+          <FormattedText text={story.title} marks={story.formatting?.title} />
+        </h1>
         {story.blocks.map((b) => (
           <section key={b.id} className={b.type === 'artifact' && b.fullBleed ? 'bleed' : undefined}>
             {b.type === 'text' ? (
-              <p>{b.text}</p>
+              <p>
+                <FormattedText text={b.text} marks={story.formatting?.[b.id]} />
+              </p>
             ) : b.type === 'media' ? (
               <figure>
                 {b.src && <img src={b.src} alt={b.text} />}
-                <figcaption>{b.text}</figcaption>
+                <figcaption>
+                  <FormattedText text={b.text} marks={story.formatting?.[b.id]} />
+                </figcaption>
               </figure>
             ) : b.type === 'padding' ? (
               <div style={{ height: b.h }} />
             ) : b.type === 'fancy' ? (
-              <Fancy text={b.text} params={b.fancy} style={s} />
+              <Fancy text={b.text} marks={story.formatting?.[b.id]} params={b.fancy} style={s} />
             ) : (
               <figure>
                 <ArtifactView output={b.output} style={b.style} fullBleed={b.fullBleed} />
                 <figcaption>{b.output.caption}</figcaption>
               </figure>
             )}
-            {story.notes[b.id] && <aside className="publication-note">{story.notes[b.id]}</aside>}
+            {story.notes[b.id] && (
+              <aside className="publication-note">
+                <FormattedText text={story.notes[b.id]} marks={story.formatting?.['n-' + b.id]} />
+              </aside>
+            )}
           </section>
         ))}
         {!!story.sources?.length && (
@@ -89,7 +102,17 @@ export default function PublishedStory({ story }: { story: Publication }) {
     </div>
   )
 }
-function Fancy({ text, params, style }: { text: string; params: FancyParams; style: Style }) {
+function Fancy({
+  text,
+  marks,
+  params,
+  style,
+}: {
+  text: string
+  marks?: TextMark[]
+  params: FancyParams
+  style: Style
+}) {
   const f = fancyStyle(params),
     [paused, setPaused] = useState(false)
   return (
@@ -121,10 +144,12 @@ function Fancy({ text, params, style }: { text: string; params: FancyParams; sty
     >
       <div className={`fancy-display fancy-${f.motion} ${paused ? 'is-paused' : ''}`}>
         <span className="fancy-motion-track">
-          <span className="fancy-motion-copy">{text}</span>
+          <span className="fancy-motion-copy">
+            <FormattedText text={text} marks={marks} />
+          </span>
           {f.motion === 'marquee' && (
             <span className="fancy-motion-copy" aria-hidden="true">
-              {text}
+              <FormattedText text={text} marks={marks} />
             </span>
           )}
         </span>

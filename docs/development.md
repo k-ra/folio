@@ -2,6 +2,8 @@
 
 React, TypeScript and Vite. A local-first writing app with block-scoped AI editing.
 
+Chat renders safe Markdown (no raw HTML or remote images); its composer supports Markdown shortcuts. Writing, titles, captions and margin notes support Cmd/Ctrl+B, I and U, Cmd/Ctrl+Shift+X for strikethrough, and Cmd/Ctrl+Shift+M for inline code. Formatting is stored as optional plain-text ranges in `Story.formatting`; original words remain strings, including literal Markdown punctuation. Rich editing uses a single-paragraph Tiptap field with hard breaks. Splits/merges, history, cloud saving, backups and publication preserve ranges. Copy entire story remains plain text. No formatting toolbar is added.
+
 ```bash
 npm ci
 npm run dev

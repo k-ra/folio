@@ -62,6 +62,11 @@ const visualStyle = (s: Style): Style => {
 export function publication(s: Story, notes = false): Publication {
   return {
     title: s.title,
+    formatting: Object.fromEntries(
+      Object.entries(s.formatting || {}).filter(
+        ([id]) => id === 'title' || s.blocks.some((b) => b.id === id || (notes && 'n-' + b.id === id)),
+      ),
+    ),
     style: visualStyle(s.style),
     notes: notes ? { ...s.notes } : {},
     sources: s.sources,

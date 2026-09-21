@@ -24,6 +24,126 @@ export async function loadExample(page: Page, story = example()) {
   await page.goto('/')
   await page.getByRole('button', { name: 'Open A field of light', exact: true }).first().click()
 }
+test('rich writing shortcuts, notes, merge undo, chat Markdown and offline export', async ({
+  page,
+  context,
+}) => {
+  const story = example()
+  story.chats.chat = [
+    {
+      me: false,
+      text: '### A thought\n\n**Bold** and *italic*.\n\n- One\n- Two',
+    },
+  ]
+  await loadExample(page, story)
+  await page.getByRole('button', { name: 'Open chat', exact: true }).click()
+  const chat = page.getByRole('region', { name: 'Chat', exact: true })
+  await expect(chat.locator('strong')).toHaveText('Bold')
+  await expect(chat.locator('em')).toHaveText('italic')
+  await expect(chat.getByRole('heading', { name: 'A thought' })).toBeVisible()
+  await expect(chat.locator('li')).toHaveCount(2)
+  const composer = chat.getByLabel('Chat message')
+  await composer.fill('My words')
+  await composer.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(0, 2))
+  await composer.press('ControlOrMeta+b')
+  await expect(composer).toHaveValue('**My** words')
+  await chat.getByRole('button', { name: 'Close chat panel' }).click()
+  const a = page.locator('[data-folio-input][data-id="a"]')
+  await a.focus()
+  await a.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(0, 5))
+  await a.press('ControlOrMeta+b')
+  await expect(a.locator('strong')).toHaveText('First')
+  await a.locator('[contenteditable]').press('ControlOrMeta+z')
+  await expect(a.locator('strong')).toHaveCount(0)
+  await a.locator('[contenteditable]').press('ControlOrMeta+Shift+z')
+  await expect(a.locator('strong')).toHaveText('First')
+  await a.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(6, 15))
+  await a.locator('[contenteditable]').press('ControlOrMeta+i')
+  await expect(a.locator('em')).toHaveText('paragraph')
+  const note = page.locator('[data-folio-input][data-id="n-a"]')
+  await note.focus()
+  await note.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(0, 7))
+  await note.press('ControlOrMeta+i')
+  await expect(note.locator('em')).toHaveText('PRIVATE')
+  const b = page.locator('[data-folio-input][data-id="b"]')
+  await b.focus()
+  await b.press('Home')
+  await b.press('Backspace')
+  await expect(a).toContainText('First paragraph.Second paragraph.')
+  await expect(a.locator('strong')).toHaveText('First')
+  expect(await a.evaluate((el: HTMLTextAreaElement) => el.selectionStart)).toBe(16)
+  await a.locator('[contenteditable]').press('ControlOrMeta+z')
+  await expect(b).toHaveValue('Second paragraph.')
+  await expect(note.locator('em')).toHaveText('PRIVATE')
+  await page.getByTitle('History', { exact: true }).click()
+  await context.setOffline(true)
+  const event = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Download HTML', exact: true }).click()
+  const path = test.info().outputPath('formatted.html')
+  await (await event).saveAs(path)
+  const reader = await context.newPage()
+  await reader.goto('file://' + path)
+  await expect(reader.locator('.publication strong')).toHaveText('First')
+  await expect(reader.locator('.publication em')).toHaveText('paragraph')
+  await expect(reader.locator('.publication-note')).toHaveCount(0)
+  await reader.screenshot({
+    path: test.info().outputPath('formatted-desktop.png'),
+    fullPage: true,
+  })
+  await reader.setViewportSize({ width: 390, height: 844 })
+  await reader.screenshot({
+    path: test.info().outputPath('formatted-mobile.png'),
+    fullPage: true,
+  })
+  await context.setOffline(false)
+  await page.reload()
+  await page.getByRole('button', { name: 'Open A field of light', exact: true }).first().click()
+  await expect(a.locator('strong')).toHaveText('First')
+})
+test('rich typing, paragraph split and all author fields preserve formatting', async ({ page }) => {
+  await loadExample(page)
+  const a = page.locator('[data-folio-input][data-id="a"]')
+  await a.focus()
+  await a.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(6, 6))
+  await a.press('ControlOrMeta+b')
+  await page.keyboard.type('bold ')
+  await expect(a.locator('strong')).toHaveText('bold ')
+  await page.keyboard.press('ControlOrMeta+b')
+  await page.keyboard.type('normal ')
+  await expect(a).toHaveText('First bold normal paragraph.')
+  await expect(a.locator('strong')).toHaveText('bold ')
+  await a.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(8, 8))
+  await page.keyboard.press('Enter')
+  await expect(a).toHaveText('First bo')
+  const next = page.locator('[data-block-id]').nth(1).locator('[data-folio-input]').first()
+  await expect(next).toHaveText('ld normal paragraph.')
+  await expect(next.locator('strong')).toHaveText('ld ')
+  await next.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(0, el.value.length))
+  await next.locator('[contenteditable]').evaluate((el) => {
+    const clipboardData = new DataTransfer()
+    clipboardData.setData('text/html', '<p><strong>Pasted</strong> words</p><p><em>Second line</em></p>')
+    el.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }))
+  })
+  await expect(next.locator('strong')).toHaveText('Pasted')
+  await expect(next.locator('em')).toHaveText('Second line')
+  expect(await next.evaluate((el: HTMLTextAreaElement) => el.value)).toBe('Pasted words\nSecond line')
+  for (const id of ['title', 'image']) {
+    const field = page.locator(`[data-folio-input][data-id="${id}"]`)
+    await field.focus()
+    await field.evaluate((el: HTMLTextAreaElement) => el.setSelectionRange(0, 1))
+    await field.press('ControlOrMeta+i')
+    await expect(field.locator('em')).toHaveText('A')
+  }
+  await page.screenshot({
+    path: test.info().outputPath('rich-editor-desktop.png'),
+    fullPage: true,
+  })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.screenshot({
+    path: test.info().outputPath('rich-editor-mobile.png'),
+    fullPage: true,
+  })
+})
 for (const width of [1440, 390])
   test(`merge, undo, offline copy/export and backup roundtrip at ${width}px`, async ({ page, context }) => {
     await page.setViewportSize({ width, height: 1000 })
@@ -141,8 +261,15 @@ test('offline charts preserve their responsive width and keyboard interaction', 
   const graphic = story.blocks.find((b) => b.type === 'magic')!
   if (graphic.type !== 'magic') throw new Error('Missing fixture graphic')
   graphic.revisions[0].output = {
-    kind: 'chart', points: [{ label: 'Monday', value: 7 }, { label: 'Tuesday', value: 12 }],
-    chartStyle: 'line', caption: 'Observations', xLabel: 'Day', yLabel: 'Count',
+    kind: 'chart',
+    points: [
+      { label: 'Monday', value: 7 },
+      { label: 'Tuesday', value: 12 },
+    ],
+    chartStyle: 'line',
+    caption: 'Observations',
+    xLabel: 'Day',
+    yLabel: 'Count',
   }
   await loadExample(page, story)
   await page.getByTitle('History', { exact: true }).click()
@@ -156,7 +283,8 @@ test('offline charts preserve their responsive width and keyboard interaction', 
   await expect(reader.locator('body')).toHaveAttribute('data-folio-ready', 'true')
   for (const width of [1440, 390]) {
     await reader.setViewportSize({ width, height: 900 })
-    const chart = reader.locator('.artifact-chart'), svg = chart.locator('svg')
+    const chart = reader.locator('.artifact-chart'),
+      svg = chart.locator('svg')
     expect((await svg.boundingBox())!.width).toBeCloseTo((await chart.boundingBox())!.width, 0)
     await reader.getByRole('img', { name: 'Monday: 7', exact: true }).focus()
     await expect(reader.locator('.chart-heading')).toContainText('Monday · 7')
