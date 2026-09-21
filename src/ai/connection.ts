@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { hasApiKey, setRequestLimit, subscribeKey } from './session'
+import { hasApiKey, isAIDisabled, setRequestLimit, subscribeKey } from './session'
 
 export interface Connection {
   configured: boolean
@@ -18,8 +18,8 @@ export async function readConnection(signal?: AbortSignal): Promise<Connection> 
     setRequestLimit(value.maxRequestBytes)
     const ownKey = value.byok === true && hasApiKey()
     return {
-      configured: ownKey || value.configured === true,
-      images: ownKey || (value.images ?? value.configured === true),
+      configured: !isAIDisabled() && (ownKey || value.configured === true),
+      images: !isAIDisabled() && (ownKey || (value.images ?? value.configured === true)),
       provider: ownKey ? 'OpenAI' : value.provider || null,
       byok: value.byok === true,
     }

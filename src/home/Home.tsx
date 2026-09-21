@@ -18,6 +18,7 @@ import StoryOpening, { openingSurface, type OpeningSurface } from './StoryOpenin
 import { gradientCss } from '../style/backgrounds'
 import './home.css'
 import InfoActions from '../portable/InfoActions'
+import FullscreenButton from '../ui/FullscreenButton'
 
 interface Props {
   stories: Story[]
@@ -500,10 +501,11 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
             alignItems: 'center',
             gap: 18,
             pointerEvents: 'auto',
+            position: 'relative',
             ...mono,
           }}
         >
-          <div style={{ position: 'relative' }}>
+          <div>
             <button
               onClick={() => setStyleOpen((v) => !v)}
               title="Style this page"
@@ -575,6 +577,7 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
               </div>
             )}
           </div>
+          <FullscreenButton />
         </div>
       </div>
 

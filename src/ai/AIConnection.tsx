@@ -1,33 +1,35 @@
 import { useId, useRef, useState } from 'react'
 import { useConnection } from './connection'
-import { hasApiKey, setApiKey } from './session'
+import { disableAI, hasApiKey, isAIDisabled, setApiKey } from './session'
 import './connection.css'
 
-/** The homepage shows the field directly; story controls share the same form in a dialog. */
+/** One opt-in control, inline at home and in a small dialog inside the workshop. */
 export default function AIConnection({ inline = false }: { inline?: boolean }) {
   const connection = useConnection()
   const id = useId()
   const dialog = useRef<HTMLDialogElement>(null)
+  const [choosing, setChoosing] = useState(false)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
-  if (!connection?.byok)
-    return inline ? (
-      <p className="ai-inline-help">
-        {connection
-          ? 'AI is unavailable on this host. Run Folio with its API server to connect a key.'
-          : 'Checking AI connection…'}
-      </p>
-    ) : null
-  const close = () => {
+  const connected = !isAIDisabled() && (hasApiKey() || connection?.configured === true)
+  const enabled = connected || choosing
+  const reset = () => {
     setDraft('')
     setError('')
+    setChoosing(false)
+  }
+  const close = () => {
+    reset()
     dialog.current?.close()
   }
-  const disclosure =
-    'When you ask for AI help, this site’s server forwards your key and the relevant writing, instructions and attachments to OpenAI. Only use a deployment you trust. API charges apply; connecting alone makes no model request.'
+  if (!connection?.byok)
+    return inline ? (
+      <p className="ai-inline-help">{connection ? 'AI unavailable on this host.' : 'Checking AI…'}</p>
+    ) : null
+
   const form = (
     <form
-      className={inline ? 'ai-connection-inline' : undefined}
+      className="ai-connection-form"
       aria-label="AI connection"
       onSubmit={(e) => {
         e.preventDefault()
@@ -39,86 +41,71 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
         }
       }}
     >
-      {!inline && (
-        <>
-          <header>
-            <h2 id={id + '-title'}>Your AI, when you want it.</h2>
-            <button type="button" aria-label="Close AI settings" onClick={close}>
-              ×
-            </button>
-          </header>
-          <p>
-            Bring your own OpenAI API key. It stays in this tab’s memory, not in your stories or browser
-            storage. Reloading forgets it.
-          </p>
-          <p>{disclosure}</p>
-        </>
-      )}
-      <label htmlFor={id + '-key'}>OpenAI API key</label>
-      <input
-        id={id + '-key'}
-        type="password"
-        autoComplete="off"
-        spellCheck={false}
-        value={draft}
-        onChange={(e) => setDraft(e.currentTarget.value)}
-        placeholder={hasApiKey() ? 'Replace your key…' : 'Paste your key here · sk-…'}
-        maxLength={503}
-      />
-      {inline && hasApiKey() && <small role="status">Key added for this tab.</small>}
-      {error && <p role="alert">{error}</p>}
-      <div className="ai-connection-actions">
-        <button type="submit" disabled={!draft.trim()}>
-          {hasApiKey() ? 'Replace key' : 'Use this key'}
+      <div className="ai-choice" role="group" aria-label="AI preference">
+        <button type="button" aria-pressed={enabled} onClick={() => setChoosing(true)}>
+          AI
         </button>
-        {hasApiKey() && (
-          <button
-            type="button"
-            onClick={() => {
-              setApiKey('')
-              close()
-            }}
-          >
-            Disconnect AI
-          </button>
-        )}
-        {!inline && (
-          <button type="button" onClick={close}>
-            Cancel
-          </button>
-        )}
+        <button
+          type="button"
+          aria-pressed={!enabled}
+          onClick={() => {
+            disableAI()
+            reset()
+          }}
+        >
+          No AI
+        </button>
+        {!inline && <button className="ai-close" type="button" aria-label="Close AI settings" onClick={close}>×</button>}
       </div>
-      {inline ? (
+      {enabled && (
         <>
-          <small>Kept in this tab only. Reloading forgets it.</small>
+          <label htmlFor={id + '-key'}>OpenAI API key</label>
+          <div className="ai-key-row">
+            <input
+              id={id + '-key'}
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              value={draft}
+              onChange={(e) => setDraft(e.currentTarget.value)}
+              placeholder={hasApiKey() ? 'Replace key…' : 'sk-…'}
+              maxLength={503}
+            />
+            <button type="submit" disabled={!draft.trim()}>
+              Save
+            </button>
+          </div>
+          {hasApiKey() && <small role="status">Connected for this tab.</small>}
+          <small>Tab only · API charges apply.</small>
           <details>
-            <summary>How your key is used</summary>
-            <p>{disclosure}</p>
-            <p>Key validity and model access are checked on your first AI request.</p>
+            <summary>Privacy</summary>
+            <p>
+              Explicit AI requests send your key and relevant content through this site’s server to OpenAI.
+              Use a deployment you trust. Reloading forgets the key; it is never saved with stories. Saving a
+              key makes no model request. Turning AI off does not recall requests already sent.
+            </p>
           </details>
         </>
-      ) : (
-        <small>
-          Disconnecting stops future requests; it cannot recall a request already sent. Key validity and model
-          access are checked on your first AI request.
-        </small>
       )}
+      {error && <small role="alert">{error}</small>}
     </form>
   )
-  if (inline) return form
+  if (inline) return <div className="ai-connection-inline">{form}</div>
   return (
     <>
-      <button type="button" className="ai-connect" onClick={() => dialog.current?.showModal()}>
-        {hasApiKey() ? 'AI settings' : 'Connect AI'}
+      <button
+        type="button"
+        className="ai-connect"
+        aria-label="AI settings"
+        onClick={() => dialog.current?.showModal()}
+      >
+        {connected ? 'AI' : 'NO AI'}
       </button>
       <dialog
         ref={dialog}
         className="ai-connection"
-        aria-labelledby={id + '-title'}
-        onClose={() => {
-          setDraft('')
-          setError('')
-        }}
+        aria-label="AI settings"
+        onClose={reset}
         onCancel={close}
       >
         {form}

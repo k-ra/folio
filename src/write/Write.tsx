@@ -29,6 +29,7 @@ import { migrateStory } from '../model/migrate'
 import { newId } from '../model/util'
 import { useFancy } from '../fancy/useFancy'
 import { mergeParagraph } from '../model/paragraphs'
+import FullscreenButton from '../ui/FullscreenButton'
 
 interface Props {
   story: Story
@@ -579,13 +580,16 @@ export default function Write({
               ←
             </span>
           </button>
-          <div className="essay-status" style={mono}>
-            <AIConnection />
-            <span style={{ opacity: 0.45 }}>
-              {wordCount(story).toLocaleString()} WORDS ·{' '}
-              {saveError ? 'LOCAL SAVE FAILED' : saving ? 'SAVING LOCALLY…' : 'SAVED LOCALLY'}
-              {cloudStatus ? ` · ${cloudStatus}` : ''}
-            </span>
+          <div className="essay-utilities">
+            <div className="essay-status" style={mono}>
+              <AIConnection />
+              <span style={{ opacity: 0.45 }}>
+                {wordCount(story).toLocaleString()} WORDS ·{' '}
+                {saveError ? 'LOCAL SAVE FAILED' : saving ? 'SAVING LOCALLY…' : 'SAVED LOCALLY'}
+                {cloudStatus ? ` · ${cloudStatus}` : ''}
+              </span>
+            </div>
+            <FullscreenButton />
           </div>
         </div>
 

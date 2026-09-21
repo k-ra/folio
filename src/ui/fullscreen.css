@@ -1,0 +1,30 @@
+.fullscreen-control {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.fullscreen-control > button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  opacity: 0.5;
+}
+.fullscreen-control > button:hover,
+.fullscreen-control > button:focus-visible {
+  opacity: 1;
+}
+.fullscreen-error {
+  position: absolute;
+  right: 0;
+  top: 32px;
+  width: 190px;
+  padding: 10px;
+  background: #f5f2eb;
+  color: #292720;
+  font:
+    11px/1.5 'Instrument Sans',
+    sans-serif;
+  letter-spacing: normal;
+  z-index: 30;
+}
