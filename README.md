@@ -12,4 +12,4 @@ all writing will stay as the author's. agents are opt-in, and help with coding v
   <img src="docs/images/studio.png" alt="Inside the Folio studio" width="70%">
 </p>
 
-currently, your stories live in your browser and nothing syncs to a cloud account.
+your stories save in your browser. optional accounts add private cloud saving; existing browser stories only upload when you choose to import them.

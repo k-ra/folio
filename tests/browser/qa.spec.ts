@@ -59,7 +59,7 @@ test('unavailable local storage keeps editing available and exports the current 
   await page.getByRole('button', { name: 'New Story' }).click()
   await page.getByPlaceholder('Untitled', { exact: true }).fill('Unsaved but recoverable')
   await page.getByPlaceholder('Begin.', { exact: true }).fill('This text must be in the backup.')
-  await expect(page.getByText(/NOT SAVED/)).toBeVisible()
+  await expect(page.getByText(/LOCAL SAVE FAILED/)).toBeVisible()
   const downloaded = page.waitForEvent('download')
   await page.getByRole('button', { name: 'Export backup', exact: true }).click()
   const backup = await downloaded

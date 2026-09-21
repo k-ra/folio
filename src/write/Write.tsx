@@ -28,6 +28,7 @@ import { newMagicBlock } from '../magic/state'
 import { migrateStory } from '../model/migrate'
 import { newId } from '../model/util'
 import { useFancy } from '../fancy/useFancy'
+import { mergeParagraph } from '../model/paragraphs'
 
 interface Props {
   story: Story
@@ -38,11 +39,25 @@ interface Props {
   goHome: () => void
   saveError: string
   saving?: boolean
+  cloudStatus?: string
 }
 
-const mono: CSSProperties = { font: `400 10px ${MONO}`, letterSpacing: '1.5px' }
+const mono: CSSProperties = {
+  font: `400 10px ${MONO}`,
+  letterSpacing: '1.5px',
+}
 
-export default function Write({ story, isNew, ai, upStory, upBlock, goHome, saveError, saving }: Props) {
+export default function Write({
+  story,
+  isNew,
+  ai,
+  upStory,
+  upBlock,
+  goHome,
+  saveError,
+  saving,
+  cloudStatus,
+}: Props) {
   const [panel, setPanel] = useState<PanelT | null>(null)
   const [draft, setDraftState] = useState<Style | null>(null)
   // Keep unsent drafts with their conversations when selection changes the target.
@@ -63,6 +78,8 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
   useEffect(() => () => chatRequest.current?.abort(), [])
   const drag = useRef<{ id: string; y: number; h: number } | null>(null)
   const storyRef = useRef(story)
+  const caret = useRef<number | null>(null)
+  const mergeUndo = useRef<{ before: Story; after: Story; id: string }[]>([])
   storyRef.current = story
 
   const S: Style = { ...DEF_STYLE, ...story.style }
@@ -86,7 +103,9 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
     const el = document.querySelector<HTMLTextAreaElement>(`textarea[data-id="${focusId}"]`)
     if (el) {
       el.focus()
-      el.setSelectionRange(el.value.length, el.value.length)
+      const pos = caret.current ?? el.value.length
+      el.setSelectionRange(pos, pos)
+      caret.current = null
     }
     setFocusId(null)
   }, [focusId, story.blocks])
@@ -136,14 +155,20 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
   const resetStyle = () => setDraftState({ ...S })
   const savePreset = (name: string) =>
     upStory(
-      (s) => ({ ...s, presets: [...(s.presets || []), { id: newId(), name, style: { ...(draft || S) } }] }),
+      (s) => ({
+        ...s,
+        presets: [...(s.presets || []), { id: newId(), name, style: { ...(draft || S) } }],
+      }),
       'Preset saved',
     )
 
   const pushMsg = (key: string, me: boolean, text: string, focus?: string | null) =>
     upStory((s) => ({
       ...s,
-      chats: { ...s.chats, [key]: [...(s.chats[key] || []), { me, text, focus: focus || null }] },
+      chats: {
+        ...s.chats,
+        [key]: [...(s.chats[key] || []), { me, text, focus: focus || null }],
+      },
     }))
 
   const sendChat = async () => {
@@ -239,7 +264,14 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
             type: 'fancy',
             text: '',
             prompt: '',
-            fancy: { size: 30, align: 'center', font: 'header', italic: false, pad: 30, ls: 0 },
+            fancy: {
+              size: 30,
+              align: 'center',
+              font: 'header',
+              italic: false,
+              pad: 30,
+              ls: 0,
+            },
           }
         if (t === 'media') return { id: x.id, type: 'media', src: null, text: '' }
         return { id: x.id, type: 'padding', h: 120 }
@@ -258,6 +290,31 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
     const blk = s.blocks[i]
     if (!blk) return
     const el = e.currentTarget
+    if (e.nativeEvent.isComposing) return
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey && mergeUndo.current.length) {
+      const undo = mergeUndo.current[mergeUndo.current.length - 1]
+      if (
+        JSON.stringify(s.blocks) === JSON.stringify(undo.after.blocks) &&
+        JSON.stringify(s.notes) === JSON.stringify(undo.after.notes) &&
+        JSON.stringify(s.chats) === JSON.stringify(undo.after.chats)
+      ) {
+        e.preventDefault()
+        upStory(
+          (st) => ({
+            ...st,
+            blocks: undo.before.blocks,
+            notes: undo.before.notes,
+            chats: undo.before.chats,
+          }),
+          'Merge undone',
+        )
+        caret.current = 0
+        setFocusId(undo.id)
+        setSel(undo.id)
+        mergeUndo.current.pop()
+        return
+      }
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       const pos = el.selectionStart
@@ -273,12 +330,20 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
       setFocusId(nb.id)
       setSel(nb.id)
       setPicker(null)
-    } else if (e.key === 'Backspace' && !el.value && s.blocks.length > 1 && blk.type !== 'media') {
+    } else if (
+      e.key === 'Backspace' &&
+      el.selectionStart === 0 &&
+      el.selectionEnd === 0 &&
+      blk.type === 'text'
+    ) {
+      const merged = mergeParagraph(s, bid)
+      if (!merged) return
       e.preventDefault()
-      const prev = s.blocks[i - 1] || s.blocks[i + 1]
-      upStory((st) => ({ ...st, blocks: st.blocks.filter((x) => x.id !== bid) }))
-      setFocusId(prev.type === 'text' || prev.type === 'fancy' ? prev.id : null)
-      setSel(prev.id)
+      mergeUndo.current.push({ before: s, after: merged.story, id: bid })
+      upStory(() => merged.story, 'Paragraphs merged')
+      caret.current = merged.caret
+      setFocusId(merged.target)
+      setSel(merged.target)
       setPicker(null)
     } else if (e.key === 'ArrowUp' && el.selectionStart === 0 && i > 0) {
       const p = s.blocks[i - 1]
@@ -432,7 +497,13 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
             flex: 'none',
           }}
         />
-        <span style={{ ...mono, opacity: orbsHov ? 0.7 : 0, transition: 'opacity .2s' }}>
+        <span
+          style={{
+            ...mono,
+            opacity: orbsHov ? 0.7 : 0,
+            transition: 'opacity .2s',
+          }}
+        >
           {kind.toUpperCase()}
         </span>
       </button>
@@ -495,8 +566,7 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
             position: 'sticky',
             top: 0,
             zIndex: 5,
-            background:
-              bdOn || card ? 'transparent' : `linear-gradient(${V.bg} 70%, rgba(${r},${g},${b},0))`,
+            background: bdOn || card ? 'transparent' : `linear-gradient(${V.bg} 70%, rgba(${r},${g},${b},0))`,
           }}
         >
           <button
@@ -513,7 +583,8 @@ export default function Write({ story, isNew, ai, upStory, upBlock, goHome, save
             <AIConnection />
             <span style={{ opacity: 0.45 }}>
               {wordCount(story).toLocaleString()} WORDS ·{' '}
-              {saveError ? 'NOT SAVED' : saving ? 'SAVING…' : 'SAVED'}
+              {saveError ? 'LOCAL SAVE FAILED' : saving ? 'SAVING LOCALLY…' : 'SAVED LOCALLY'}
+              {cloudStatus ? ` · ${cloudStatus}` : ''}
             </span>
           </div>
         </div>

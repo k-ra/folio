@@ -3,6 +3,7 @@ import { test as base, expect } from '@playwright/test'
 /** Browser QA is offline unless a test explicitly mocks the provider contract. */
 export const test = base.extend({
   page: async ({ page }, use) => {
+    await page.route(/https:\/\/[^/]+\.supabase\.(co|in)\//, (route) => route.abort())
     await page.route('**/api/magic/status', (route) => route.fulfill({ json: { configured: false } }))
     await page.route(/\/api\/(magic|chat|background|fancy|style)$/, (route) =>
       route.fulfill({

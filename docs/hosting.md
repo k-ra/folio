@@ -10,9 +10,9 @@ On an explicit AI request, the browser sends the key in a header over HTTPS to t
 
 The hosted function **never falls back to an owner's `OPENAI_API_KEY` or a local Claude sign-in**, even if those variables are set accidentally. The optional `FOLIO_TEXT_MODEL` and `FOLIO_IMAGE_MODEL` variables override the repository's existing defaults; visitors need provider access to the selected models and pay their own API usage. Subscription sign-ins are not shared with visitors. Disconnecting cannot recall a request already sent to the provider.
 
-Generation, artifact edits, chat, fancy text and custom backgrounds use the same request-scoped connection. Writing and saving remain browser-local. Selecting a preset does not contact a model. Large image results use a streamed response; inputs are limited to **4 MB for the complete JSON request** on this host, including base64 overhead, history and the previous artifact. The browser checks this before upload. Larger attached files can stay in a story but require a smaller extract/image for hosted generation, or the local server. This avoids Vercel's [4.5 MB request/buffered-response limit](https://vercel.com/docs/functions/limitations) without adding cloud storage.
+Generation, artifact edits, chat, fancy text and custom backgrounds use the same request-scoped connection. Writing saves locally first; optional account sync is independent of AI. Selecting a preset does not contact a model. Large image results use a streamed response; inputs are limited to **4 MB for the complete JSON request** on this host, including base64 overhead, history and the previous artifact. The browser checks this before upload. Larger attached files can stay in a story but require a smaller extract/image for hosted generation, or the local server. This avoids Vercel's [4.5 MB request/buffered-response limit](https://vercel.com/docs/functions/limitations) independently of optional account storage.
 
-Before a wide launch, configure Vercel Firewall rate limits and spend alerts: BYOK prevents visitors spending an owner's OpenAI credits, but function traffic still consumes the deployment's hosting allowance. This prototype has no user accounts or distributed per-user quota service.
+Before a wide launch, configure Vercel Firewall rate limits and spend alerts: BYOK prevents visitors spending an owner's OpenAI credits, but function traffic still consumes the deployment's hosting allowance. Optional cloud accounts do not add a distributed per-user AI quota service.
 
 After deploying, check `/api/magic/status`: it should report `byok: true` and `configured: false` without revealing any secret. Confirm a story saves across reload, Connect AI opens, and a reload forgets the key. Test one small live chat, graphic, image, text style and background deliberately with your own key; model-quality and account-access checks spend API usage and are not part of automated QA.
 
@@ -24,7 +24,7 @@ References: [Vercel's Vite integration](https://vercel.com/docs/frameworks/front
 2. Set `OPENAI_API_KEY` to your own key and start `npm run dev`.
 3. Open the localhost URL. Explicit generation and chat requests use your provider account; model access and usage limits apply.
 
-Never commit `.env.local`, use a `VITE_` prefix for secrets, put a key into a public build, or publish a local subscription's credentials. The browser sends the relevant prompt, history, style and attachments to the local server; the server sends that context to your provider. Selecting an image preset sends its bundled style reference only when you generate. Writing and saving without live generation stay local.
+Never commit `.env.local`, use a `VITE_` prefix for secrets, put a key into a public build, or publish a local subscription's credentials. The browser sends the relevant prompt, history, style and attachments to the local server; the server sends that context to your provider. Selecting an image preset sends its bundled style reference only when you generate. Cloud story saving is separately opt-in; AI credentials are never included.
 
 The optional local Claude connection is documented in `.env.example`; image generation requires OpenAI. A subscription login is not a credential for visitors to share.
 
@@ -40,12 +40,12 @@ No Pages deployment is enabled automatically by this repository.
 
 ## Where stories live
 
-Folio uses IndexedDB (`folio-artifacts-v2`) for stories and generated artifacts, plus localStorage for the home preference. Each visitor has their own browser-local workspace—not a folder committed to GitHub and not shared cloud storage. Returning to the same origin in the same browser profile normally restores it; another device, browser profile or domain starts separately. Your localhost stories do not automatically move to a hosted URL.
+Folio uses IndexedDB (`folio-artifacts-v2`) for stories and generated artifacts, plus localStorage for the home preference. Without an account, each visitor has a browser-local workspace—not a folder committed to GitHub or shared cloud storage. Returning to the same origin in the same browser profile normally restores it; another device, browser profile or domain starts separately. Optional accounts synchronize a separate private library. Your browser stories never automatically move into it.
 
 Browser storage can be cleared, private sessions are temporary, and quota/eviction rules vary. It is not a backup. GitHub project paths under one `USERNAME.github.io` origin share browser storage, so independent installations under that same origin should use distinct storage names or separate domains. [MDN explains origins, quotas and eviction](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
 
-The app offers an emergency JSON export when saving fails, but a general export/import workflow and persistent-storage request are still pending. Do not use this early prototype as the only copy of irreplaceable writing.
+The info panel offers offline HTML/ZIP publications and complete `.folio` backups with reimport. Keep independent backups of irreplaceable writing, even when cloud saving is enabled. A browser persistent-storage request is not currently implemented.
 
-## Optional cloud sync — proposed
+## Optional accounts and cloud sync
 
-Keep IndexedDB as the fast local copy. Add sign-in, per-user story/version records and private object storage for images and attachments. Supabase is one possible implementation using [Auth](https://supabase.com/docs/guides/auth) and [row-level security](https://supabase.com/docs/guides/database/postgres/row-level-security); it is not connected here. Sync also needs offline queues, conflict handling, deletion semantics and an export/restore path. Publishing an essay should be a separate explicit action, never a side effect of syncing.
+Optional Supabase email-code accounts and private JSONB story storage are implemented. Configure the provider, SQL migration and two public build variables using [accounts and exports](accounts-and-exports.md). IndexedDB remains the immediate local copy; guest stories require explicit import. Revision checks prevent silent device overwrites. HTML/ZIP publication and complete .folio backups are local actions in the existing info panel, never side effects of cloud saving.

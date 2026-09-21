@@ -13,7 +13,7 @@ function open(): Promise<IDBDatabase> {
 }
 
 /** IndexedDB has room for images and keeps a whole workspace commit atomic. */
-export async function loadWorkspace(fallback?: Story[]): Promise<Story[] | undefined> {
+export async function loadWorkspace(fallback?: Story[], owner?: string): Promise<Story[] | undefined> {
   const db = await open()
   try {
     return await new Promise((resolve, reject) => {
@@ -21,14 +21,14 @@ export async function loadWorkspace(fallback?: Story[]): Promise<Story[] | undef
       // Save the story and marker atomically, also when upgrading a legacy workspace.
       const transaction = db.transaction('workspace', fallback ? 'readwrite' : 'readonly')
       const store = transaction.objectStore('workspace')
-      const request = store.get('stories')
+      const request = store.get(owner ? `account:${owner}:stories` : 'stories')
       const setup = store.get('mock-essay-v1')
       let stories: Story[] | undefined
       let completed = 0
       const loaded = () => {
         if (++completed !== 2) return
         stories = Array.isArray(request.result) ? request.result : fallback
-        if (fallback && !setup.result && stories) {
+        if (!owner && fallback && !setup.result && stories) {
           stories = introduceMockEssay(stories)
           store.put(stories, 'stories')
           store.put(true, 'mock-essay-v1')
@@ -44,15 +44,31 @@ export async function loadWorkspace(fallback?: Story[]): Promise<Story[] | undef
   }
 }
 
-export async function saveWorkspace(stories: Story[]): Promise<void> {
+export async function saveWorkspace(stories: Story[], owner?: string): Promise<void> {
   const db = await open()
   try {
     await new Promise<void>((resolve, reject) => {
       const transaction = db.transaction('workspace', 'readwrite')
-      transaction.objectStore('workspace').put(stories, 'stories')
+      transaction.objectStore('workspace').put(stories, owner ? `account:${owner}:stories` : 'stories')
       transaction.oncomplete = () => resolve()
       transaction.onabort = transaction.onerror = () =>
         reject(transaction.error || new Error('Local storage is full.'))
+    })
+  } finally {
+    db.close()
+  }
+}
+
+export async function cloudCheckpoint<T>(owner: string, value?: T): Promise<T | undefined> {
+  const db = await open()
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('workspace', value === undefined ? 'readonly' : 'readwrite')
+      const store = tx.objectStore('workspace')
+      const key = `account:${owner}:checkpoint`
+      const request = value === undefined ? store.get(key) : store.put(value, key)
+      tx.oncomplete = () => resolve(value === undefined ? request.result : value)
+      tx.onerror = tx.onabort = () => reject(tx.error || new Error('Could not save cloud checkpoint.'))
     })
   } finally {
     db.close()

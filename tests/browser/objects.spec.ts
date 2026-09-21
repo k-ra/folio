@@ -28,7 +28,7 @@ for (const width of [1440, 390]) {
     await expect(prose).toBeFocused()
     await expect(prose).toHaveCSS('outline-style', 'none')
     await expect(prose).toHaveCSS('border-left-width', '1px')
-    await expect(prose).not.toHaveCSS('border-left-color', 'rgba(0, 0, 0, 0)')
+    await expect(prose).toHaveCSS('border-left-color', 'rgba(0, 0, 0, 0)')
     for (const side of ['top', 'right', 'bottom'])
       await expect(prose).toHaveCSS(`border-${side}-width`, '0px')
     await page.screenshot({

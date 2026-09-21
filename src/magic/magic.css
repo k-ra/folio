@@ -1,3 +1,5 @@
+@import './artifact.css';
+
 /* Magic blocks: the conversation lives in the margin. */
 .eyebrow {
   font:
@@ -16,7 +18,7 @@ textarea:focus-visible {
   outline: 1px solid currentColor;
   outline-offset: 5px;
 }
-/* Writing stays on the page; focus is a quiet mark in its left margin. */
+/* Preserve the writing track without a visible paragraph guide. */
 .essay-main .prose-input {
   border-left: 1px solid transparent;
   padding-left: 14px;
@@ -24,7 +26,7 @@ textarea:focus-visible {
 }
 .essay-main .prose-input:focus {
   outline: none;
-  border-left-color: rgba(128, 128, 128, 0.45);
+  border-left-color: transparent;
 }
 button:disabled {
   opacity: 0.28;
@@ -264,43 +266,6 @@ button:disabled {
 .artifact-version span {
   font-size: 8px;
   letter-spacing: 0.8px;
-}
-.artifact-image {
-  display: block;
-  width: 100%;
-  object-fit: contain;
-}
-.image-grain {
-  filter: grayscale(0.65) contrast(1.15);
-}
-.image-linework {
-  filter: grayscale(1);
-}
-.artifact-frame {
-  border: 0;
-  width: 100%;
-  display: block;
-}
-.artifact-chart svg {
-  width: 100%;
-  height: auto;
-  display: block;
-  overflow: visible;
-}
-.artifact-chart g:focus {
-  outline: none;
-}
-.artifact-chart g:focus > circle,
-.artifact-chart g:focus > rect:not([fill='transparent']) {
-  stroke-width: 3;
-}
-.chart-heading {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  font-size: 10px;
-  opacity: 0.55;
-  padding-bottom: 12px;
 }
 .artifact-reveal {
   animation: artifact-arrive 0.7s ease both;

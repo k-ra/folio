@@ -3,11 +3,35 @@ import { simulated } from './ai'
 import Home from './home/Home'
 import { useHomeTheme, useStories } from './model/store'
 import Write from './write/Write'
+import { AccountProvider, useAccount } from './cloud/Auth'
+import { useCloud } from './cloud/useCloud'
+import { WorkspaceActions } from './portable/InfoActions'
+import { saveWorkspace } from './model/storage'
+import { newId } from './model/util'
+import { backup } from './portable/backup'
 
 const ai = simulated
 
 export default function App({ initialStoryId }: { initialStoryId?: string }) {
-  const { stories, setStories, upStory, upBlock, ready, saveError, saving } = useStories()
+  return (
+    <AccountProvider>
+      <AccountWorkspace initialStoryId={initialStoryId} />
+    </AccountProvider>
+  )
+}
+function AccountWorkspace({ initialStoryId }: { initialStoryId?: string }) {
+  const { user, ready } = useAccount()
+  if (!ready)
+    return (
+      <div className="workspace-loading" role="status">
+        Opening Folio…
+      </div>
+    )
+  return <Workspace key={user?.id || 'browser'} owner={user?.id} initialStoryId={initialStoryId} />
+}
+function Workspace({ initialStoryId, owner }: { initialStoryId?: string; owner?: string }) {
+  const { stories, setStories, upStory, upBlock, ready, saveError, saving } = useStories(owner)
+  const cloud = useCloud(owner, stories, setStories, ready)
   const [homeTheme, pickHomeTheme] = useHomeTheme()
   const [view, setView] = useState<{ kind: 'home' } | { kind: 'write'; id: string; isNew: boolean }>(
     initialStoryId ? { kind: 'write', id: initialStoryId, isNew: false } : { kind: 'home' },
@@ -27,6 +51,20 @@ export default function App({ initialStoryId }: { initialStoryId?: string }) {
     setView({ kind: 'home' })
   }, [view, setStories])
 
+  const actions = {
+    cloud,
+    flush: () => saveWorkspace(stories, owner),
+    importStory: (incoming: import('./model/types').Story) => {
+      const same = stories.find((s) => s.id === incoming.id)
+      if (same && backup(same) === backup(incoming)) {
+        open(same.id, false)
+        return
+      }
+      const next = same ? { ...incoming, id: newId() } : incoming
+      setStories((arr) => [next, ...arr])
+      open(next.id, false)
+    },
+  }
   if (!ready)
     return (
       <div className="workspace-loading" role="status">
@@ -39,7 +77,9 @@ export default function App({ initialStoryId }: { initialStoryId?: string }) {
       <button
         onClick={() => {
           const url = URL.createObjectURL(
-            new Blob([JSON.stringify(stories, null, 2)], { type: 'application/json' }),
+            new Blob([JSON.stringify(stories, null, 2)], {
+              type: 'application/json',
+            }),
           )
           const link = document.createElement('a')
           link.href = url
@@ -56,7 +96,7 @@ export default function App({ initialStoryId }: { initialStoryId?: string }) {
     const story = stories.find((s) => s.id === view.id)
     if (story)
       return (
-        <>
+        <WorkspaceActions.Provider value={actions}>
           {saveNotice}
           <Write
             key={story.id}
@@ -68,12 +108,13 @@ export default function App({ initialStoryId }: { initialStoryId?: string }) {
             goHome={goHome}
             saveError={saveError}
             saving={saving}
+            cloudStatus={owner ? cloud.status : undefined}
           />
-        </>
+        </WorkspaceActions.Provider>
       )
   }
   return (
-    <>
+    <WorkspaceActions.Provider value={actions}>
       {saveNotice}
       <Home
         stories={stories}
@@ -83,6 +124,6 @@ export default function App({ initialStoryId }: { initialStoryId?: string }) {
         ai={ai}
         onOpen={open}
       />
-    </>
+    </WorkspaceActions.Provider>
   )
 }

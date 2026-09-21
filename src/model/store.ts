@@ -50,7 +50,9 @@ export function withHistory(s: Story, fn: StoryUpdater, why?: string): Story {
     why === 'Artifact updated' ||
     why === 'Text styled' ||
     why === 'Restored' ||
-    why === 'Restyled'
+    why === 'Restyled' ||
+    why === 'Paragraphs merged' ||
+    why === 'Merge undone'
   ) {
     hist.push({
       t: now,
@@ -72,8 +74,8 @@ export function withHistory(s: Story, fn: StoryUpdater, why?: string): Story {
   return next
 }
 
-export function useStories() {
-  const [stories, setStories] = useState<Story[]>(load)
+export function useStories(owner?: string) {
+  const [stories, setStories] = useState<Story[]>(() => (owner ? [] : load()))
   const [ready, setReady] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [savedStories, setSavedStories] = useState<Story[] | null>(null)
@@ -81,7 +83,7 @@ export function useStories() {
   const saving = !saveError && savedStories !== stories
   useEffect(() => {
     let active = true
-    loadWorkspace(load())
+    loadWorkspace(owner ? [] : load(), owner)
       .then((saved) => {
         if (active && Array.isArray(saved)) setStories(saved.map(migrateStory))
       })
@@ -98,25 +100,32 @@ export function useStories() {
   useEffect(() => {
     if (!ready) return
     let active = true
-    const timer = setTimeout(() => {
-      saveWorkspace(stories)
-        .then(() => {
-          if (active) {
-            setSaveError('')
-            setSavedStories(stories)
-          }
-        })
-        .catch(() => {
-          if (active) {
-            setSaveError('Your latest changes could not be saved. Export a backup before leaving.')
-          }
-        })
-    }, 150)
+    saveWorkspace(stories, owner)
+      .then(() => {
+        if (active) {
+          setSaveError('')
+          setSavedStories(stories)
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setSaveError('Your latest changes could not be saved. Export a backup before leaving.')
+        }
+      })
     return () => {
       active = false
-      clearTimeout(timer)
     }
   }, [stories, ready])
+  useEffect(() => {
+    const protect = (e: BeforeUnloadEvent) => {
+      if (saving || saveError) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', protect)
+    return () => window.removeEventListener('beforeunload', protect)
+  }, [saving, saveError])
 
   const upStory = useCallback((id: string, fn: StoryUpdater, why?: string) => {
     setStories((arr) => arr.map((s) => (s.id === id ? withHistory(s, fn, why) : s)))
@@ -124,7 +133,14 @@ export function useStories() {
 
   const upBlock = useCallback(
     (sid: string, bid: string, fn: (b: Block) => Block, why?: string) => {
-      upStory(sid, (s) => ({ ...s, blocks: s.blocks.map((b) => (b.id === bid ? fn({ ...b }) : b)) }), why)
+      upStory(
+        sid,
+        (s) => ({
+          ...s,
+          blocks: s.blocks.map((b) => (b.id === bid ? fn({ ...b }) : b)),
+        }),
+        why,
+      )
     },
     [upStory],
   )

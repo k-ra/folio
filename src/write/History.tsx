@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { MONO, SANS } from '../model/constants'
 import type { Story, Style } from '../model/types'
 import { fmtWhen } from '../model/util'
+import InfoActions from '../portable/InfoActions'
 
 const mono: CSSProperties = { font: `400 10px ${MONO}`, letterSpacing: '1.5px' }
 
@@ -57,6 +58,7 @@ export default function History({ story, V, open, toggle, restore }: Props) {
             animation: 'fadein .2s ease both',
           }}
         >
+          <InfoActions story={story} />
           <div
             style={{
               display: 'flex',

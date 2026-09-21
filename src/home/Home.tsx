@@ -17,6 +17,7 @@ import { clamp, easeInOut, excerptOf, newId, wordCount } from '../model/util'
 import StoryOpening, { openingSurface, type OpeningSurface } from './StoryOpening'
 import { gradientCss } from '../style/backgrounds'
 import './home.css'
+import InfoActions from '../portable/InfoActions'
 
 interface Props {
   stories: Story[]
@@ -570,6 +571,7 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
                   }}
                 />
                 <AIConnection inline />
+                <InfoActions />
               </div>
             )}
           </div>

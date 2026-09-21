@@ -16,7 +16,7 @@ These are implementation rules, not just visual references. Keep the structure i
 
 - Use spacing, typography and alignment before adding borders, rules, icons or labels.
 - No decorative/diagonal arrows to advertise clickability. Preserve meaningful navigation (the back arrow), accessible names, hover states and keyboard focus.
-- Prose focus gets a thin grey left rule. Unsubmitted prompts have a full light outline; finished artifacts show a full outline when selected. Do not apply one generic focus box to every object.
+- Prose has no visible vertical paragraph guide while writing. Unsubmitted prompts have a full light outline; finished artifacts show a full outline when selected. Do not apply one generic focus box to every object.
 - Chat is CHAT, the conversation and its composer. No quote borders, decorative separators or metadata stack. Sources/settings/history stay discoverable in their relevant controls.
 - Selection sets the chat target: a finished artifact opens its editable conversation from either the rail orb or its margin. Show one quiet, removable reference above the composer. Clearing it returns to story chat; switching targets must keep their drafts and histories separate. Navigation never submits an edit.
 - Fancy text is also an editable chat target. Keep its words separate from its presentation: AI styles the text without replacing it, and style undo must preserve later writing edits. Styling instructions belong in the shared margin, not a ruled prompt row. Animated text needs a direct edit action, pause, and a readable reduced-motion presentation; inherit page font/ink unless explicitly overridden.
@@ -29,6 +29,8 @@ These are implementation rules, not just visual references. Keep the structure i
 - Remove background is a generation choice for new images and a versioned edit for finished ones. Request real PNG transparency; never simulate transparency with a white or checkerboard fill.
 
 ## Source of truth and checks
+
+Account, import, copy and export actions belong inside the existing info/history panel (and the existing homepage settings panel for account/import access). Do not add page-level chrome. Save status distinguishes local durability from cloud acknowledgement without changing the grid. The note affordance follows the hovered paragraph, fades after inactivity, and stays available while hovered or keyboard-focused. Paragraph merges stop at non-text boundaries, retain both notes, and have an undo checkpoint.
 
 The layout tokens and shared rail are defined in `src/style/controls.css`; the rows/subgrid are composed in `src/write/Write.tsx`. History is a grid child, not a viewport-positioned sibling. `tests/browser/rail.spec.ts` checks the actual centerlines on desktop/mobile, during scrolling, beside panels, and on floating sheets. Existing centering, orb, layout and object-state tests protect the other rules.
 

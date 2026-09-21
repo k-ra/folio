@@ -1,0 +1,44 @@
+.info-actions,
+.info-group,
+.info-actions form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.info-actions {
+  font:
+    12px/1.6 'Instrument Sans',
+    sans-serif;
+  letter-spacing: normal;
+  margin-bottom: 20px;
+}
+.info-actions button {
+  text-align: left;
+  min-height: 28px;
+}
+.info-actions small {
+  font-size: 11px;
+  opacity: 0.65;
+}
+.info-actions input:not([type='checkbox']) {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  color: inherit;
+  border: 1px solid #8885;
+  padding: 6px;
+  background: transparent;
+}
+.info-actions input[type='file'] {
+  font-size: 10px;
+}
+.info-actions label {
+  display: block;
+}
+.info-actions button:hover {
+  text-decoration: underline;
+}
+.info-actions [role='alert'] {
+  opacity: 1;
+}
