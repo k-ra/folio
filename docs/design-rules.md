@@ -32,6 +32,8 @@ These are implementation rules, not just visual references. Keep the structure i
 
 Account, import, copy and export actions belong inside the existing info/history panel (and the existing homepage settings panel for account/import access). Do not add page-level chrome. Save status distinguishes local durability from cloud acknowledgement without changing the grid. The note affordance follows the hovered paragraph, fades after inactivity, and stays available while hovered or keyboard-focused. Paragraph merges stop at non-text boundaries, retain both notes, and have an undo checkpoint.
 
+Reading position belongs to the user. Hover, autosave and unchanged field renders must not scroll the page. Auto-growing fields measure outside the document flow; never collapse a live field to measure it. Refit for content, width, typography and font loading, and apply a height only when it changes. `tests/browser/scroll.spec.ts` covers focused long writing, idle controls and responsive resizing.
+
 The layout tokens and shared rail are defined in `src/style/controls.css`; the rows/subgrid are composed in `src/write/Write.tsx`. History is a grid child, not a viewport-positioned sibling. `tests/browser/rail.spec.ts` checks the actual centerlines on desktop/mobile, during scrolling, beside panels, and on floating sheets. Existing centering, orb, layout and object-state tests protect the other rules.
 
 For any new workshop control, identify its owner (page, block, margin, or panel), place it on that owner's grid, and test its geometry at narrow/wide widths. If the design needs an exception, document the reason here rather than hiding an arbitrary offset in a component.
