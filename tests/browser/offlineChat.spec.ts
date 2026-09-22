@@ -33,6 +33,15 @@ for (const width of [1440, 390])
     await page.getByRole('button', { name: 'Save to index', exact: true }).click()
     await chat.getByRole('button', { name: 'INDEX', exact: true }).click()
     await expect(page.locator('.index-excerpt')).toHaveText(excerpt)
+    await expect(page.locator('.index-excerpt strong')).toHaveCount(1)
+    await expect(page.getByRole('button', { name: 'Open source' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Edit', exact: true }).click()
+    const markdown = page.getByRole('textbox', { name: 'Index Markdown' })
+    expect(await markdown.inputValue()).toContain('**')
+    await markdown.fill((await markdown.inputValue()) + '\n\n## My index\n\n*Still editable.*')
+    await page.getByRole('button', { name: 'Done', exact: true }).click()
+    await expect(page.locator('.index-excerpt h2')).toHaveText('My index')
+    await expect(page.locator('.index-excerpt em')).toHaveText('Still editable.')
     await page.screenshot({
       path: test.info().outputPath(`offline-index-${width}.png`),
       animations: 'disabled',
@@ -43,7 +52,8 @@ for (const width of [1440, 390])
     await page.getByRole('button', { name: 'Open offline chat sample', exact: true }).click()
     await expect(chat.locator('.chat-message')).toHaveCount(6)
     await chat.getByRole('button', { name: 'INDEX', exact: true }).click()
-    await expect(page.locator('.index-excerpt')).toHaveText(excerpt)
+    await expect(page.locator('.index-excerpt')).toContainText(excerpt)
+    await expect(page.locator('.index-excerpt h2')).toHaveText('My index')
     const ids = await page.evaluate(async () => {
       const db = await new Promise<IDBDatabase>((resolve) => {
         const r = indexedDB.open('folio-artifacts-v2', 1)

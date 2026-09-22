@@ -13,7 +13,7 @@
   opacity: 1;
 }
 .index-empty,
-.index-clipping {
+.index-excerpt {
   font-size: 13px;
   line-height: 1.65;
 }
@@ -21,32 +21,23 @@
   opacity: 0.5;
 }
 .index-excerpt {
-  display: block;
   text-align: left;
-  white-space: pre-wrap;
-  margin-top: 8px;
-  font: inherit;
 }
-.index-excerpt[aria-expanded='false'] {
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-.index-context {
-  padding-top: 24px;
-}
-.index-context > .eyebrow {
+.index-editor {
   display: block;
-  margin-top: 18px;
+  width: 100%;
+  min-height: 100%;
+  resize: vertical;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.65;
 }
-.index-context > p {
-  white-space: pre-wrap;
-}
-.index-context > button {
+.index-edit {
+  align-self: flex-start;
   opacity: 0.5;
   font-size: 11px;
-  margin-top: 18px;
 }
 .index-local {
   font-size: 10px;

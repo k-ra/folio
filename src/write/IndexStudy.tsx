@@ -2,66 +2,43 @@ import { useEffect, useState } from 'react'
 import type { Story } from '../model/types'
 import { useAccount } from '../cloud/Auth'
 import Markdown from '../text/Markdown'
-import { storyText } from '../portable/backup'
+import { literalMarkdown, loadIndex, selectionMarkdown } from './indexMarkdown'
 import './indexStudy.css'
 
-type Passage = { source: 'chat' | 'essay'; key: string; excerpt: string }
-type Clip = Passage & { id: string; context: string }
+type Passage = { excerpt: string }
 type Anchor = Passage & { left: number; top: number }
 
 /** Branch-only experiment: clipping storage is separate from published story schemas. */
 export function useIndexStudy(story: Story) {
   const { user } = useAccount()
-  const storage = `folio.index-study.v2:${user?.id || 'browser'}:${story.id}`
-  const [loaded] = useState((): { clips: Clip[]; error: string } => {
+  const identity = `${user?.id || 'browser'}:${story.id}`
+  const storage = `folio.index-study.v3:${identity}`
+  const [loaded] = useState((): { markdown: string; error: string } => {
     try {
-      const value = JSON.parse(localStorage.getItem(storage) || '[]')
-      if (
-        !Array.isArray(value) ||
-        value.some(
-          (c) =>
-            !c ||
-            typeof c.id !== 'string' ||
-            typeof c.context !== 'string' ||
-            typeof c.excerpt !== 'string' ||
-            typeof c.key !== 'string' ||
-            !['chat', 'essay'].includes(c.source),
-        )
-      )
-        throw new Error('Unreadable clippings')
-      return { clips: value, error: '' }
+      return { markdown: loadIndex(localStorage, storage, `folio.index-study.v2:${identity}`), error: '' }
     } catch {
-      return { clips: [], error: 'Saved clippings could not be read. The stored copy is unchanged.' }
+      return { markdown: '', error: 'Saved clippings could not be read. The stored copy is unchanged.' }
     }
   })
-  const [clips, setClips] = useState(loaded.clips)
+  const [markdown, setMarkdown] = useState(loaded.markdown)
   const [error, setError] = useState(loaded.error)
   const [open, setOpen] = useState(false)
-  const [expanded, setExpanded] = useState('')
   const [notice, setNotice] = useState('')
-  const persist = (next: Clip[]) => {
-    setClips(next)
+  const persist = (next: string) => {
+    setMarkdown(next)
     try {
       if (loaded.error) throw new Error(loaded.error)
-      localStorage.setItem(storage, JSON.stringify(next))
+      localStorage.setItem(storage, next)
       setError('')
+      return true
     } catch {
       setError('Clippings are only in this tab. Browser saving failed.')
+      return false
     }
   }
   const save = (passage: Passage) => {
-    if (
-      !clips.some(
-        (c) => c.source === passage.source && c.key === passage.key && c.excerpt === passage.excerpt,
-      )
-    ) {
-      const context =
-        passage.source === 'essay'
-          ? storyText(story)
-          : (story.chats.chat || []).map((m) => `${m.me ? 'YOU' : 'FOLIO'}\n\n${m.text}`).join('\n\n')
-      persist([...clips, { ...passage, id: crypto.randomUUID(), context }])
-    }
-    setNotice('Saved to index')
+    const saved = persist([markdown.trimEnd(), passage.excerpt].filter(Boolean).join('\n\n'))
+    setNotice(saved ? 'Saved to index' : 'Added to index · not saved')
   }
   useEffect(() => {
     if (!notice) return
@@ -69,65 +46,42 @@ export function useIndexStudy(story: Story) {
     return () => clearTimeout(timer)
   }, [notice])
   return {
-    clips,
+    markdown,
+    edit: persist,
     open,
     setOpen,
-    expanded,
-    setExpanded,
     error,
     notice,
     save,
-    remove: (id: string) => persist(clips.filter((c) => c.id !== id)),
   }
 }
 export type IndexStudy = ReturnType<typeof useIndexStudy>
 
 export function IndexContents({ study }: { study: IndexStudy }) {
+  const [editing, setEditing] = useState(false)
   return (
     <>
       <div className="chat-messages index-contents" aria-label="Saved clippings">
-        {!study.clips.length && (
+        {!study.markdown && !editing && (
           <p className="index-empty">Select words in chat or your essay to save a clipping.</p>
         )}
-        {study.clips.map((c) => (
-          <section className="index-clipping" key={c.id}>
-            <span className="eyebrow">{c.source === 'chat' ? 'CHAT' : 'ESSAY'}</span>
-            <button
-              className="index-excerpt"
-              aria-expanded={study.expanded === c.id}
-              onClick={() => study.setExpanded(study.expanded === c.id ? '' : c.id)}
-            >
-              {c.excerpt}
-            </button>
-            {study.expanded === c.id && (
-              <div className="index-context">
-                <button
-                  onClick={() => {
-                    study.setOpen(false)
-                    requestAnimationFrame(() => {
-                      const selector = c.source === 'chat' ? '[data-index-message]' : '[data-story-field]'
-                      const source = [...document.querySelectorAll<HTMLElement>(selector)].find(
-                        (el) => (c.source === 'chat' ? el.dataset.indexMessage : el.dataset.id) === c.key,
-                      )
-                      const passage =
-                        source &&
-                        [...source.querySelectorAll<HTMLElement>('p, li')].find((el) =>
-                          el.textContent?.includes(c.excerpt.slice(0, 40)),
-                        )
-                      ;(passage || source)?.scrollIntoView({ block: 'center' })
-                    })
-                  }}
-                >
-                  Open source
-                </button>
-                <span className="eyebrow">CONTEXT WHEN SAVED</span>
-                {c.source === 'chat' ? <Markdown>{c.context}</Markdown> : <p>{c.context}</p>}
-                <button onClick={() => study.remove(c.id)}>Remove clipping</button>
-              </div>
-            )}
-          </section>
-        ))}
+        {editing ? (
+          <textarea
+            className="index-editor"
+            aria-label="Index Markdown"
+            value={study.markdown}
+            onChange={(e) => study.edit(e.target.value)}
+            autoFocus
+          />
+        ) : (
+          <div className="index-excerpt">
+            <Markdown>{study.markdown}</Markdown>
+          </div>
+        )}
       </div>
+      <button className="index-edit" onClick={() => setEditing(!editing)}>
+        {editing ? 'Done' : 'Edit'}
+      </button>
       <small className="index-local">
         Prototype · clippings stay in this browser, outside exports and cloud saves.
       </small>
@@ -171,9 +125,7 @@ export function ClipSelection({ study, reveal }: { study: IndexStudy; reveal: ()
         active.selectionStart !== active.selectionEnd
       ) {
         passage = {
-          source: 'essay',
-          key: active.dataset.id!,
-          excerpt: active.value.slice(active.selectionStart, active.selectionEnd),
+          excerpt: literalMarkdown(active.value.slice(active.selectionStart, active.selectionEnd)),
         }
         const bounds = active.getBoundingClientRect()
         rect =
@@ -194,7 +146,10 @@ export function ClipSelection({ study, reveal }: { study: IndexStudy; reveal: ()
             const range = selection.getRangeAt(0)
             const excerpt =
               chat || start === end
-                ? selection.toString()
+                ? selectionMarkdown(
+                    chat ? start.querySelector<HTMLElement>('.folio-markdown') || start : start,
+                    range,
+                  )
                 : [...document.querySelectorAll<HTMLElement>('[data-story-text]')]
                     .filter((el) => range.intersectsNode(el))
                     .map((el) => {
@@ -204,12 +159,10 @@ export function ClipSelection({ study, reveal }: { study: IndexStudy; reveal: ()
                         part.setStart(range.startContainer, range.startOffset)
                       if (range.compareBoundaryPoints(Range.END_TO_END, part) < 0)
                         part.setEnd(range.endContainer, range.endOffset)
-                      return part.toString()
+                      return selectionMarkdown(el, part)
                     })
                     .join('\n\n')
             passage = {
-              source: chat ? 'chat' : 'essay',
-              key: chat ? start.dataset.indexMessage! : start.dataset.id!,
               excerpt,
             }
             container = start.closest<HTMLElement>('.chat-messages') || undefined

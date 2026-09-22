@@ -4,8 +4,8 @@ Run `npm run dev -- --port 5174` on `prototype/tracing-index`, then open `/` and
 
 - Open the existing chat orb. **INDEX** sits beside **CHAT** in the existing drawer header and uses its normal width/resizing. Switching tabs preserves the mounted conversation and reading position.
 - Highlight writing or research chat to reveal **Save to index**. Native textareas, rich text and cross-paragraph selection are supported; margin notes are excluded. Selection never changes the author's text.
-- Expand a clipping to read its saved context or open its source. No permanent Keep button beneath every message. Artifact editing keeps its existing controls and conversation behavior; this pass does not relocate it.
-- Clippings live only in this origin's browser storage, scoped by account and story (`folio.index-study.v2`). They do not yet enter cloud payloads, backups or publication exports. Read/write failures preserve the stored copy and surface a warning. Old standalone-study data is left untouched.
+- INDEX is one content-only Markdown document. Selected headings, emphasis, lists, links, quotes, tables and code retain their formatting, including partial selections within emphasized text. Edit/Done exposes the Markdown for rearranging or removing passages. No source labels, conversation snapshots, or permanent Keep buttons. Artifact editing keeps its existing controls and conversation behavior.
+- The Markdown lives only in this origin's browser storage, scoped by account and story (`folio.index-study.v3`). It does not yet enter cloud payloads, backups or publication exports. Old v2 excerpts load as literal text; their original storage remains untouched for recovery, but context/provenance is not copied into the new document. Already-flattened formatting cannot be recovered automatically. Read/write failures preserve the stored copy and surface a warning.
 
 The normal chat uses Folio's actual existing AI connection. Tests reuse `live-response.md`, an 831-word response captured from one authorized Claude request about a fictional essay on 2026-09-21. No additional live generation is part of QA.
 
@@ -13,4 +13,4 @@ For zero-cost manual testing, choose **Open offline chat sample** in homepage se
 
 Run `npx playwright test --config prototypes/tracing/playwright.config.ts` for real-editor desktop/mobile clipping tests. The shared rail, centering, orbs, layout, scroll, editor and product-polish suites remain unchanged and must pass.
 
-Before merging: approve placement in the real app, finish keyboard/source focus restoration and long-selection anchoring, and integrate clipping data into the versioned story schema, cloud/backup migrations and publication privacy tests. This is not production clipping persistence and stays off main.
+Before merging: approve placement in the real app, finish keyboard and long-selection anchoring review, and integrate the Markdown document into the versioned story schema, cloud/backup migrations and publication privacy tests. This is not production clipping persistence and stays off main.
