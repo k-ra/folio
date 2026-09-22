@@ -17,11 +17,22 @@ The client authenticates directly with Supabase. No Supabase admin/service-role 
 
 Without these settings the editor remains local-only and homepage settings explain that cloud accounts are unconfigured.
 
+### Google sign-in (optional)
+
+1. In Google Cloud, configure the consent screen and a **Web application** OAuth client. Add your Folio origin(s) to authorized JavaScript origins and the callback URL shown by Supabase's Google provider to authorized redirect URIs.
+2. Enable Google in Supabase Authentication → Providers. Enter that client ID and secret **there**, never in Folio's public environment variables.
+3. In Supabase Authentication → URL Configuration, allow your exact Folio homepage and its import callback pattern, e.g. `https://your-folio.example/\?folio_import=*`. Add `http://127.0.0.1:5173/\?folio_import=*` for local development. For subpath hosting, include that base path before the escaped question mark. The wildcard is only for Folio's one-time nonce, not arbitrary destination domains.
+4. Set `VITE_GOOGLE_AUTH_ENABLED=true` alongside the two Supabase settings in Vercel/local development and rebuild. Homepage settings then show **Sign in with Google & import browser stories**.
+
+See the provider's [Google setup](https://supabase.com/docs/guides/auth/social-login/auth-google) and [redirect allowlist syntax](https://supabase.com/docs/guides/auth/redirect-urls). Test the real callback on your deployed origin before announcing it; offline QA does not configure or validate your Google project.
+
+That labeled action is the import consent. Folio saves locally before leaving, then uses the same private, deduplicating browser import after the Google callback. Existing cloud IDs are skipped, including deleted records; browser originals are never removed. Partial failures retain the request in that tab for reload/retry; signing out cancels it. An expired callback requires a fresh manual import. Ordinary email sign-in and an existing authenticated session alone never import browser stories.
+
 ## Saving and account boundaries
 
 - Browser edits are saved immediately through IndexedDB, independently of cloud availability. Status says **SAVED LOCALLY**, **CLOUD PENDING**, **CLOUD SAVED**, **CLOUD ERROR**, or **CLOUD CONFLICT**; a local failure is explicit. Cloud success means the server acknowledged the current snapshot, not just that an upload started.
 - Each account has a separate local cache and sync checkpoint. Signing out returns to the original browser library. This is logical separation, not encryption against someone with access to your browser profile. Sign out on shared devices; use a separate browser profile for stronger local privacy.
-- First sign-in opens the account's cloud library without uploading guest stories. Homepage settings offer **Import browser stories to my account**. This is explicit consent to upload complete stories, including private notes and history. It copies rather than moves. IDs deduplicate imports; repeat imports skip existing cloud IDs, even if their browser originals later change. A partially completed import can safely be retried.
+- Ordinary sign-in opens the account's cloud library without uploading guest stories. Homepage settings offer **Import browser stories to my account**; Google's explicitly labeled sign-in-and-import action combines those two steps. Both authorize uploading complete stories, including private notes and history. They copy rather than move. IDs deduplicate imports; repeat imports skip existing cloud IDs, even if their browser originals later change. A partially completed import can safely be retried.
 - Background retries run after edits, reconnection/window focus and every 15 seconds. A failed upload never clears the local copy. A lost acknowledgement is reconciled by content fingerprint. Cloud downloads replace only unchanged local snapshots; typing during a fetch is protected.
 - Conflicts are surfaced in save status and homepage account settings. **Keep both copies** retains the device version as a new story and the remote version separately (or retains the device copy separately when the remote was deleted). There is no silent last-writer-wins or automatic text merge.
 - AI credentials stay in the existing tab-memory connection state. Auth tokens are managed separately by Supabase Auth. Neither is part of story data, cloud payloads, or portable files. `.folio` import uses an allowlisted schema, including history snapshots.
@@ -47,8 +58,8 @@ The inline reader/fonts intentionally increase the main application bundle so an
 For the account UI/transport integration mock (never use these fake settings in production):
 
 ```sh
-VITE_SUPABASE_URL=https://folio-qa.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=qa-public-key npm run build
-FOLIO_QA_CLOUD=1 FOLIO_QA_PREVIEW=1 npm run test:e2e -- tests/browser/cloudAccounts.spec.ts
+VITE_SUPABASE_URL=https://folio-qa.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=qa-public-key VITE_GOOGLE_AUTH_ENABLED=true npm run build
+FOLIO_QA_CLOUD=1 FOLIO_QA_PREVIEW=1 npm run test:e2e -- tests/browser/cloudAccounts.spec.ts tests/browser/googleAccounts.spec.ts
 npm run build
 ```
 

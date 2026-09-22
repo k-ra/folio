@@ -3,6 +3,7 @@ import type { Story } from '../model/types'
 import type { CloudState } from '../cloud/useCloud'
 import { useAccount } from '../cloud/Auth'
 import { cloudClient } from '../cloud/client'
+import { prepareGoogleImport, clearGoogleImport } from '../cloud/googleImport'
 import { readBackup } from './backup'
 import StoryDownloads from './StoryDownloads'
 import './info.css'
@@ -13,7 +14,7 @@ export const WorkspaceActions = createContext<{
   flush?: () => Promise<void>
 }>({})
 export default function InfoActions({ story }: { story?: Story }) {
-  const { user } = useAccount(),
+  const { user, error: authError } = useAccount(),
     { cloud, importStory, flush } = useContext(WorkspaceActions)
   const [email, setEmail] = useState(''),
     [token, setToken] = useState(''),
@@ -84,9 +85,8 @@ export default function InfoActions({ story }: { story?: Story }) {
                 {!!cloud.browserCount && (
                   <>
                     <small>
-                      Your {cloud.browserCount} browser stories have not been automatically uploaded.
-                      Importing copies them into this account; originals stay here. Existing cloud IDs are
-                      skipped.
+                      {cloud.browserCount} browser originals remain on this device. Import copies missing
+                      stories into this account; existing cloud IDs are skipped.
                     </small>
                     <button disabled={busy} onClick={() => void act(cloud.importBrowser)}>
                       Import browser stories to my account
@@ -112,71 +112,99 @@ export default function InfoActions({ story }: { story?: Story }) {
             )}
           </>
         ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              void act(async () => {
-                await flush?.()
-                const { error } = sent
-                  ? await cloudClient!.auth.verifyOtp({
-                      email,
-                      token,
-                      type: 'email',
-                    })
-                  : await cloudClient!.auth.signInWithOtp({ email })
-                if (error) throw error
-                if (!sent) {
-                  setSent(true)
-                  setMessage('Check your email for a sign-in code.')
-                }
-              })
-            }}
-          >
-            <label>
-              Email
-              <input
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                disabled={sent}
-                onChange={(e) => setEmail(e.currentTarget.value)}
-              />
-            </label>
-            {sent && (
-              <label>
-                Sign-in code
-                <input
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  required
-                  value={token}
-                  onChange={(e) => setToken(e.currentTarget.value)}
-                />
-              </label>
-            )}
-            <button disabled={busy}>{sent ? 'Confirm sign-in' : 'Email me a sign-in code'}</button>
-            {sent && (
+          <>
+            {import.meta.env.VITE_GOOGLE_AUTH_ENABLED === 'true' && (
               <button
-                type="button"
-                onClick={() => {
-                  setSent(false)
-                  setToken('')
-                }}
+                disabled={busy}
+                onClick={() =>
+                  void act(async () => {
+                    await flush?.()
+                    const nonce = prepareGoogleImport()
+                    try {
+                      const redirect = new URL(import.meta.env.BASE_URL, location.origin)
+                      redirect.searchParams.set('folio_import', nonce)
+                      const { error } = await cloudClient!.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: { redirectTo: redirect.href },
+                      })
+                      if (error) throw error
+                    } catch (e) {
+                      clearGoogleImport()
+                      throw e
+                    }
+                  })
+                }
               >
-                Use another email / resend
+                Sign in with Google &amp; import browser stories
               </button>
             )}
-            <small>
-              Signing in opens your private cloud library. Browser stories are not uploaded unless you
-              explicitly import them.
-            </small>
-          </form>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                void act(async () => {
+                  await flush?.()
+                  const { error } = sent
+                    ? await cloudClient!.auth.verifyOtp({
+                        email,
+                        token,
+                        type: 'email',
+                      })
+                    : await cloudClient!.auth.signInWithOtp({ email })
+                  if (error) throw error
+                  if (!sent) {
+                    setSent(true)
+                    setMessage('Check your email for a sign-in code.')
+                  }
+                })
+              }}
+            >
+              <label>
+                Email
+                <input
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  disabled={sent}
+                  onChange={(e) => setEmail(e.currentTarget.value)}
+                />
+              </label>
+              {sent && (
+                <label>
+                  Sign-in code
+                  <input
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    required
+                    value={token}
+                    onChange={(e) => setToken(e.currentTarget.value)}
+                  />
+                </label>
+              )}
+              <button disabled={busy}>{sent ? 'Confirm sign-in' : 'Email me a sign-in code'}</button>
+              {sent && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSent(false)
+                    setToken('')
+                  }}
+                >
+                  Use another email / resend
+                </button>
+              )}
+              <small>
+                Signing in opens your private cloud library. Browser stories are not uploaded unless you
+                explicitly import them.
+              </small>
+            </form>
+          </>
         )}
       </div>
       {busy && <small role="status">Working…</small>}
       {message && <small role="status">{message}</small>}
       {error && <small role="alert">{error}</small>}
+      {authError && <small role="alert">{authError}</small>}
     </div>
   )
 }
