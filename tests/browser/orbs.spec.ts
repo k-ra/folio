@@ -21,12 +21,18 @@ for (const width of [1440, 1100, 766, 390]) {
           }),
         )
         .toBeLessThan(1)
-      const heading = await title.boundingBox()
-      const body = await firstBlock.boundingBox()
-      const orb = await firstOrb.boundingBox()
-      expect(heading).not.toBeNull()
-      expect(orb).not.toBeNull()
-      expect(body!.y).toBeGreaterThan(heading!.y + heading!.height)
+      await expect(firstBlock).toBeVisible()
+      await expect(firstOrb).toBeVisible()
+      // Sample together; font fitting can occur between separate protocol calls.
+      await expect
+        .poll(() =>
+          page.evaluate(() => {
+            const heading = document.querySelector('[data-id="title"]')!.getBoundingClientRect()
+            const body = document.querySelector('[data-block-id]')!.getBoundingClientRect()
+            return body.top - heading.bottom
+          }),
+        )
+        .toBeGreaterThan(0)
       // Read both controls in the same frame while the side panel is closing.
       await expect
         .poll(() =>

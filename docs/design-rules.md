@@ -30,7 +30,13 @@ These are implementation rules, not just visual references. Keep the structure i
 
 ## Source of truth and checks
 
-Account, import, copy and export actions belong inside the existing info/history panel (and the existing homepage settings panel for account/import access). Do not add page-level chrome. Save status distinguishes local durability from cloud acknowledgement without changing the grid. The note affordance follows the hovered paragraph, fades after inactivity, and stays available while hovered or keyboard-focused. Paragraph merges stop at non-text boundaries, retain both notes, and have an undo checkpoint.
+Copy and download belong in the existing info/history panel: Copy text, Download (expanding inline to HTML / .folio), and a small margin-notes checkbox. Accounts and backup import belong only in the homepage settings menu. Do not add page-level chrome. Publication chooses HTML for code-only stories and ZIP when published images or datasets are present. Chat interactions are not essay revisions and restoring writing never rewinds chat. Pasted writing has its own history label.
+
+Chat opens at its standard 380 px width and can be resized from its edge, with keyboard support. Keep the writing column centered through the existing panel/grid contract. Small popovers have no decorative outline; their scrolling content stays inside a persistent padded frame.
+
+Whole-essay selection spans author fields, not private notes or chat. Cmd/Ctrl+A and cross-paragraph dragging use a temporary native selection surface while the underlying editors remain mounted to retain undo. Clicking back into writing or Escape returns to editing without changing content.
+
+Save status distinguishes local durability from cloud acknowledgement without changing the grid. The note affordance follows the hovered paragraph, fades after inactivity, and stays available while hovered or keyboard-focused. Paragraph merges stop at non-text boundaries, retain both notes, and have an undo checkpoint.
 
 Reading position belongs to the user. Hover, autosave and unchanged field renders must not scroll the page. Auto-growing fields measure outside the document flow; never collapse a live field to measure it. Refit for content, width, typography and font loading, and apply a height only when it changes. `tests/browser/scroll.spec.ts` covers focused long writing, idle controls and responsive resizing.
 

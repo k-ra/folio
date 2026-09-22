@@ -103,3 +103,15 @@
 .folio-markdown em {
   font-style: italic;
 }
+.selection-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: 1em;
+  cursor: text;
+}
+.essay-selecting {
+  user-select: none;
+}
+.essay-selecting [data-story-text] {
+  user-select: text;
+}

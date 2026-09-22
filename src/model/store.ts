@@ -5,6 +5,7 @@ import type { Block, HomeThemeKey, Story } from './types'
 import { wordCount } from './util'
 import { migrateStory } from './migrate'
 import { loadWorkspace, saveWorkspace } from './storage'
+import { sameEssay } from './history'
 
 /**
  * Legacy localStorage is a read-only fallback until IndexedDB loads.
@@ -30,6 +31,7 @@ export type StoryUpdater = (s: Story) => Story
  */
 export function withHistory(s: Story, fn: StoryUpdater, why?: string): Story {
   const next = fn({ ...s })
+  if (sameEssay(s, next)) return { ...next, history: s.history }
   const now = Date.now()
   const hist = [...(s.history || [])]
   const last = hist[hist.length - 1]
@@ -62,7 +64,6 @@ export function withHistory(s: Story, fn: StoryUpdater, why?: string): Story {
         title: s.title,
         blocks: s.blocks,
         style: s.style,
-        chats: s.chats,
         notes: s.notes,
         presets: s.presets,
         formatting: s.formatting,

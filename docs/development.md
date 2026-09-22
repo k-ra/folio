@@ -14,6 +14,8 @@ FOLIO_QA_PREVIEW=1 npm run test:e2e
 
 The browser suite uses `tests/browser/fixtures.ts` to block live generation. Production QA runs on port 4173, separate from the editor on 5173. It covers saving, edit history, chat/margin synchronization, style drafts, responsive layout, full bleed and sandboxed artifacts. Use `npm run qa:live` only for a deliberately authorized live check; it spends two model requests on a disposable demo.
 
+`productPolish.spec.ts` covers chat resizing/reset, cross-paragraph drag and Select All, partial copy, retained formatting undo, paste history, and compact download/account placement. Selection is a temporary native text surface; mounted editors retain their undo state. Conversation changes save normally but do not create essay revisions, and restoring an essay preserves the current chats.
+
 ## Boundaries
 
 - `src/model/`: stories, versions, migrations and IndexedDB persistence.

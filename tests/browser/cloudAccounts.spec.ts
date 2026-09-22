@@ -129,8 +129,14 @@ test('accounts require explicit browser import, deduplicate, isolate libraries, 
   await expect(page.locator('textarea[data-id="b"]')).toHaveValue('Saved locally during outage')
   await expect(page.locator('.essay-status')).toContainText('CLOUD ERROR')
   fail = false
-  await page.getByTitle('History', { exact: true }).click()
+  await page.getByRole('button', { name: 'All stories', exact: true }).click()
+  await settings().click()
   await page.getByRole('button', { name: 'Retry cloud save', exact: true }).click()
+  await expect
+    .poll(() => rows.a['portable-example'].story!.blocks[1])
+    .toMatchObject({ text: 'Saved locally during outage' })
+  await settings().click()
+  await page.getByRole('button', { name: 'Open A field of light', exact: true }).first().click()
   await expect(page.locator('.essay-status')).toContainText('CLOUD SAVED')
   expect(rows.a['portable-example'].story!.blocks[1]).toMatchObject({
     text: 'Saved locally during outage',
@@ -140,12 +146,12 @@ test('accounts require explicit browser import, deduplicate, isolate libraries, 
     version: rows.a['portable-example'].version + 1,
     story: { ...rows.a['portable-example'].story!, title: 'Another device' },
   }
-  await page.getByTitle('History', { exact: true }).click()
   await page.locator('textarea[data-id="b"]').fill('Conflicting local writing')
   await expect(page.locator('.essay-status')).toContainText('CLOUD CONFLICT')
-  await page.getByTitle('History', { exact: true }).click()
+  await page.getByRole('button', { name: 'All stories', exact: true }).click()
+  await settings().click()
   await page.getByRole('button', { name: 'Keep both copies', exact: true }).click()
-  await expect(page.getByPlaceholder('Untitled', { exact: true })).toHaveValue('Another device')
+  await expect(page.getByRole('button', { name: 'Open Another device', exact: true }).first()).toBeVisible()
   await expect
     .poll(() => Object.values(rows.a).filter((r) => r.story?.title.endsWith('(device copy)')).length)
     .toBe(1)

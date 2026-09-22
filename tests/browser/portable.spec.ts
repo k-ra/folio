@@ -1,6 +1,19 @@
 import { test, expect, type Page } from './fixtures'
 import { example } from '../storyFixture'
-import { readFile } from 'node:fs/promises'
+import { readFile, mkdir, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { unzipSync } from 'fflate'
+import type { Download } from '@playwright/test'
+
+async function savePublication(file: Download, htmlPath: string) {
+  if (!file.suggestedFilename().endsWith('.zip')) return file.saveAs(htmlPath)
+  const entries = unzipSync(await readFile((await file.path())!))
+  for (const [name, data] of Object.entries(entries)) {
+    const target = name === 'index.html' ? htmlPath : join(dirname(htmlPath), name)
+    await mkdir(dirname(target), { recursive: true })
+    await writeFile(target, data)
+  }
+}
 
 export async function loadExample(page: Page, story = example()) {
   await page.goto('/?qa=essay')
@@ -77,10 +90,11 @@ test('rich writing shortcuts, notes, merge undo, chat Markdown and offline expor
   await expect(note.locator('em')).toHaveText('PRIVATE')
   await page.getByTitle('History', { exact: true }).click()
   await context.setOffline(true)
+  await page.getByRole('button', { name: 'Download', exact: true }).click()
   const event = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Download HTML', exact: true }).click()
+  await page.getByRole('button', { name: 'HTML', exact: true }).click()
   const path = test.info().outputPath('formatted.html')
-  await (await event).saveAs(path)
+  await savePublication(await event, path)
   const reader = await context.newPage()
   await reader.goto('file://' + path)
   await expect(reader.locator('.publication strong')).toHaveText('First')
@@ -122,7 +136,13 @@ test('rich typing, paragraph split and all author fields preserve formatting', a
   await next.locator('[contenteditable]').evaluate((el) => {
     const clipboardData = new DataTransfer()
     clipboardData.setData('text/html', '<p><strong>Pasted</strong> words</p><p><em>Second line</em></p>')
-    el.dispatchEvent(new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }))
+    el.dispatchEvent(
+      new ClipboardEvent('paste', {
+        clipboardData,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
   })
   await expect(next.locator('strong')).toHaveText('Pasted')
   await expect(next.locator('em')).toHaveText('Second line')
@@ -192,20 +212,21 @@ for (const width of [1440, 390])
     await context.setOffline(true)
     await page.getByTitle('History', { exact: true }).click()
     const info = page.getByRole('region', { name: 'Story history' })
-    await info.getByRole('button', { name: 'Copy entire story', exact: true }).click()
+    await info.getByRole('button', { name: 'Copy text', exact: true }).click()
     expect(await page.evaluate(() => (window as unknown as { copied: string }).copied)).toContain(
       'First paragraph.\n\nSecond paragraph, latest unsynced edit.',
     )
+    await info.getByRole('button', { name: 'Download', exact: true }).click()
     const htmlEvent = page.waitForEvent('download')
-    await info.getByRole('button', { name: 'Download HTML', exact: true }).click()
+    await info.getByRole('button', { name: 'HTML', exact: true }).click()
     const html = await htmlEvent,
       htmlPath = test.info().outputPath('story.html')
-    await html.saveAs(htmlPath)
+    await savePublication(html, htmlPath)
     const source = await readFile(htmlPath, 'utf8')
     expect(source).not.toContain('PRIVATE FIRST NOTE')
     expect(source).not.toContain('PRIVATE CHAT')
     const backupEvent = page.waitForEvent('download')
-    await info.getByRole('button', { name: 'Download .folio backup', exact: true }).click()
+    await info.getByRole('button', { name: '.folio', exact: true }).click()
     const file = await backupEvent,
       backupPath = test.info().outputPath('story.folio')
     await file.saveAs(backupPath)
@@ -248,8 +269,9 @@ for (const width of [1440, 390])
     // Existing ID, changed contents: import as a separate story, never overwrite.
     await page.getByTitle('History', { exact: true }).click()
     await b.fill('A later local edit.')
-    await page.getByTitle('History', { exact: true }).click()
-    await info.getByLabel('Import .folio backup').setInputFiles(backupPath)
+    await page.getByRole('button', { name: 'All stories', exact: true }).click()
+    await page.getByTitle('Style this page', { exact: true }).click()
+    await page.getByLabel('Import .folio backup').setInputFiles(backupPath)
     await expect(page.locator('textarea[data-id="b"]')).toHaveValue('Second paragraph, latest unsynced edit.')
     await expect(page.locator('textarea[data-id="n-b"]')).toHaveValue('PRIVATE SECOND NOTE')
     await page.getByRole('button', { name: 'All stories', exact: true }).click()
@@ -274,10 +296,11 @@ test('offline charts preserve their responsive width and keyboard interaction', 
   await loadExample(page, story)
   await page.getByTitle('History', { exact: true }).click()
   await context.setOffline(true)
+  await page.getByRole('button', { name: 'Download', exact: true }).click()
   const downloaded = page.waitForEvent('download')
-  await page.getByRole('button', { name: 'Download HTML', exact: true }).click()
+  await page.getByRole('button', { name: 'HTML', exact: true }).click()
   const path = test.info().outputPath('chart.html')
-  await (await downloaded).saveAs(path)
+  await savePublication(await downloaded, path)
   const reader = await context.newPage()
   await reader.goto('file://' + path)
   await expect(reader.locator('body')).toHaveAttribute('data-folio-ready', 'true')

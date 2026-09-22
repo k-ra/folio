@@ -61,7 +61,7 @@ export default function FancyBlock({ b, ctl }: { b: Fancy; ctl: WriteCtl }) {
             onClick={() => setEditing(true)}
           >
             <span className="fancy-motion-track">
-              <span className="fancy-motion-copy" id={`fancy-words-${b.id}`}>
+              <span className="fancy-motion-copy" id={`fancy-words-${b.id}`} data-story-text data-id={b.id}>
                 <FormattedText text={b.text} marks={ctl.story.formatting?.[b.id]} />
               </span>
               {f.motion === 'marquee' && (

@@ -3,8 +3,12 @@ import { MONO, SANS } from '../model/constants'
 import type { Story, Style } from '../model/types'
 import { fmtWhen } from '../model/util'
 import InfoActions from '../portable/InfoActions'
+import { essayHistory } from '../model/history'
 
-const mono: CSSProperties = { font: `400 10px ${MONO}`, letterSpacing: '1.5px' }
+const mono: CSSProperties = {
+  font: `400 10px ${MONO}`,
+  letterSpacing: '1.5px',
+}
 
 interface Props {
   story: Story
@@ -15,7 +19,7 @@ interface Props {
 }
 
 export default function History({ story, V, open, toggle, restore }: Props) {
-  const hist = [...(story.history || [])].reverse()
+  const hist = essayHistory(story).reverse()
   return (
     <div className="essay-history">
       <button
@@ -39,6 +43,7 @@ export default function History({ story, V, open, toggle, restore }: Props) {
           id="story-history"
           role="region"
           aria-label="Story history"
+          className="quiet-popover"
           style={{
             position: 'absolute',
             left: 0,
@@ -47,10 +52,10 @@ export default function History({ story, V, open, toggle, restore }: Props) {
             maxWidth: 'calc(100vw - var(--rail-left) - 24px)',
             boxSizing: 'border-box',
             maxHeight: '50vh',
-            overflow: 'auto',
+            overflow: 'hidden',
             background: V.bg,
             color: V.ink,
-            boxShadow: '0 24px 50px -24px rgba(0,0,0,.5), 0 0 0 1px rgba(128,128,128,.18)',
+            boxShadow: '0 24px 50px -24px rgba(0,0,0,.5)',
             padding: '16px 18px',
             display: 'flex',
             flexDirection: 'column',
@@ -58,45 +63,46 @@ export default function History({ story, V, open, toggle, restore }: Props) {
             animation: 'fadein .2s ease both',
           }}
         >
-          <InfoActions story={story} />
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              ...mono,
-              opacity: 0.5,
-              marginBottom: 10,
-            }}
-          >
-            <span>HISTORY</span>
-            <span>
-              {hist.length} {hist.length === 1 ? 'VERSION' : 'VERSIONS'}
-            </span>
-          </div>
-          {hist.map((v, i) => (
-            <button
-              key={v.t + ':' + i}
-              onClick={() => restore(v.t)}
-              className="hover-row"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '52px 1fr auto',
-                gap: 12,
-                alignItems: 'baseline',
-                textAlign: 'left',
-                padding: '7px 6px',
-                margin: '0 -6px',
-                font: `400 12px ${SANS}`,
-                opacity: i === 0 ? 1 : 0.75,
-              }}
-            >
-              <span style={{ font: `400 10px ${MONO}`, opacity: 0.6 }}>{fmtWhen(v.t)}</span>
-              <span>{v.label}</span>
-              <span style={{ font: `400 10px ${MONO}`, opacity: 0.5 }}>{v.words.toLocaleString()}w</span>
-            </button>
-          ))}
-          <div style={{ ...mono, letterSpacing: '1px', opacity: 0.4, marginTop: 10 }}>
-            CLICK A VERSION TO RESTORE · RESTORING IS ITSELF A VERSION
+          <div className="quiet-popover-scroll">
+            <InfoActions story={story} />
+            {!!hist.length && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  ...mono,
+                  opacity: 0.5,
+                  marginBottom: 10,
+                }}
+              >
+                <span>HISTORY</span>
+                <span>
+                  {hist.length} {hist.length === 1 ? 'VERSION' : 'VERSIONS'}
+                </span>
+              </div>
+            )}
+            {hist.map((v, i) => (
+              <button
+                key={v.t + ':' + i}
+                onClick={() => restore(v.t)}
+                className="hover-row"
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '52px 1fr auto',
+                  gap: 12,
+                  alignItems: 'baseline',
+                  textAlign: 'left',
+                  padding: '7px 6px',
+                  margin: '0 -6px',
+                  font: `400 12px ${SANS}`,
+                  opacity: i === 0 ? 1 : 0.75,
+                }}
+              >
+                <span style={{ font: `400 10px ${MONO}`, opacity: 0.6 }}>{fmtWhen(v.t)}</span>
+                <span>{v.label}</span>
+                <span style={{ font: `400 10px ${MONO}`, opacity: 0.5 }}>{v.words.toLocaleString()}w</span>
+              </button>
+            ))}
           </div>
         </div>
       )}

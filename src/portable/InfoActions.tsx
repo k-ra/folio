@@ -3,8 +3,8 @@ import type { Story } from '../model/types'
 import type { CloudState } from '../cloud/useCloud'
 import { useAccount } from '../cloud/Auth'
 import { cloudClient } from '../cloud/client'
-import { backup, download, filename, readBackup, storyText } from './backup'
-import { exportHtml, exportZip, externalDependencies } from './export'
+import { readBackup } from './backup'
+import StoryDownloads from './StoryDownloads'
 import './info.css'
 
 export const WorkspaceActions = createContext<{
@@ -20,8 +20,7 @@ export default function InfoActions({ story }: { story?: Story }) {
     [sent, setSent] = useState(false)
   const [message, setMessage] = useState(''),
     [error, setError] = useState(''),
-    [busy, setBusy] = useState(false),
-    [notes, setNotes] = useState(false)
+    [busy, setBusy] = useState(false)
   const act = async (fn: () => Promise<void> | void) => {
     setBusy(true)
     setError('')
@@ -34,80 +33,9 @@ export default function InfoActions({ story }: { story?: Story }) {
       setBusy(false)
     }
   }
+  if (story) return <StoryDownloads story={story} />
   return (
     <div className="info-actions">
-      {story && (
-        <div className="info-group">
-          <button
-            disabled={busy}
-            onClick={() =>
-              void act(async () => {
-                const text = storyText(story)
-                if (navigator.clipboard) await navigator.clipboard.writeText(text)
-                else {
-                  const el = document.createElement('textarea')
-                  el.value = text
-                  document.body.append(el)
-                  el.select()
-                  const ok = document.execCommand('copy')
-                  el.remove()
-                  if (!ok) throw new Error('Clipboard unavailable. Download HTML or a backup instead.')
-                }
-                setMessage('Entire story copied.')
-              })
-            }
-          >
-            Copy entire story
-          </button>
-          <button
-            disabled={busy}
-            onClick={() =>
-              void act(async () => {
-                download(exportHtml(story, notes), 'text/html', filename(story) + '.html')
-                setMessage(
-                  externalDependencies(story).length
-                    ? 'Downloaded. External references are listed inside the HTML and may be unavailable offline.'
-                    : 'Downloaded a standalone HTML file; no external resources required.',
-                )
-              })
-            }
-          >
-            Download HTML
-          </button>
-          <label>
-            <input type="checkbox" checked={notes} onChange={(e) => setNotes(e.currentTarget.checked)} />{' '}
-            Include margin notes in publication
-          </label>
-          <small>
-            Chats and revision history are never included in HTML. For large media, download the ZIP and keep
-            index.html with its assets folder.
-          </small>
-          <button
-            disabled={busy}
-            onClick={() =>
-              void act(async () => {
-                download(exportZip(story, notes) as BlobPart, 'application/zip', filename(story) + '.zip')
-                setMessage('ZIP downloaded. External dependencies, if any, are listed in index.html.')
-              })
-            }
-          >
-            Download HTML + assets (.zip)
-          </button>
-          <button
-            disabled={busy}
-            onClick={() =>
-              void act(() => {
-                download(backup(story), 'application/json', filename(story) + '.folio')
-                setMessage(
-                  'Backup downloaded, including notes, chats, media and history. Keep it private. External URLs remain references.',
-                )
-              })
-            }
-          >
-            Download .folio backup
-          </button>
-        </div>
-      )}
       {importStory && (
         <label className="info-import">
           Import .folio backup

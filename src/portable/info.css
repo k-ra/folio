@@ -42,3 +42,26 @@
 .info-actions [role='alert'] {
   opacity: 1;
 }
+.story-downloads {
+  gap: 4px;
+}
+.download-choice {
+  display: flex;
+  gap: 18px;
+  align-items: baseline;
+}
+.publication-notes {
+  font-size: 10px;
+  opacity: 0.55;
+  line-height: 1.5;
+  margin-top: 3px;
+}
+.publication-notes input {
+  margin: 0 4px 0 0;
+  vertical-align: middle;
+}
+.quiet-popover-scroll {
+  min-height: 0;
+  overflow: auto;
+  padding: 0 2px;
+}

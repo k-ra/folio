@@ -130,7 +130,7 @@ button:disabled {
   right: 8px;
   z-index: 3;
   padding: 14px 16px;
-  border: 1px solid rgba(128, 128, 128, 0.25);
+  border: 0;
   box-shadow: 0 6px 20px #00000008;
   width: 170px;
   max-width: calc(100% - 16px);
@@ -333,7 +333,8 @@ summary::-webkit-details-marker {
   width: min(290px, calc(100vw - 106px));
   max-height: 55vh;
   overflow: auto;
-  padding: 20px;
+  padding: 0 20px;
+  border-block: 20px solid transparent;
   box-sizing: border-box;
   box-shadow: 0 6px 28px #00000016;
 }

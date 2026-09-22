@@ -145,6 +145,16 @@ export function exportZip(s: Story, notes = false) {
     return value
   }
   const p = collect(publication(s, notes)) as Publication
+  for (const block of s.blocks)
+    if (block.type === 'magic' && block.revision >= 0) {
+      for (const file of block.attachments)
+        if (file.kind === 'data') {
+          const safeName = file.name.replace(/[^\p{L}\p{N}._-]/gu, '_') || 'data.csv'
+          assets[
+            `datasets/${block.id.replace(/[^a-z0-9_-]/gi, '_')}-${file.id.replace(/[^a-z0-9_-]/gi, '_')}-${safeName}`
+          ] = strToU8(file.content)
+        }
+    }
   return zipSync(
     {
       ...assets,
@@ -152,4 +162,65 @@ export function exportZip(s: Story, notes = false) {
     },
     { level: 6 },
   )
+}
+
+/** Publications choose a container; backups retain the complete editable source. */
+export async function publicationDownload(story: Story, notes = false) {
+  const s = structuredClone(story)
+  const missing: string[] = []
+  const embed = async (src: string): Promise<string> => {
+    if (!/^(https?:|blob:)/.test(src)) return src
+    try {
+      const response = await fetch(src, {
+        credentials: 'omit',
+        referrerPolicy: 'no-referrer',
+        signal: AbortSignal.timeout(10000),
+      })
+      if (!response.ok) throw new Error('Unavailable')
+      const blob = await response.blob()
+      if (!/^image\//.test(blob.type) || blob.size > 40 * 1024 * 1024) throw new Error('Unsupported media')
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+    } catch {
+      missing.push(src)
+      return src
+    }
+  }
+  // Only published media: never follow links in private notes, chat or prompts.
+  for (const b of s.blocks) {
+    if (b.type === 'media' && b.src) b.src = await embed(b.src)
+    if (b.type === 'magic') {
+      const output = b.revisions[b.revision]?.output
+      if (output?.kind === 'image') output.src = await embed(output.src)
+    }
+  }
+  if (s.style.backdrop === 'image' && s.style.backdropSrc)
+    s.style.backdropSrc = await embed(s.style.backdropSrc)
+  const visual = JSON.stringify(publication(s, notes))
+  const hasAssets =
+    /data:(image|video|audio)\//.test(visual) ||
+    s.blocks.some(
+      (b) =>
+        (b.type === 'media' && !!b.src) ||
+        (b.type === 'magic' &&
+          (b.revisions[b.revision]?.output.kind === 'image' ||
+            (b.revision >= 0 && b.attachments.some((a) => a.kind === 'data')))),
+    ) ||
+    s.style.backdrop === 'image'
+  const dependencies = externalDependencies(s)
+  return {
+    data: hasAssets ? exportZip(s, notes) : exportHtml(s, notes),
+    type: hasAssets ? 'application/zip' : 'text/html',
+    extension: hasAssets ? '.zip' : '.html',
+    notice:
+      missing.length || dependencies.length
+        ? 'Downloaded. External dependencies that could not be bundled are listed in the HTML.'
+        : hasAssets
+          ? 'Downloaded with assets. Open index.html from the unzipped folder.'
+          : 'Downloaded.',
+  }
 }

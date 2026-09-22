@@ -136,11 +136,22 @@ for (const width of [1440, 390]) {
         exact: true,
       })
       await expect(remove).toBeVisible()
-      const bounds = await row.boundingBox()
-      const control = await remove.boundingBox()
-      expect(Math.abs(control!.y + control!.height / 2 - (bounds!.y + bounds!.height / 2))).toBeLessThan(1)
-      expect(control!.x).toBeGreaterThanOrEqual(0)
-      expect(control!.x + control!.width).toBeLessThanOrEqual(bounds!.x)
+      await expect
+        .poll(() =>
+          row
+            .evaluate((el) => {
+              const bounds = el.getBoundingClientRect()
+              const control = el.querySelector('[aria-label="Remove block"]')!.getBoundingClientRect()
+              return {
+                delta: Math.abs(control.y + control.height / 2 - (bounds.y + bounds.height / 2)),
+                left: control.x,
+                right: control.right,
+                edge: bounds.x,
+              }
+            })
+            .then((r) => r.delta < 1 && r.left >= 0 && r.right <= r.edge),
+        )
+        .toBe(true)
     }
     await page.screenshot({
       path: `test-results/refined-block-controls-${width}.png`,

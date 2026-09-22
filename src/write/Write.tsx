@@ -10,7 +10,7 @@ import {
 import type { AI } from '../ai'
 import { connectedChat } from '../ai/connected'
 import AIConnection from '../ai/AIConnection'
-import { DEFAULT_FILES, DEF_STYLE, EASE, FONTS, MONO, SANS } from '../model/constants'
+import { DEFAULT_FILES, DEF_STYLE, FONTS, MONO, SANS } from '../model/constants'
 import type { StoryUpdater } from '../model/store'
 import type { Block, BlockType, ChatFocus, Panel as PanelT, Story, Style } from '../model/types'
 import { hexToRgb, textBlock as T, wordCount } from '../model/util'
@@ -30,6 +30,9 @@ import { newId } from '../model/util'
 import { useFancy } from '../fancy/useFancy'
 import { mergeParagraph } from '../model/paragraphs'
 import FullscreenButton from '../ui/FullscreenButton'
+import PanelResize, { DEFAULT_PANEL_WIDTH } from './PanelResize'
+import EssaySelection from './EssaySelection'
+import { storyText } from '../portable/backup'
 import { withFormatting, sliceMarks, type TextMark } from '../text/formatting'
 
 interface Props {
@@ -61,6 +64,13 @@ export default function Write({
   cloudStatus,
 }: Props) {
   const [panel, setPanel] = useState<PanelT | null>(null)
+  const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
+  const pasting = useRef(false)
+  const editLabel = () => {
+    const pasted = pasting.current
+    pasting.current = false
+    return pasted ? 'Pasted' : undefined
+  }
   const [draft, setDraftState] = useState<Style | null>(null)
   // Keep unsent drafts with their conversations when selection changes the target.
   const [chatDrafts, setChatDrafts] = useState<Record<string, string>>({})
@@ -134,6 +144,7 @@ export default function Write({
   // ---- panels
   const togglePanel = (kind: 'data' | 'style' | 'chat') => {
     const same = kind === 'chat' ? isChatPanel(panel) : panel?.kind === kind
+    if (!same) setPanelWidth(DEFAULT_PANEL_WIDTH)
     if (kind === 'style' && !same) setDraftState({ ...DEF_STYLE, ...storyRef.current.style })
     setPanel(same ? null : kind === 'chat' ? chatTarget(storyRef.current, chatFocus?.id) : { kind })
   }
@@ -226,19 +237,25 @@ export default function Write({
 
   // ---- blocks
   const setTitle = (v: string, marks: TextMark[] = []) =>
-    upStory((s) => ({
-      ...s,
-      title: v,
-      formatting: withFormatting(s.formatting, 'title', v, marks),
-    }))
+    upStory(
+      (s) => ({
+        ...s,
+        title: v,
+        formatting: withFormatting(s.formatting, 'title', v, marks),
+      }),
+      editLabel(),
+    )
   const setBlockText = (bid: string, v: string, marks: TextMark[] = []) => {
     const block = storyRef.current.blocks.find((b) => b.id === bid)
     if (block?.type === 'fancy' && block.status === 'rendering') fancy.cancel(bid)
-    upStory((s) => ({
-      ...s,
-      blocks: s.blocks.map((x) => (x.id === bid && 'text' in x ? { ...x, text: v } : x)),
-      formatting: withFormatting(s.formatting, bid, v, marks),
-    }))
+    upStory(
+      (s) => ({
+        ...s,
+        blocks: s.blocks.map((x) => (x.id === bid && 'text' in x ? { ...x, text: v } : x)),
+        formatting: withFormatting(s.formatting, bid, v, marks),
+      }),
+      editLabel(),
+    )
     if (picker === bid && v) setPicker(null)
   }
   const setBlockPrompt = (bid: string, v: string) =>
@@ -383,6 +400,7 @@ export default function Write({
     }
   }
   const openArtifactChat = (bid: string) => {
+    if (!isChatPanel(panel)) setPanelWidth(DEFAULT_PANEL_WIDTH)
     setSel(bid)
     setChatFocus({ id: bid })
     setPanel({ kind: 'block', id: bid })
@@ -421,11 +439,14 @@ export default function Write({
     setFocusId('n-' + bid)
   }
   const setNote = (bid: string, v: string, marks: TextMark[] = []) =>
-    upStory((s) => ({
-      ...s,
-      notes: { ...s.notes, [bid]: v },
-      formatting: withFormatting(s.formatting, 'n-' + bid, v, marks),
-    }))
+    upStory(
+      (s) => ({
+        ...s,
+        notes: { ...s.notes, [bid]: v },
+        formatting: withFormatting(s.formatting, 'n-' + bid, v, marks),
+      }),
+      editLabel(),
+    )
   const noteBlur = (bid: string) => {
     if ((storyRef.current.notes[bid] || '').trim()) return
     upStory((s) => {
@@ -448,6 +469,7 @@ export default function Write({
       return migrateStory({
         ...s,
         ...snapshot,
+        chats: s.chats,
         formatting: snapshot.formatting,
       })
     }, 'Restored')
@@ -549,6 +571,12 @@ export default function Write({
   return (
     <div
       className={`writing-page ${panelOpen ? 'panel-open' : ''}`}
+      onPasteCapture={() => {
+        pasting.current = true
+        setTimeout(() => {
+          pasting.current = false
+        }, 0)
+      }}
       style={{
         minHeight: '100vh',
         display: 'flex',
@@ -563,19 +591,22 @@ export default function Write({
       <div
         className="panel-slot"
         aria-hidden={!panelOpen}
-        style={{
-          width: panelOpen ? 380 : 0,
-          flex: 'none',
-          overflow: 'hidden',
-          transition: `width .45s ${EASE}`,
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          boxSizing: 'border-box',
-          zIndex: 6,
-        }}
+        style={
+          {
+            width: panelOpen ? `min(${panelWidth}px, 94vw)` : 0,
+            '--panel-width': `${panelWidth}px`,
+            flex: 'none',
+            overflow: 'hidden',
+            position: 'sticky',
+            top: 0,
+            height: '100vh',
+            boxSizing: 'border-box',
+            zIndex: 6,
+          } as CSSProperties
+        }
       >
         {panelOpen && <Panel ctl={ctl} />}
+        {panelOpen && isChatPanel(panel) && <PanelResize width={panelWidth} resize={setPanelWidth} />}
       </div>
 
       <div
@@ -628,69 +659,73 @@ export default function Write({
           </div>
         </div>
 
-        <div className="essay-main" style={{ rowGap: V.gap }}>
-          {card && <div className="floating-paper-surface" aria-hidden="true" style={{ background: V.bg }} />}
-          <div className="essay-title">
-            <AutoTextarea
-              className="prose-input"
-              data-id="title"
-              placeholder="Untitled"
-              value={story.title}
-              onChange={(e) => setTitle(e.currentTarget.value)}
-              rich={{ marks: story.formatting?.title, onChange: setTitle }}
-              onFocus={clearFocus}
+        <EssaySelection text={storyText(story)}>
+          <div className="essay-main" style={{ rowGap: V.gap }}>
+            {card && (
+              <div className="floating-paper-surface" aria-hidden="true" style={{ background: V.bg }} />
+            )}
+            <div className="essay-title">
+              <AutoTextarea
+                className="prose-input"
+                data-id="title"
+                placeholder="Untitled"
+                value={story.title}
+                onChange={(e) => setTitle(e.currentTarget.value)}
+                rich={{ marks: story.formatting?.title, onChange: setTitle }}
+                onFocus={clearFocus}
+                style={{
+                  fontFamily: FONTS[V.headerFont],
+                  fontSize: 32,
+                  lineHeight: 1.15,
+                  letterSpacing: '-.4px',
+                }}
+              />
+            </div>
+
+            <div
+              className="essay-orbs"
+              onMouseEnter={() => setOrbsHov(true)}
+              onMouseLeave={() => setOrbsHov(false)}
               style={{
-                fontFamily: FONTS[V.headerFont],
-                fontSize: 32,
-                lineHeight: 1.15,
-                letterSpacing: '-.4px',
+                gridColumn: 1,
+                gridRow: 2,
+                position: 'sticky',
+                top: 110,
+                zIndex: 5,
+                alignSelf: 'start',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 26,
+                alignItems: 'flex-start',
+                padding: '0 20px 20px var(--rail-left)',
+                justifySelf: 'start',
               }}
-            />
-          </div>
+            >
+              {orb('data', 'transparent')}
+              {orb('style', 'conic-gradient(currentColor 0 50%, transparent 50%)')}
+              {orb('chat', 'radial-gradient(circle, currentColor 0 3px, transparent 3.5px)')}
+            </div>
 
-          <div
-            className="essay-orbs"
-            onMouseEnter={() => setOrbsHov(true)}
-            onMouseLeave={() => setOrbsHov(false)}
-            style={{
-              gridColumn: 1,
-              gridRow: 2,
-              position: 'sticky',
-              top: 110,
-              zIndex: 5,
-              alignSelf: 'start',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 26,
-              alignItems: 'flex-start',
-              padding: '0 20px 20px var(--rail-left)',
-              justifySelf: 'start',
-            }}
-          >
-            {orb('data', 'transparent')}
-            {orb('style', 'conic-gradient(currentColor 0 50%, transparent 50%)')}
-            {orb('chat', 'radial-gradient(circle, currentColor 0 3px, transparent 3.5px)')}
+            <div
+              className="essay-content"
+              style={{
+                gridColumn: '1 / -1',
+                gridRow: 2,
+                padding: '0 0 40vh',
+                display: 'grid',
+                gridTemplateColumns: 'subgrid',
+                alignContent: 'start',
+                rowGap: V.gap,
+                fontFamily: FONTS[V.bodyFont],
+                fontSize: V.size,
+                lineHeight: 1.75,
+              }}
+            >
+              <Blocks ctl={ctl} />
+              <StorySources sources={story.sources} />
+            </div>
           </div>
-
-          <div
-            className="essay-content"
-            style={{
-              gridColumn: '1 / -1',
-              gridRow: 2,
-              padding: '0 0 40vh',
-              display: 'grid',
-              gridTemplateColumns: 'subgrid',
-              alignContent: 'start',
-              rowGap: V.gap,
-              fontFamily: FONTS[V.bodyFont],
-              fontSize: V.size,
-              lineHeight: 1.75,
-            }}
-          >
-            <Blocks ctl={ctl} />
-            <StorySources sources={story.sources} />
-          </div>
-        </div>
+        </EssaySelection>
         <History
           story={story}
           V={V}

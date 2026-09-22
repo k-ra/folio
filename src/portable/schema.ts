@@ -170,10 +170,11 @@ const snapshot = z.object({
   blocks: z.array(block),
   style,
   notes: z.record(text, text),
-  chats: z.record(text, z.array(message)),
+  chats: z.record(text, z.array(message)).optional(),
   presets: z.array(z.object({ id, name: text, style })).optional(),
 })
 const schema = snapshot.extend({
+  chats: z.record(text, z.array(message)),
   id,
   date: text,
   thumb: z.enum(['lines', 'bars', 'gradient', 'aa', 'mono', 'photo']),
