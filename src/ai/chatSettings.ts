@@ -7,6 +7,7 @@ export const chatSettingsSchema = z
     systemPrompt: z.string().max(6000).optional(),
     browsing: z.boolean().optional(),
     searchTopic: z.string().max(500).optional(),
+    offlineSample: z.boolean().optional(),
   })
   .strict()
 export type ChatSettings = z.infer<typeof chatSettingsSchema>

@@ -35,6 +35,7 @@ import EssaySelection from './EssaySelection'
 import { storyText } from '../portable/backup'
 import { withFormatting, sliceMarks, type TextMark } from '../text/formatting'
 import { ClipSelection, useIndexStudy } from './IndexStudy'
+import { offlineChatReply } from '../model/samples/chatPlayground'
 
 interface Props {
   story: Story
@@ -65,7 +66,9 @@ export default function Write({
   cloudStatus,
 }: Props) {
   const indexStudy = useIndexStudy(story)
-  const [panel, setPanel] = useState<PanelT | null>(null)
+  const [panel, setPanel] = useState<PanelT | null>(
+    story.chatSettings?.offlineSample ? { kind: 'chat' } : null,
+  )
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
   const pasting = useRef(false)
   const editLabel = () => {
@@ -211,6 +214,11 @@ export default function Write({
     setChatInput('')
     setBusy(true)
     setChatError('')
+    if (panel.kind === 'chat' && story.chatSettings?.offlineSample) {
+      pushMsg(key, false, offlineChatReply((story.chats.chat || []).filter((m) => m.me).length))
+      setBusy(false)
+      return
+    }
     const controller = new AbortController()
     chatRequest.current = controller
     try {

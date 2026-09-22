@@ -12,10 +12,11 @@ export const WorkspaceActions = createContext<{
   cloud?: CloudState
   importStory?: (s: Story) => void
   flush?: () => Promise<void>
+  openChatSample?: () => void
 }>({})
 export default function InfoActions({ story }: { story?: Story }) {
   const { user, error: authError } = useAccount(),
-    { cloud, importStory, flush } = useContext(WorkspaceActions)
+    { cloud, importStory, flush, openChatSample } = useContext(WorkspaceActions)
   const [email, setEmail] = useState(''),
     [token, setToken] = useState(''),
     [sent, setSent] = useState(false)
@@ -37,6 +38,7 @@ export default function InfoActions({ story }: { story?: Story }) {
   if (story) return <StoryDownloads story={story} />
   return (
     <div className="info-actions">
+      {openChatSample && <button onClick={openChatSample}>Open offline chat sample</button>}
       {importStory && (
         <label className="info-import">
           Import .folio backup

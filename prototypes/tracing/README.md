@@ -9,6 +9,8 @@ Run `npm run dev -- --port 5174` on `prototype/tracing-index`, then open `/` and
 
 The normal chat uses Folio's actual existing AI connection. Tests reuse `live-response.md`, an 831-word response captured from one authorized Claude request about a fictional essay on 2026-09-21. No additional live generation is part of QA.
 
+For zero-cost manual testing, choose **Open offline chat sample** in homepage settings or Chat settings. It creates one ordinary **Chat playground** story with an original fictional essay and two long, formatted canned replies. The chat opens immediately. Follow-ups remain canned and bypass the provider even when AI is connected. The sample is clearly labeled; real stories keep their existing behavior. Reopening the action reuses the saved sample without resetting edits, conversations or clippings. It enters the active workspace only after that explicit click, using normal local/cloud storage and backup rules. No credentials are provisioned or persisted.
+
 Run `npx playwright test --config prototypes/tracing/playwright.config.ts` for real-editor desktop/mobile clipping tests. The shared rail, centering, orbs, layout, scroll, editor and product-polish suites remain unchanged and must pass.
 
 Before merging: approve placement in the real app, finish keyboard/source focus restoration and long-selection anchoring, and integrate clipping data into the versioned story schema, cloud/backup migrations and publication privacy tests. This is not production clipping persistence and stays off main.

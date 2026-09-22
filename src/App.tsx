@@ -9,6 +9,7 @@ import { WorkspaceActions } from './portable/InfoActions'
 import { saveWorkspace } from './model/storage'
 import { newId } from './model/util'
 import { backup } from './portable/backup'
+import { CHAT_PLAYGROUND_ID, chatPlayground } from './model/samples/chatPlayground'
 
 const ai = simulated
 
@@ -52,6 +53,10 @@ function Workspace({ initialStoryId, owner }: { initialStoryId?: string; owner?:
   }, [view, setStories])
 
   const actions = {
+    openChatSample: () => {
+      setStories((arr) => (arr.some((s) => s.id === CHAT_PLAYGROUND_ID) ? arr : [chatPlayground(), ...arr]))
+      open(CHAT_PLAYGROUND_ID, false)
+    },
     cloud,
     flush: () => saveWorkspace(stories, owner),
     importStory: (incoming: import('./model/types').Story) => {

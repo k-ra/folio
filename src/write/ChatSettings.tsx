@@ -1,13 +1,23 @@
 import { DEFAULT_CHAT_PROMPT } from '../ai/chatSettings'
 import type { WriteCtl } from './ctl'
 import './chatSettings.css'
+import { useContext } from 'react'
+import { WorkspaceActions } from '../portable/InfoActions'
 
 export default function ChatSettings({ ctl }: { ctl: WriteCtl }) {
   const settings = ctl.story.chatSettings || {}
+  const { openChatSample } = useContext(WorkspaceActions)
+  if (settings.offlineSample)
+    return <small className="chat-sample-label">Offline sample · canned replies · no API calls</small>
   return (
     <details className="chat-settings">
       <summary>Chat settings</summary>
       <div className="chat-settings-fields">
+        {openChatSample && (
+          <button type="button" disabled={ctl.busy} onClick={openChatSample}>
+            Open offline chat sample
+          </button>
+        )}
         <label className="chat-browsing">
           <input
             type="checkbox"

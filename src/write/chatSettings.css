@@ -2,6 +2,12 @@
   font-size: 11px;
   margin-bottom: 12px;
 }
+.chat-sample-label {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 10px;
+  opacity: 0.55;
+}
 .chat-settings > summary {
   cursor: pointer;
   list-style: none;
