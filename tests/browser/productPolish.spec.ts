@@ -73,7 +73,7 @@ test('drag selection crosses paragraph fields without copying margin notes', asy
   expect(selected).toContain('First paragraph')
   expect(selected).toContain('Second paragraph')
 })
-test('info offers three quiet rows and accounts live on the homepage', async ({ page }) => {
+test('info offers two quiet actions above history and accounts live on the homepage', async ({ page }) => {
   await page.goto('/?demo=magic')
   await page.getByTitle('History', { exact: true }).click()
   const info = page.getByRole('region', { name: 'Story history' })

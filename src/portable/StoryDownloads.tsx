@@ -79,10 +79,12 @@ export default function StoryDownloads({ story }: { story: Story }) {
           </>
         )}
       </div>
-      <label className="publication-notes">
-        <input type="checkbox" checked={notes} onChange={(e) => setNotes(e.currentTarget.checked)} /> Include
-        margin notes in publication
-      </label>
+      {choosing && (
+        <label className="publication-notes">
+          <input type="checkbox" checked={notes} onChange={(e) => setNotes(e.currentTarget.checked)} />{' '}
+          Include margin notes in publication
+        </label>
+      )}
       {busy && <small role="status">Preparing…</small>}
       {message && <small role="status">{message}</small>}
       {error && <small role="alert">{error}</small>}

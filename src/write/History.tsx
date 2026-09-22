@@ -65,26 +65,30 @@ export default function History({ story, V, open, toggle, restore }: Props) {
         >
           <div className="quiet-popover-scroll">
             <InfoActions story={story} />
-            {!!hist.length && (
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  ...mono,
-                  opacity: 0.5,
-                  marginBottom: 10,
-                }}
-              >
-                <span>HISTORY</span>
-                <span>
-                  {hist.length} {hist.length === 1 ? 'VERSION' : 'VERSIONS'}
-                </span>
-              </div>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                ...mono,
+                opacity: 0.5,
+                marginBottom: 10,
+              }}
+            >
+              <h2 style={{ font: 'inherit', margin: 0 }}>HISTORY</h2>
+              <span>
+                {hist.length} {hist.length === 1 ? 'VERSION' : 'VERSIONS'}
+              </span>
+            </div>
+            {!hist.length && (
+              <p style={{ font: `400 12px ${SANS}`, opacity: 0.5, margin: '0 0 4px' }}>
+                No earlier versions yet. Writing changes will appear here.
+              </p>
             )}
             {hist.map((v, i) => (
               <button
                 key={v.t + ':' + i}
                 onClick={() => restore(v.t)}
+                title={`Restore ${v.label.toLowerCase()} version`}
                 className="hover-row"
                 style={{
                   display: 'grid',

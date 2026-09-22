@@ -30,7 +30,7 @@ These are implementation rules, not just visual references. Keep the structure i
 
 ## Source of truth and checks
 
-Copy and download belong in the existing info/history panel: Copy text, Download (expanding inline to HTML / .folio), and a small margin-notes checkbox. Accounts and backup import belong only in the homepage settings menu. Do not add page-level chrome. Publication chooses HTML for code-only stories and ZIP when published images or datasets are present. Chat interactions are not essay revisions and restoring writing never rewinds chat. Pasted writing has its own history label.
+The existing info/history panel starts with just two actions: Copy text and Download. Download expands to HTML / .folio and the small margin-notes checkbox. History stays underneath, with its heading visible even when no earlier versions exist; clicking a revision restores it, and that restoration is itself reversible. Accounts and backup import belong only in the homepage settings menu. Do not add page-level chrome. Publication chooses HTML for code-only stories and ZIP when published images or datasets are present. Chat interactions are not essay revisions and restoring writing never rewinds chat. Pasted writing has its own history label.
 
 Chat opens at its standard 380 px width and can be resized from its edge, with keyboard support. Keep the writing column centered through the existing panel/grid contract. Small popovers have no decorative outline; their scrolling content stays inside a persistent padded frame.
 
