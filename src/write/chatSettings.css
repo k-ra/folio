@@ -1,0 +1,62 @@
+.chat-settings {
+  font-size: 11px;
+  margin-bottom: 12px;
+}
+.chat-settings > summary {
+  cursor: pointer;
+  list-style: none;
+  opacity: 0.6;
+}
+.chat-settings > summary::-webkit-details-marker {
+  display: none;
+}
+.chat-settings[open] > summary {
+  opacity: 1;
+}
+.chat-settings-fields {
+  display: grid;
+  gap: 12px;
+  padding: 14px 2px 4px;
+  max-height: 38dvh;
+  overflow: auto;
+}
+.chat-settings-fields label {
+  display: grid;
+  gap: 8px;
+}
+.chat-settings-fields .chat-browsing {
+  display: flex;
+  align-items: center;
+}
+.chat-settings-fields input[type='checkbox'] {
+  appearance: auto;
+  width: 13px;
+  height: 13px;
+  accent-color: currentColor;
+}
+.chat-settings-fields input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+.chat-settings-fields small {
+  font-size: 10px;
+  line-height: 1.5;
+  opacity: 0.55;
+}
+.chat-settings-fields textarea {
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  padding: 8px;
+  background: color-mix(in srgb, currentColor 4%, transparent);
+}
+.chat-settings-bottom {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.chat-settings-bottom button {
+  flex-shrink: 0;
+}

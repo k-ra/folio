@@ -52,6 +52,7 @@ export interface WriteCtl {
   resetStyle: () => void
   savePreset: (name: string) => void
   setChatInput: (v: string) => void
+  setChatSettings: (settings: NonNullable<Story['chatSettings']>) => void
   sendChat: () => void
   clearFocus: () => void
 }

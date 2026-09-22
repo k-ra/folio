@@ -7,6 +7,7 @@ import ControlPanel from '../style/ControlPanel'
 import { currentRevision } from '../magic/state'
 import Markdown from '../text/Markdown'
 import { IndexContents, type IndexStudy } from './IndexStudy'
+import ChatSettings from './ChatSettings'
 
 export default function Panel({ ctl, index }: { ctl: WriteCtl; index?: IndexStudy }) {
   const { panel, story, S } = ctl
@@ -114,6 +115,7 @@ export default function Panel({ ctl, index }: { ctl: WriteCtl; index?: IndexStud
           <div ref={bottom} />
         </div>
         <footer className="chat-footer">
+          {panel?.kind === 'chat' && <ChatSettings ctl={ctl} />}
           {focus && (
             <div className="chat-focus" aria-label={editable ? 'Editing artifact' : 'Chat reference'}>
               <span title={[focus.kind, focus.quote].filter(Boolean).join(' · ')}>

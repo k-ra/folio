@@ -215,12 +215,20 @@ export default function Write({
     chatRequest.current = controller
     try {
       let reply = ''
+      if (panel.kind === 'chat' && story.chatSettings?.browsing && !magic.connected)
+        throw new Error('Connect an OpenAI API key in AI settings to browse the web.')
       if (panel.kind === 'style') {
         const res = await ai.restyle(text, draft || S)
         setDraftState((d) => ({ ...(d || S), ...res.patch }))
         reply = res.explanation
       } else if (magic.connected) {
-        reply = await connectedChat(story.chats[key] || [], text, fl, story, controller.signal)
+        reply = await connectedChat(
+          story.chats[key] || [],
+          text,
+          fl,
+          panel.kind === 'chat' ? story : { ...story, chatSettings: undefined },
+          controller.signal,
+        )
       } else if (panel.kind === 'data') {
         reply = await ai.dataReply(text, files)
       } else {
@@ -520,6 +528,7 @@ export default function Write({
     resetStyle,
     savePreset,
     setChatInput,
+    setChatSettings: (chatSettings) => upStory((s) => ({ ...s, chatSettings })),
     sendChat,
     clearFocus,
   }

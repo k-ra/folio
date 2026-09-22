@@ -1,10 +1,14 @@
 import { spawn } from 'node:child_process'
+import { citedText, safeCitationUrl, type Citation } from './citations.js'
 
 type Env = Record<string, string | undefined>
 type TextPayload = {
   instructions: string
   input: { role: string; content: { type: string; text?: string; image_url?: string }[] }[]
   text?: { format: { schema: object } }
+  tools?: { type: 'web_search'; search_context_size: 'low' }[]
+  max_tool_calls?: number
+  max_output_tokens?: number
 }
 
 export function connectionStatus(env: Env) {
@@ -18,7 +22,18 @@ export function connectionStatus(env: Env) {
 
 /** One text-only transport for artifacts, backgrounds and conversation. Never exposes credentials. */
 export async function generateText(env: Env, payload: TextPayload, signal: AbortSignal): Promise<string> {
-  if (env.FOLIO_TEXT_PROVIDER === 'claude') return claudeText(env, payload, signal)
+  return (await generateTextResult(env, payload, signal)).text
+}
+
+export async function generateTextResult(
+  env: Env,
+  payload: TextPayload,
+  signal: AbortSignal,
+): Promise<{ text: string; sources: string[] }> {
+  if (env.FOLIO_TEXT_PROVIDER === 'claude') {
+    if (payload.tools?.length) throw new Error('Web browsing requires an OpenAI API key.')
+    return { text: await claudeText(env, payload, signal), sources: [] }
+  }
   if (!env.OPENAI_API_KEY) throw new Error('No model connected. Configure the local server first.')
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -36,17 +51,27 @@ export async function generateText(env: Env, payload: TextPayload, signal: Abort
     )
   const result = (await response.json()) as {
     status?: string
-    output?: { content?: { type: string; text?: string }[] }[]
+    output?: { content?: { type: string; text?: string; annotations?: Citation[] }[] }[]
   }
   const content = result.output?.flatMap((o) => o.content || []) || []
   if (result.status === 'incomplete' || content.some((o) => o.type === 'refusal'))
     throw new Error('The model did not return a complete result. Your previous version is unchanged.')
   const text = content
     .filter((o) => o.type === 'output_text')
-    .map((o) => o.text || '')
+    .map((o) => (payload.tools?.length ? citedText(o.text || '', o.annotations) : o.text || ''))
     .join('')
   if (!text.trim()) throw new Error('The model returned no text. Please retry.')
-  return text
+  const sources = [
+    ...new Set(
+      content.flatMap((o) =>
+        (o.annotations || []).flatMap((a) => {
+          const url = a.type === 'url_citation' && safeCitationUrl(a.url)
+          return url ? [url] : []
+        }),
+      ),
+    ),
+  ]
+  return { text, sources }
 }
 
 export function claudeArgs(payload: TextPayload, model: string) {

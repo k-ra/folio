@@ -41,7 +41,13 @@ export async function connectedChat(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal,
-    body: JSON.stringify({ instruction, focus, history: messages.slice(-24), story: chatContext(story) }),
+    body: JSON.stringify({
+      instruction,
+      focus,
+      history: messages.slice(-24),
+      story: chatContext(story),
+      settings: story.chatSettings,
+    }),
   })
   const result = await response.json().catch(() => ({}))
   if (!response.ok) throw new Error(result.error || 'Chat could not connect. Your message is saved.')

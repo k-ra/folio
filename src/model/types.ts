@@ -172,6 +172,8 @@ export interface Version {
 export type ThumbKind = 'lines' | 'bars' | 'gradient' | 'aa' | 'mono' | 'photo'
 
 export interface Story {
+  /** Story-chat preferences, not artifact instructions or publication content. */
+  chatSettings?: import('../ai/chatSettings').ChatSettings
   /** Inline presentation ranges keyed by title, block ID, or n-<block ID> for a margin note. */
   formatting?: Formatting
   id: string

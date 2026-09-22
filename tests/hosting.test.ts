@@ -45,6 +45,95 @@ async function request(
 }
 
 describe('hosted BYOK boundary', () => {
+  it('isolates public web research from private story context and custom prompts', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          output: [
+            {
+              content: [
+                {
+                  type: 'output_text',
+                  text: 'Research [source]',
+                  annotations: [
+                    {
+                      type: 'url_citation',
+                      start_index: 9,
+                      end_index: 17,
+                      url: 'https://example.org/research',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ output: [{ content: [{ type: 'output_text', text: 'A grounded reply.' }] }] }),
+      })
+    vi.stubGlobal('fetch', fetch)
+    const result = await request('/api/chat', {
+      instruction: 'PRIVATE MESSAGE',
+      history: [{ me: true, text: 'PRIVATE HISTORY' }],
+      story: {
+        title: 'PRIVATE TITLE',
+        notes: { a: 'PRIVATE NOTE' },
+        blocks: [{ attachments: ['PRIVATE DATA'] }],
+      },
+      settings: {
+        browsing: true,
+        searchTopic: 'whale communication research',
+        systemPrompt: 'PRIVATE CUSTOM PROMPT',
+      },
+    })
+    expect(result.status).toBe(200)
+    expect(fetch).toHaveBeenCalledTimes(2)
+    const search = JSON.parse(fetch.mock.calls[0][1].body)
+    expect(search.tools).toEqual([{ type: 'web_search', search_context_size: 'low' }])
+    expect(search.max_tool_calls).toBe(3)
+    expect(search.max_output_tokens).toBe(8000)
+    expect(search.input[0].content[0].text).toBe('whale communication research')
+    expect(JSON.stringify(search)).not.toContain('PRIVATE')
+    const reply = JSON.parse(fetch.mock.calls[1][1].body)
+    expect(reply.tools).toBeUndefined()
+    expect(reply.instructions).toContain('PRIVATE CUSTOM PROMPT')
+    expect(reply.instructions).toContain('untrusted reference material')
+    expect(JSON.stringify(reply.input)).toContain('PRIVATE NOTE')
+    expect(JSON.stringify(reply.input)).toContain('https://example.org/research')
+    expect(result.body.reply).toContain('[1](<https://example.org/research>)')
+  })
+  it('rejects malformed browsing preferences before making model calls', async () => {
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    for (const settings of [
+      { browsing: true },
+      { browsing: 'yes' },
+      { systemPrompt: 'x'.repeat(6001) },
+      { browsing: true, searchTopic: 'x'.repeat(501) },
+      { tools: ['shell'] },
+    ]) {
+      const result = await request('/api/chat', { instruction: 'Hello', history: [], story: {}, settings })
+      expect(result.status).toBe(400)
+    }
+    expect(fetch).not.toHaveBeenCalled()
+  })
+  it('surfaces research failure without inventing a fallback reply', async () => {
+    const fetch = vi.fn().mockResolvedValue({ ok: false, status: 429 })
+    vi.stubGlobal('fetch', fetch)
+    const result = await request('/api/chat', {
+      instruction: 'Hello',
+      history: [],
+      story: {},
+      settings: { browsing: true, searchTopic: 'whales' },
+    })
+    expect(result.status).toBe(502)
+    expect(result.body.error).toContain('limit')
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
   it('reports BYOK without exposing or using deployment credentials', async () => {
     const result = await request('/api/magic/status', {}, {}, false, 'GET')
     expect(result.body).toEqual({

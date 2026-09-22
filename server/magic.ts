@@ -196,7 +196,17 @@ export function createMagicHandler(env: Env, root: string) {
             },
           }
       if (!image) {
-        const output = JSON.parse(await generateText(env, payload, abort.signal))
+        const output = JSON.parse(
+          await generateText(
+            env,
+            {
+              instructions: payload.instructions,
+              input: payload.input,
+              text: payload.text,
+            },
+            abort.signal,
+          ),
+        )
         if (
           typeof output.html !== 'string' ||
           !output.html.trim() ||
