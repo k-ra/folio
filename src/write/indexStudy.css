@@ -1,0 +1,81 @@
+/* Only the experimental controls. The workshop and chat use their existing styles. */
+.index-tabs {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+.index-tabs button {
+  font: inherit;
+  letter-spacing: inherit;
+  opacity: 0.45;
+}
+.index-tabs button[aria-pressed='true'] {
+  opacity: 1;
+}
+.index-empty,
+.index-clipping {
+  font-size: 13px;
+  line-height: 1.65;
+}
+.index-empty {
+  opacity: 0.5;
+}
+.index-excerpt {
+  display: block;
+  text-align: left;
+  white-space: pre-wrap;
+  margin-top: 8px;
+  font: inherit;
+}
+.index-excerpt[aria-expanded='false'] {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.index-context {
+  padding-top: 24px;
+}
+.index-context > .eyebrow {
+  display: block;
+  margin-top: 18px;
+}
+.index-context > p {
+  white-space: pre-wrap;
+}
+.index-context > button {
+  opacity: 0.5;
+  font-size: 11px;
+  margin-top: 18px;
+}
+.index-local {
+  font-size: 10px;
+  opacity: 0.45;
+  padding-top: 18px;
+}
+.index-selection {
+  position: fixed;
+  z-index: 60;
+  background: #292720;
+  color: #fffdf6;
+  padding: 8px 12px;
+  border-radius: 3px;
+  font:
+    12px/1.5 'Instrument Sans',
+    sans-serif;
+}
+.index-saved {
+  position: fixed;
+  bottom: 16px;
+  right: 24px;
+  z-index: 60;
+  background: var(--bg, #fffdf6);
+  color: #292720;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+.index-selection:focus-visible,
+.index-tabs button:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
+}

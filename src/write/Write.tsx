@@ -34,6 +34,7 @@ import PanelResize, { DEFAULT_PANEL_WIDTH } from './PanelResize'
 import EssaySelection from './EssaySelection'
 import { storyText } from '../portable/backup'
 import { withFormatting, sliceMarks, type TextMark } from '../text/formatting'
+import { ClipSelection, useIndexStudy } from './IndexStudy'
 
 interface Props {
   story: Story
@@ -63,6 +64,7 @@ export default function Write({
   saving,
   cloudStatus,
 }: Props) {
+  const indexStudy = useIndexStudy(story)
   const [panel, setPanel] = useState<PanelT | null>(null)
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
   const pasting = useRef(false)
@@ -605,7 +607,7 @@ export default function Write({
           } as CSSProperties
         }
       >
-        {panelOpen && <Panel ctl={ctl} />}
+        {panelOpen && <Panel ctl={ctl} index={panel?.kind === 'chat' ? indexStudy : undefined} />}
         {panelOpen && isChatPanel(panel) && <PanelResize width={panelWidth} resize={setPanelWidth} />}
       </div>
 
@@ -734,6 +736,14 @@ export default function Write({
           restore={restoreVersion}
         />
       </div>
+      <ClipSelection
+        study={indexStudy}
+        reveal={() => {
+          setPanel({ kind: 'chat' })
+          setChatFocus(null)
+          indexStudy.setOpen(true)
+        }}
+      />
     </div>
   )
 }

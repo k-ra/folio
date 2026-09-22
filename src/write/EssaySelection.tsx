@@ -124,6 +124,7 @@ export default function EssaySelection({ children, text }: { children: ReactNode
     const down = (e: PointerEvent) => {
       if (e.button !== 0) return
       const target = e.target as HTMLElement
+      if (target.closest('.index-selection')) return
       if (state.current.active) {
         const field = target.closest<HTMLElement>('[data-story-text]')
         if (!field) {

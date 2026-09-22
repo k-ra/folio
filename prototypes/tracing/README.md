@@ -1,15 +1,14 @@
-# INDEX study — not on main
+# INDEX in the actual editor — prototype branch only
 
-Run the public app's Vite dev server, then open `/prototypes/tracing/`. This is an isolated interaction prototype, not a replacement editor. It never reads Folio stories, calls a model, or uploads anything.
+Run `npm run dev -- --port 5174` on `prototype/tracing-index`, then open `/` and any story. This is the full Folio app: its normal homepage, editor, style panel, margins, artifacts, saving and AI connection. No replacement layout, fonts, demonstration toolbar, or extra rail controls. The old `/prototypes/tracing/` URL redirects to the actual app; the old standalone study source is retained only as design history.
 
-- Select words in chat or the essay to reveal **Save to index** beside the selection. No per-message action is repeated. Tab focuses the action; Escape dismisses it. Exact duplicates are ignored.
-- **CHAT / INDEX** share one left drawer. Switching tabs preserves the chat's scroll position. An excerpt expands into its saved context; the source action returns to the passage in chat or the essay.
-- **No AI** still has a research notebook: add your own thoughts and clip them.
-- Clicking the example graphic opens its separate conversation on the right. That rail does not exist before selecting the graphic. Its session-only instructions never enter research chat.
-- Research notes and clippings use a separate browser storage key (`folio.prototype.tracing-index.v1`). Storage failures are visible. The sample essay is read-only. `live-response.md` is an 831-word response captured from one explicitly authorized Claude request about this fictional essay on 2026-09-21. The prototype replays it locally; opening the page makes no AI request and sends no writing.
+- Open the existing chat orb. **INDEX** sits beside **CHAT** in the existing drawer header and uses its normal width/resizing. Switching tabs preserves the mounted conversation and reading position.
+- Highlight writing or research chat to reveal **Save to index**. Native textareas, rich text and cross-paragraph selection are supported; margin notes are excluded. Selection never changes the author's text.
+- Expand a clipping to read its saved context or open its source. No permanent Keep button beneath every message. Artifact editing keeps its existing controls and conversation behavior; this pass does not relocate it.
+- Clippings live only in this origin's browser storage, scoped by account and story (`folio.index-study.v2`). They do not yet enter cloud payloads, backups or publication exports. Read/write failures preserve the stored copy and surface a warning. Old standalone-study data is left untouched.
 
-## Decision
+The normal chat uses Folio's actual existing AI connection. Tests reuse `live-response.md`, an 831-word response captured from one authorized Claude request about a fictional essay on 2026-09-21. No additional live generation is part of QA.
 
-The essay is the work; the left drawer holds research nearby; each clipping retains provenance. The index should not become another transcript or silently insert AI text into writing. Only the excerpt is initially visible. Expanded context is a snapshot, so later research does not rewrite its meaning.
+Run `npx playwright test --config prototypes/tracing/playwright.config.ts` for real-editor desktop/mobile clipping tests. The shared rail, centering, orbs, layout, scroll, editor and product-polish suites remain unchanged and must pass.
 
-Before merging: try real reading sessions, decide whether a clipping needs a paragraph anchor, and add structured-story storage, backup/cloud migration, accessible focus restoration, and publication exclusion tests. Do not merge this stand-alone localStorage prototype as production persistence. Live AI and object editing remain disconnected here deliberately.
+Before merging: approve placement in the real app, finish keyboard/source focus restoration and long-selection anchoring, and integrate clipping data into the versioned story schema, cloud/backup migrations and publication privacy tests. This is not production clipping persistence and stays off main.

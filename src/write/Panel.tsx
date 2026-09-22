@@ -6,8 +6,9 @@ import { focusLabel } from './focus'
 import ControlPanel from '../style/ControlPanel'
 import { currentRevision } from '../magic/state'
 import Markdown from '../text/Markdown'
+import { IndexContents, type IndexStudy } from './IndexStudy'
 
-export default function Panel({ ctl }: { ctl: WriteCtl }) {
+export default function Panel({ ctl, index }: { ctl: WriteCtl; index?: IndexStudy }) {
   const { panel, story, S } = ctl
   const bottom = useRef<HTMLDivElement>(null)
   const key = panel?.kind === 'block' ? panel.id : panel?.kind
@@ -35,102 +36,122 @@ export default function Panel({ ctl }: { ctl: WriteCtl }) {
   return (
     <section
       className="chat-panel"
-      aria-label={artifact ? 'Artifact chat' : fancy ? 'Text styling chat' : title}
+      aria-label={index?.open ? 'Index' : artifact ? 'Artifact chat' : fancy ? 'Text styling chat' : title}
       style={{ background: S.bg, color: S.ink, fontFamily: FONTS[S.bodyFont] }}
     >
       <header className="panel-header">
-        <h2>{title.toUpperCase()}</h2>
+        <h2>
+          {index ? (
+            <span className="index-tabs">
+              <button aria-pressed={!index.open} onClick={() => index.setOpen(false)}>
+                CHAT
+              </button>
+              <button aria-pressed={index.open} onClick={() => index.setOpen(true)}>
+                INDEX
+              </button>
+            </span>
+          ) : (
+            title.toUpperCase()
+          )}
+        </h2>
         <button aria-label="Close chat panel" onClick={ctl.closePanel}>
           ×
         </button>
       </header>
-      {panel?.kind === 'data' && (
-        <div className="data-files">
-          {story.blocks
-            .flatMap((b) => (b.type === 'magic' ? b.attachments : []))
-            .map((f) => (
-              <div key={f.id}>
-                <span>{f.name}</span>
-                <small>{f.kind}</small>
-              </div>
-            ))}
-          {!story.blocks.some((b) => b.type === 'magic' && b.attachments.length) && (
-            <p>Add a CSV, TSV, or reference image through a magic block. Its attachments will appear here.</p>
+      {index?.open && <IndexContents study={index} />}
+      <div style={{ display: index?.open ? 'none' : 'contents' }}>
+        {panel?.kind === 'data' && (
+          <div className="data-files">
+            {story.blocks
+              .flatMap((b) => (b.type === 'magic' ? b.attachments : []))
+              .map((f) => (
+                <div key={f.id}>
+                  <span>{f.name}</span>
+                  <small>{f.kind}</small>
+                </div>
+              ))}
+            {!story.blocks.some((b) => b.type === 'magic' && b.attachments.length) && (
+              <p>
+                Add a CSV, TSV, or reference image through a magic block. Its attachments will appear here.
+              </p>
+            )}
+          </div>
+        )}
+        <div className="chat-messages" role="log" aria-label="Conversation">
+          {!msgs.length && (
+            <div className="chat-empty">
+              {editable
+                ? 'Keep the good parts. Change the rest.'
+                : 'A second pair of eyes, whenever you need one.'}
+            </div>
           )}
+          {msgs.map((m, i) => (
+            <div key={i} className={'chat-message ' + (m.me ? 'from-me' : '')}>
+              {m.focus && <div className="eyebrow">{m.focus}</div>}
+              <span className="eyebrow">{m.me ? 'YOU' : 'FOLIO'}</span>
+              <div data-index-message={index ? String(i) : undefined}>
+                <Markdown>{m.text}</Markdown>
+              </div>
+            </div>
+          ))}
+          {working && (
+            <div className="chat-working" role="status">
+              <span className="loading-dot" />
+              {fancy ? 'Styling your text…' : artifact ? 'Working on your edit…' : 'Thinking…'}
+              {fancy && <button onClick={() => ctl.fancy.cancel(fancy.id)}>Cancel</button>}
+            </div>
+          )}
+          {editable?.error && (
+            <p role="alert" className="magic-error">
+              {editable.error} Your instruction is saved in the margin.
+            </p>
+          )}
+          {!editable && ctl.chatError && (
+            <p role="alert" className="magic-error">
+              {ctl.chatError}
+            </p>
+          )}
+          <div ref={bottom} />
         </div>
-      )}
-      <div className="chat-messages" role="log" aria-label="Conversation">
-        {!msgs.length && (
-          <div className="chat-empty">
-            {editable
-              ? 'Keep the good parts. Change the rest.'
-              : 'A second pair of eyes, whenever you need one.'}
-          </div>
-        )}
-        {msgs.map((m, i) => (
-          <div key={i} className={'chat-message ' + (m.me ? 'from-me' : '')}>
-            {m.focus && <div className="eyebrow">{m.focus}</div>}
-            <span className="eyebrow">{m.me ? 'YOU' : 'FOLIO'}</span>
-            <Markdown>{m.text}</Markdown>
-          </div>
-        ))}
-        {working && (
-          <div className="chat-working" role="status">
-            <span className="loading-dot" />
-            {fancy ? 'Styling your text…' : artifact ? 'Working on your edit…' : 'Thinking…'}
-            {fancy && <button onClick={() => ctl.fancy.cancel(fancy.id)}>Cancel</button>}
-          </div>
-        )}
-        {editable?.error && (
-          <p role="alert" className="magic-error">
-            {editable.error} Your instruction is saved in the margin.
-          </p>
-        )}
-        {!editable && ctl.chatError && (
-          <p role="alert" className="magic-error">
-            {ctl.chatError}
-          </p>
-        )}
-        <div ref={bottom} />
-      </div>
-      <footer className="chat-footer">
-        {focus && (
-          <div className="chat-focus" aria-label={editable ? 'Editing artifact' : 'Chat reference'}>
-            <span title={[focus.kind, focus.quote].filter(Boolean).join(' · ')}>
-              {focus.kind}
-              {focus.quote ? ` · ${focus.quote}` : ''}
-            </span>
-            <button aria-label="Clear chat focus" title="Return to story chat" onClick={ctl.clearFocus}>
-              ×
+        <footer className="chat-footer">
+          {focus && (
+            <div className="chat-focus" aria-label={editable ? 'Editing artifact' : 'Chat reference'}>
+              <span title={[focus.kind, focus.quote].filter(Boolean).join(' · ')}>
+                {focus.kind}
+                {focus.quote ? ` · ${focus.quote}` : ''}
+              </span>
+              <button aria-label="Clear chat focus" title="Return to story chat" onClick={ctl.clearFocus}>
+                ×
+              </button>
+            </div>
+          )}
+          <AutoTextarea
+            markdown
+            data-id="chat"
+            aria-label="Chat message"
+            placeholder={
+              fancy
+                ? 'How should this text feel?'
+                : artifact
+                  ? 'What should change next?'
+                  : 'Ask about the piece…'
+            }
+            value={ctl.chatInput}
+            onChange={(e) => ctl.setChatInput(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                void ctl.sendChat()
+              }
+            }}
+          />
+          <div className="chat-send-row">
+            <button disabled={working || !ctl.chatInput.trim()} onClick={ctl.sendChat}>
+              Send
             </button>
           </div>
-        )}
-        <AutoTextarea
-          markdown
-          data-id="chat"
-          aria-label="Chat message"
-          placeholder={
-            fancy
-              ? 'How should this text feel?'
-              : artifact
-                ? 'What should change next?'
-                : 'Ask about the piece…'
-          }
-          value={ctl.chatInput}
-          onChange={(e) => ctl.setChatInput(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              void ctl.sendChat()
-            }
-          }}
-        />
-        <div className="chat-send-row">
-          <button disabled={working || !ctl.chatInput.trim()} onClick={ctl.sendChat}>
-            Send
-          </button>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </section>
   )
 }
