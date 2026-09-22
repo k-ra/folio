@@ -59,7 +59,11 @@ export default function Panel({ ctl, index }: { ctl: WriteCtl; index?: IndexStud
           ×
         </button>
       </header>
-      {index?.open && <IndexContents study={index} />}
+      {index && (
+        <div style={{ display: index.open ? 'contents' : 'none' }}>
+          <IndexContents study={index} />
+        </div>
+      )}
       <div style={{ display: index?.open ? 'none' : 'contents' }}>
         {panel?.kind === 'data' && (
           <div className="data-files">

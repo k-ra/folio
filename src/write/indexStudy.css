@@ -12,32 +12,34 @@
 .index-tabs button[aria-pressed='true'] {
   opacity: 1;
 }
-.index-empty,
 .index-excerpt {
   font-size: 13px;
   line-height: 1.65;
 }
-.index-empty {
-  opacity: 0.5;
-}
 .index-excerpt {
   text-align: left;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 .index-editor {
+  flex: 1;
   display: block;
   width: 100%;
-  min-height: 100%;
-  resize: vertical;
+  min-height: 240px;
   border: 0;
+  outline: none;
   background: transparent;
   color: inherit;
   font: inherit;
   line-height: 1.65;
 }
-.index-edit {
-  align-self: flex-start;
-  opacity: 0.5;
-  font-size: 11px;
+.index-editor > p:only-child:has(> br.ProseMirror-trailingBreak:only-child)::before {
+  content: 'Write here, or select words in chat or your essay to keep.';
+  opacity: 0.4;
+  pointer-events: none;
+  float: left;
+  height: 0;
 }
 .index-local {
   font-size: 10px;

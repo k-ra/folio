@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { Story } from '../model/types'
 import { useAccount } from '../cloud/Auth'
-import Markdown from '../text/Markdown'
+import type { JSONContent } from '@tiptap/core'
+import IndexEditor, { emptyIndex, indexFromMarkdown, readIndexDocument } from './IndexEditor'
 import { literalMarkdown, loadIndex, selectionMarkdown } from './indexMarkdown'
 import './indexStudy.css'
 
@@ -12,23 +13,39 @@ type Anchor = Passage & { left: number; top: number }
 export function useIndexStudy(story: Story) {
   const { user } = useAccount()
   const identity = `${user?.id || 'browser'}:${story.id}`
-  const storage = `folio.index-study.v3:${identity}`
-  const [loaded] = useState((): { markdown: string; error: string } => {
+  const storage = `folio.index-study.v4:${identity}`
+  const [loaded] = useState((): { document: JSONContent; error: string } => {
     try {
-      return { markdown: loadIndex(localStorage, storage, `folio.index-study.v2:${identity}`), error: '' }
+      const saved = localStorage.getItem(storage)
+      return {
+        document:
+          saved !== null
+            ? readIndexDocument(saved)
+            : indexFromMarkdown(
+                loadIndex(
+                  localStorage,
+                  `folio.index-study.v3:${identity}`,
+                  `folio.index-study.v2:${identity}`,
+                ),
+              ),
+        error: '',
+      }
     } catch {
-      return { markdown: '', error: 'Saved clippings could not be read. The stored copy is unchanged.' }
+      return {
+        document: emptyIndex(),
+        error: 'Saved clippings could not be read. The stored copy is unchanged.',
+      }
     }
   })
-  const [markdown, setMarkdown] = useState(loaded.markdown)
+  const [document, setDocument] = useState(loaded.document)
   const [error, setError] = useState(loaded.error)
   const [open, setOpen] = useState(false)
   const [notice, setNotice] = useState('')
-  const persist = (next: string) => {
-    setMarkdown(next)
+  const persist = (next: JSONContent) => {
+    setDocument(next)
     try {
       if (loaded.error) throw new Error(loaded.error)
-      localStorage.setItem(storage, next)
+      localStorage.setItem(storage, JSON.stringify(next))
       setError('')
       return true
     } catch {
@@ -37,7 +54,12 @@ export function useIndexStudy(story: Story) {
     }
   }
   const save = (passage: Passage) => {
-    const saved = persist([markdown.trimEnd(), passage.excerpt].filter(Boolean).join('\n\n'))
+    const content = document.content || []
+    const empty = content.length === 1 && content[0].type === 'paragraph' && !content[0].content?.length
+    const saved = persist({
+      type: 'doc',
+      content: [...(empty ? [] : content), ...(indexFromMarkdown(passage.excerpt).content || [])],
+    })
     setNotice(saved ? 'Saved to index' : 'Added to index · not saved')
   }
   useEffect(() => {
@@ -46,7 +68,7 @@ export function useIndexStudy(story: Story) {
     return () => clearTimeout(timer)
   }, [notice])
   return {
-    markdown,
+    document,
     edit: persist,
     open,
     setOpen,
@@ -58,30 +80,11 @@ export function useIndexStudy(story: Story) {
 export type IndexStudy = ReturnType<typeof useIndexStudy>
 
 export function IndexContents({ study }: { study: IndexStudy }) {
-  const [editing, setEditing] = useState(false)
   return (
     <>
       <div className="chat-messages index-contents" aria-label="Saved clippings">
-        {!study.markdown && !editing && (
-          <p className="index-empty">Select words in chat or your essay to save a clipping.</p>
-        )}
-        {editing ? (
-          <textarea
-            className="index-editor"
-            aria-label="Index Markdown"
-            value={study.markdown}
-            onChange={(e) => study.edit(e.target.value)}
-            autoFocus
-          />
-        ) : (
-          <div className="index-excerpt">
-            <Markdown>{study.markdown}</Markdown>
-          </div>
-        )}
+        <IndexEditor value={study.document} onChange={study.edit} />
       </div>
-      <button className="index-edit" onClick={() => setEditing(!editing)}>
-        {editing ? 'Done' : 'Edit'}
-      </button>
       <small className="index-local">
         Prototype · clippings stay in this browser, outside exports and cloud saves.
       </small>
