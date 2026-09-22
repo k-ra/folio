@@ -1,10 +1,15 @@
 import { test, expect } from './fixtures'
 
-test('Folio has a self-contained, scalable typographic page icon', async ({ page }) => {
+test('Folio has a self-contained Tide-gradient orb page icon', async ({ page }) => {
   await page.goto('/')
   const icon = page.locator('link[rel="icon"]')
   await expect(icon).toHaveAttribute('type', 'image/svg+xml')
   const href = await icon.evaluate((el: HTMLLinkElement) => el.href)
+  const svg = await (await page.request.get(href)).text()
+  expect(svg).toContain('Folio — Tide orb')
+  expect(svg.match(/<circle\b/g)).toHaveLength(1)
+  expect(svg).toContain('linearGradient')
+  expect(svg).not.toMatch(/<(?:text|path|rect|image)\b/)
   await page.setContent(`<body style="margin:32px;background:#d6d3ce;display:flex;align-items:center;gap:24px">
     ${[16, 32, 64, 256].map((size) => `<img alt="Folio ${size}" width="${size}" height="${size}" src="${href}">`).join('')}
   </body>`)
