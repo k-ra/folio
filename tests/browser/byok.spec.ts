@@ -28,17 +28,18 @@ for (const width of [1440, 390, 320]) {
     )
     await menu.getByRole('button', { name: 'AI', exact: true }).click()
     await expect(menu.getByLabel('OpenAI API key', { exact: true })).toBeVisible()
+    const ai = (await menu.getByRole('button', { name: 'AI', exact: true }).boundingBox())!
+    const key = (await menu.getByLabel('OpenAI API key', { exact: true }).boundingBox())!
+    expect(Math.abs(ai.y + ai.height / 2 - key.y - key.height / 2)).toBeLessThan(2)
+    await page.screenshot({ path: `test-results/byok-home-entry-${width}.png`, animations: 'disabled' })
     await expect(page.getByRole('dialog')).toHaveCount(0)
     const rect = (await menu.boundingBox())!
     expect(rect.x).toBeGreaterThanOrEqual(0)
     expect(rect.x + rect.width).toBeLessThanOrEqual(width)
     await page.getByLabel('OpenAI API key', { exact: true }).fill('sk-offline-browser-test')
     await menu.getByRole('button', { name: 'Save', exact: true }).click()
-    await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveAttribute(
-      'placeholder',
-      'Connected · replace key…',
-    )
-    await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveValue('')
+    await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveCount(0)
+    await expect(menu.getByRole('button', { name: 'AI connected', exact: true })).toBeVisible()
     expect(paid).toBe(0)
     const storage = await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))
     expect(storage).not.toContain('sk-offline-browser-test')
@@ -88,7 +89,11 @@ for (const width of [1440, 390, 320]) {
         })
         .map((child) => child.className),
     )
-    expect(rows).toEqual(['ai-choice', 'ai-key-row'])
+    expect(rows).toEqual(['ai-connection-line'])
+    const ai = (await dialog.getByRole('button', { name: 'AI', exact: true }).boundingBox())!
+    const key = (await dialog.getByLabel('OpenAI API key', { exact: true }).boundingBox())!
+    expect(Math.abs(ai.y + ai.height / 2 - key.y - key.height / 2)).toBeLessThan(2)
+    await page.screenshot({ path: `test-results/byok-dialog-entry-${width}.png`, animations: 'disabled' })
     expect((await dialog.boundingBox())!.height).toBeLessThan(150)
     const rect = (await dialog.boundingBox())!
     expect(rect.x).toBeGreaterThanOrEqual(0)
@@ -99,6 +104,9 @@ for (const width of [1440, 390, 320]) {
     await expect(page.getByRole('button', { name: 'AI settings', exact: true })).toBeVisible()
     expect(paid).toBe(0)
     await page.getByRole('button', { name: 'AI settings', exact: true }).click()
+    await expect(dialog.getByRole('button', { name: 'AI connected', exact: true })).toBeVisible()
+    await expect(page.getByLabel('OpenAI API key', { exact: true })).toHaveCount(0)
+    await dialog.getByRole('button', { name: 'AI connected', exact: true }).click()
     await expect(page.getByLabel('OpenAI API key', { exact: true })).toHaveValue('')
     await page.screenshot({ path: `test-results/byok-dialog-${width}.png` })
     await page.keyboard.press('Escape')
@@ -112,19 +120,20 @@ for (const width of [1440, 390, 320]) {
   })
 }
 
-test('visitor key goes in the request header, not saved story context; disconnect forgets it', async ({
-  page,
-}) => {
+test('visitor key goes in the request header; errors recover and disconnect forgets it', async ({ page }) => {
   await page.route('**/api/magic/status', (route) =>
     route.fulfill({ json: { configured: false, byok: true } }),
   )
   const requests: { key: string | undefined; body: string | null }[] = []
+  let fail = true
   await page.route('**/api/chat', (route) => {
     requests.push({
       key: route.request().headers()['x-folio-api-key'],
       body: route.request().postData(),
     })
-    return route.fulfill({ json: { reply: 'Offline test reply.' } })
+    return fail
+      ? route.fulfill({ status: 401, json: { error: 'Invalid test key.' } })
+      : route.fulfill({ json: { reply: 'Offline test reply.' } })
   })
   await page.goto('/')
   await page.getByRole('button', { name: 'Homepage settings', exact: true }).click()
@@ -143,8 +152,18 @@ test('visitor key goes in the request header, not saved story context; disconnec
   await page.getByRole('button', { name: 'Open chat', exact: true }).click()
   await page.getByLabel('Chat message').fill('Discuss this essay')
   await page.getByRole('button', { name: 'Send', exact: true }).click()
+  await expect(page.locator('.ai-connect .ai-indicator-error')).toHaveText('!')
+  await page.getByRole('button', { name: 'AI settings', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'AI connection error', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'AI connection error', exact: true }).click()
+  await expect(page.getByLabel('OpenAI API key', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Close AI settings', exact: true }).click()
+  fail = false
+  await page.getByLabel('Chat message').fill('Try again')
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(page.getByRole('log')).toContainText('Offline test reply.')
-  expect(requests).toHaveLength(1)
+  await expect(page.locator('.ai-connect .ai-indicator-error')).toHaveCount(0)
+  expect(requests).toHaveLength(2)
   expect(requests[0].key).toBe('sk-offline-browser-test')
   expect(requests[0].body).not.toContain('sk-offline-browser-test')
   await expect(page.locator('.essay-header')).toContainText('SAVED')
@@ -171,7 +190,7 @@ test('visitor key goes in the request header, not saved story context; disconnec
   await page.getByLabel('Chat message').fill('An offline follow-up')
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(page.locator('.chat-working')).toHaveCount(0)
-  expect(requests).toHaveLength(1)
+  expect(requests).toHaveLength(2)
 })
 
 test('a static-only installation does not offer a nonfunctional key form', async ({ page }) => {

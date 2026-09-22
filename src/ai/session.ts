@@ -2,12 +2,28 @@
 let apiKey = ''
 let disabled = false
 let maxRequestBytes = 4_000_000
+let requestState: 'ready' | 'connected' | 'error' = 'ready'
+let keyRevision = 0
+const requestListeners = new Set<() => void>()
+export const getAIRequestState = () => requestState
+export const subscribeAIRequestState = (listener: () => void) => {
+  requestListeners.add(listener)
+  return () => {
+    requestListeners.delete(listener)
+  }
+}
+function updateRequestState(state: typeof requestState) {
+  requestState = state
+  requestListeners.forEach((listener) => listener())
+}
 const listeners = new Set<() => void>()
 export const hasApiKey = () => !!apiKey
 export const isAIDisabled = () => disabled
 export function disableAI() {
   apiKey = ''
   disabled = true
+  keyRevision++
+  updateRequestState('ready')
   listeners.forEach((listener) => listener())
 }
 export const subscribeKey = (listener: () => void) => {
@@ -21,6 +37,8 @@ export function setApiKey(value: string) {
   if (key && !/^sk-[\w-]{10,500}$/.test(key)) throw new Error('Enter an OpenAI API key beginning with sk-.')
   apiKey = key
   disabled = false
+  keyRevision++
+  updateRequestState('ready')
   listeners.forEach((listener) => listener())
 }
 export function setRequestLimit(bytes: unknown) {
@@ -37,10 +55,23 @@ export async function apiFetch(
     )
   const headers = new Headers(init.headers)
   if (apiKey) headers.set('X-Folio-Api-Key', apiKey)
-  return fetch(path, {
-    ...init,
-    headers,
-    redirect: 'error',
-    cache: 'no-store',
-  })
+  const revision = keyRevision
+  try {
+    const response = await fetch(path, {
+      ...init,
+      headers,
+      redirect: 'error',
+      cache: 'no-store',
+    })
+    if (revision === keyRevision) updateRequestState(response.ok ? 'connected' : 'error')
+    return response
+  } catch (cause) {
+    if (
+      revision === keyRevision &&
+      !init.signal?.aborted &&
+      !(typeof cause === 'object' && cause !== null && 'name' in cause && cause.name === 'AbortError')
+    )
+      updateRequestState('error')
+    throw cause
+  }
 }

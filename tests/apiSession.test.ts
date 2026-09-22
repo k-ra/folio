@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apiFetch, hasApiKey, setApiKey, setRequestLimit } from '../src/ai/session'
+import {
+  apiFetch,
+  disableAI,
+  getAIRequestState,
+  hasApiKey,
+  setApiKey,
+  setRequestLimit,
+} from '../src/ai/session'
 
 afterEach(() => {
   setApiKey('')
@@ -7,6 +14,45 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 describe('tab-only API connection', () => {
+  it('reports request errors and recovery without persisting or verifying a newly saved key', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false })
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({ ok: true })
+    vi.stubGlobal('fetch', fetch)
+    setApiKey('sk-offline-visitor-key')
+    expect(getAIRequestState()).toBe('ready')
+    expect(fetch).not.toHaveBeenCalled()
+    await apiFetch('/api/chat', {})
+    expect(getAIRequestState()).toBe('error')
+    await expect(apiFetch('/api/chat', {})).rejects.toThrow('Failed to fetch')
+    expect(getAIRequestState()).toBe('error')
+    await apiFetch('/api/chat', {})
+    expect(getAIRequestState()).toBe('connected')
+    disableAI()
+    expect(getAIRequestState()).toBe('ready')
+  })
+  it('does not mark cancellation or responses for a replaced key as connection errors', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new DOMException('Cancelled', 'AbortError')))
+    await expect(apiFetch('/api/chat', {})).rejects.toThrow('Cancelled')
+    expect(getAIRequestState()).toBe('ready')
+    let finish!: (value: { ok: boolean }) => void
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise((resolve) => {
+            finish = resolve
+          }),
+      ),
+    )
+    const pending = apiFetch('/api/chat', {})
+    setApiKey('sk-new-offline-visitor-key')
+    finish({ ok: false })
+    await pending
+    expect(getAIRequestState()).toBe('ready')
+  })
   it('sends the key only as a header, prevents redirect leakage, and forgets on disconnect', async () => {
     const fetch = vi.fn().mockResolvedValue({ ok: true })
     vi.stubGlobal('fetch', fetch)
