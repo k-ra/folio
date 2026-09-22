@@ -4,6 +4,7 @@ import { cloudCheckpoint, loadWorkspace, saveWorkspace } from '../model/storage'
 import { newId } from '../model/util'
 import { StorySync, type Checkpoint, type Conflict } from './sync'
 import { fingerprint, transportFor } from './transport'
+import { pendingGoogleImport, clearGoogleImport } from './googleImport'
 
 export function useCloud(
   owner: string | undefined,
@@ -49,6 +50,10 @@ export function useCloud(
       busy.current = true
       const snapshot = current.current
       try {
+        if (pendingGoogleImport(owner)) {
+          await copyBrowserStories()
+          clearGoogleImport()
+        }
         if (!engine.current)
           engine.current = new StorySync(
             (await cloudCheckpoint<Checkpoint>(owner)) || {},
@@ -79,7 +84,10 @@ export function useCloud(
         }
       } catch (e) {
         if (alive.current)
-          setError(e instanceof Error ? e.message : 'Cloud save failed. Local edits remain available.')
+          setError(
+            (pendingGoogleImport(owner) ? 'Import incomplete; retry is safe. ' : '') +
+              (e instanceof Error ? e.message : 'Cloud save failed. Local edits remain available.'),
+          )
       } finally {
         busy.current = false
         if (alive.current && current.current !== snapshot) retry()
@@ -87,31 +95,37 @@ export function useCloud(
     }, 750)
     return () => clearTimeout(timer)
   }, [owner, ready, stories, tick, setStories])
+  const copyBrowserStories = async () => {
+    if (!owner || !transport) throw new Error('Sign in before importing.')
+    // Explicit consent is the only route from the guest workspace to the account.
+    const browser = (await loadWorkspace()) || []
+    const existing = new Set([
+      ...(await transport.list()).map((s) => s.id),
+      ...current.current.map((s) => s.id),
+    ])
+    let imported = 0
+    for (const story of browser) {
+      if (!alive.current) throw new Error('Account changed. Import stopped; originals are unchanged.')
+      if (existing.has(story.id)) continue
+      try {
+        await transport.save(story.id, 0, story)
+        imported++
+      } catch (e) {
+        if (!(e instanceof Error && e.message.startsWith('Conflict:'))) throw e
+      }
+    }
+    setImportMessage(
+      `${imported} imported. Existing cloud stories were skipped; browser originals are unchanged.`,
+    )
+    setError('')
+  }
   const importBrowser = async () => {
     if (!owner || !transport) return
     if (busy.current) throw new Error('Cloud saving is in progress. Please try importing again shortly.')
     busy.current = true
     try {
-      // Explicit consent is the only route from the guest workspace to the account.
-      const browser = (await loadWorkspace()) || []
-      const existing = new Set([
-        ...(await transport.list()).map((s) => s.id),
-        ...current.current.map((s) => s.id),
-      ])
-      let imported = 0
-      for (const story of browser) {
-        if (existing.has(story.id)) continue
-        try {
-          await transport.save(story.id, 0, story)
-          imported++
-        } catch (e) {
-          if (!(e instanceof Error && e.message.startsWith('Conflict:'))) throw e
-        }
-      }
-      setImportMessage(
-        `${imported} imported. Existing cloud stories were skipped; browser originals are unchanged.`,
-      )
-      setError('')
+      await copyBrowserStories()
+      if (pendingGoogleImport(owner)) clearGoogleImport()
     } catch (e) {
       setError(`Import incomplete; retry is safe. ${e instanceof Error ? e.message : ''}`)
     } finally {
