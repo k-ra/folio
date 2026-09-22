@@ -34,7 +34,10 @@ for (const width of [1440, 390, 320]) {
     expect(rect.x + rect.width).toBeLessThanOrEqual(width)
     await page.getByLabel('OpenAI API key', { exact: true }).fill('sk-offline-browser-test')
     await menu.getByRole('button', { name: 'Save', exact: true }).click()
-    await expect(menu.getByRole('status')).toHaveText('Connected for this tab.')
+    await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveAttribute(
+      'placeholder',
+      'Connected · replace key…',
+    )
     await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveValue('')
     expect(paid).toBe(0)
     const storage = await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))
@@ -75,7 +78,18 @@ for (const width of [1440, 390, 320]) {
     await expect(dialog).toBeVisible()
     await expect(dialog.getByLabel('OpenAI API key', { exact: true })).toHaveCount(0)
     await dialog.getByRole('button', { name: 'AI', exact: true }).click()
-    await expect(dialog.locator('details')).not.toHaveAttribute('open', '')
+    await expect(dialog.locator('details')).toHaveCount(0)
+    await expect(dialog.locator('label')).toHaveCount(0)
+    const rows = await dialog.locator('form').evaluate((el) =>
+      [...el.children]
+        .filter((child) => {
+          const r = child.getBoundingClientRect()
+          return r.width > 1 && r.height > 1
+        })
+        .map((child) => child.className),
+    )
+    expect(rows).toEqual(['ai-choice', 'ai-key-row'])
+    expect((await dialog.boundingBox())!.height).toBeLessThan(150)
     const rect = (await dialog.boundingBox())!
     expect(rect.x).toBeGreaterThanOrEqual(0)
     expect(rect.x + rect.width).toBeLessThanOrEqual(width)

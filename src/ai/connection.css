@@ -70,23 +70,22 @@
   font: inherit;
   border-bottom: 1px solid color-mix(in srgb, currentColor 40%, transparent);
 }
-.ai-connection-form label {
-  opacity: 0.75;
-}
 .ai-connection-form button:disabled {
   opacity: 0.35;
   cursor: default;
 }
-.ai-connection-form small,
-.ai-connection-form details {
+.ai-connection-form small {
   font-size: 10px;
   opacity: 0.65;
 }
-.ai-connection-form summary {
-  cursor: pointer;
-}
-.ai-connection-form details p {
-  margin: 8px 0 0;
+.ai-accessible-help {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .ai-connection-form [role='alert'] {
   opacity: 1;

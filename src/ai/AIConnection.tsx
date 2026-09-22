@@ -55,36 +55,37 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
         >
           No AI
         </button>
-        {!inline && <button className="ai-close" type="button" aria-label="Close AI settings" onClick={close}>×</button>}
+        {!inline && (
+          <button className="ai-close" type="button" aria-label="Close AI settings" onClick={close}>
+            ×
+          </button>
+        )}
       </div>
       {enabled && (
         <>
-          <label htmlFor={id + '-key'}>OpenAI API key</label>
           <div className="ai-key-row">
             <input
               id={id + '-key'}
+              aria-label="OpenAI API key"
+              aria-describedby={id + '-privacy'}
+              title="Tab only · API charges apply. Your key is not saved with stories."
               type="password"
               autoComplete="off"
               spellCheck={false}
               value={draft}
               onChange={(e) => setDraft(e.currentTarget.value)}
-              placeholder={hasApiKey() ? 'Replace key…' : 'sk-…'}
+              placeholder={hasApiKey() ? 'Connected · replace key…' : 'OpenAI API key'}
               maxLength={503}
             />
             <button type="submit" disabled={!draft.trim()}>
               Save
             </button>
           </div>
-          {hasApiKey() && <small role="status">Connected for this tab.</small>}
-          <small>Tab only · API charges apply.</small>
-          <details>
-            <summary>Privacy</summary>
-            <p>
-              Explicit AI requests send your key and relevant content through this site’s server to OpenAI.
-              Use a deployment you trust. Reloading forgets the key; it is never saved with stories. Saving a
-              key makes no model request. Turning AI off does not recall requests already sent.
-            </p>
-          </details>
+          <span id={id + '-privacy'} className="ai-accessible-help">
+            Tab only; API charges apply. Explicit AI requests send your key and relevant content through this
+            site’s server to OpenAI. Use a deployment you trust. Reloading forgets the key; it is never saved
+            with stories. Saving a key makes no model request.
+          </span>
         </>
       )}
       {error && <small role="alert">{error}</small>}
