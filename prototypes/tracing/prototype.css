@@ -85,12 +85,13 @@ header button:hover {
   gap: 20px;
 }
 .studio {
+  --drawer-width: 380px;
   display: flex;
   align-items: flex-start;
   min-height: calc(100vh - 48px);
 }
 .panel {
-  width: 320px;
+  width: var(--drawer-width);
   flex: none;
   padding: 32px 27px 24px;
   position: sticky;
@@ -114,12 +115,10 @@ header button:hover {
   margin: 10px 0 6px;
   font-size: 14px;
 }
-.keep,
 .source {
   font-size: 11px;
   opacity: 0.45;
 }
-.keep:hover,
 .source:hover {
   opacity: 1;
 }
@@ -198,30 +197,7 @@ header button:hover {
   font-size: 12px;
   opacity: 0.6;
 }
-.tracing {
-  position: absolute;
-  z-index: 4;
-  top: 114px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(608px, calc(100% - 44px));
-  min-height: 460px;
-  max-height: calc(100dvh - 170px);
-  padding: 28px 32px;
-  background: rgba(252, 249, 239, 0.94);
-  backdrop-filter: blur(3px);
-  box-shadow: 0 16px 65px -25px #50482c45;
-  display: flex;
-  flex-direction: column;
-}
-.tracing header {
-  margin-bottom: 28px;
-}
-.index-scroll {
-  overflow: auto;
-  min-height: 0;
-  padding: 0 3px;
-}
+
 .tracing footer {
   font-size: 10px;
   opacity: 0.4;
@@ -238,8 +214,8 @@ header button:hover {
   display: block;
   text-align: left;
   white-space: pre-wrap;
-  font-size: 19px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
@@ -297,10 +273,11 @@ header button:hover {
     top: 48px;
     bottom: 0;
     height: calc(100dvh - 48px);
-    width: min(320px, 90vw);
+    width: min(var(--drawer-width), 94vw);
     box-shadow: 0 10px 45px #0001;
   }
-  .research {
+  .research,
+  .tracing {
     left: 0;
   }
   .object {
@@ -309,9 +286,7 @@ header button:hover {
   .sheet {
     width: 100%;
   }
-  .tracing {
-    z-index: 6;
-  }
+
   .study-label span {
     max-width: 200px;
     text-align: right;
@@ -324,12 +299,7 @@ header button:hover {
   .sheet {
     padding-top: 45px;
   }
-  .tracing {
-    top: 104px;
-    padding: 24px;
-    min-height: 360px;
-    width: calc(100% - 44px);
-  }
+
   .excerpt {
     font-size: 17px;
   }
@@ -350,4 +320,82 @@ header button:hover {
     animation: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+.drawer-tabs {
+  display: flex;
+  gap: 24px;
+}
+.drawer-tabs button {
+  font:
+    400 11px Folio,
+    sans-serif;
+  letter-spacing: 0.1em;
+  opacity: 0.4;
+}
+.drawer-tabs button[aria-pressed='true'] {
+  opacity: 1;
+}
+.index-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 3px 24px;
+  overscroll-behavior: contain;
+}
+.messages {
+  overscroll-behavior: contain;
+}
+.message > [data-clip-source] {
+  margin-top: 12px;
+}
+.folio-markdown {
+  font-size: 14px;
+  line-height: 1.75;
+  letter-spacing: normal;
+}
+.folio-markdown h1,
+.folio-markdown h2,
+.folio-markdown h3 {
+  font-size: 14px;
+  line-height: 1.5;
+  letter-spacing: normal;
+  font-weight: 600;
+  margin: 1.6em 0 0.65em;
+}
+.folio-markdown p {
+  margin: 0 0 1.1em;
+}
+.folio-markdown ul,
+.folio-markdown ol {
+  padding-left: 1.2em;
+}
+.folio-markdown li {
+  margin: 0.5em 0;
+}
+.context .folio-markdown {
+  font-size: 13px;
+  margin: 8px 0 24px;
+}
+.selection-clip {
+  position: fixed;
+  z-index: 20;
+  background: #292720;
+  color: #fdfbf6;
+  border-radius: 3px;
+  padding: 7px 12px;
+  font:
+    12px/1.5 Folio,
+    sans-serif;
+  box-shadow: 0 4px 16px #0002;
+  white-space: nowrap;
+}
+.notice {
+  left: auto;
+  right: 16px;
+}
+header,
+.tracing footer,
+.panel form {
+  flex: none;
 }

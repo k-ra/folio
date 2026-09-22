@@ -1,63 +1,102 @@
 import { test, expect } from '../../../tests/browser/fixtures'
+import type { Locator } from '@playwright/test'
 
-test('clippings retain selected words and conversation, deduplicate and survive reload without AI', async ({
+async function select(text: Locator) {
+  await text.scrollIntoViewIfNeeded()
+  return text.evaluate((el) => {
+    const range = document.createRange()
+    range.selectNodeContents(el)
+    getSelection()!.removeAllRanges()
+    getSelection()!.addRange(range)
+    return el.textContent!
+  })
+}
+
+test('long live response has selection-only clipping, deduplication and a left index drawer', async ({
   page,
 }) => {
   await page.goto('/prototypes/tracing/')
-  const reply = page.getByRole('region', { name: 'Folio message' }),
-    text = reply.locator('p')
-  // Select only the first sentence, not the whole response.
-  await text.evaluate((el) => {
-    const node = el.firstChild!,
-      end = node.textContent!.indexOf('.') + 1
-    const range = document.createRange()
-    range.setStart(node, 0)
-    range.setEnd(node, end)
-    getSelection()!.removeAllRanges()
-    getSelection()!.addRange(range)
-  })
-  await reply.getByRole('button', { name: 'Keep', exact: true }).click()
-  await reply.getByRole('button', { name: 'Keep', exact: true }).click()
-  await reply.getByRole('button', { name: 'In index', exact: true }).click()
-  const index = page.getByRole('region', { name: 'Tracing index' })
+  const chat = page.getByRole('complementary', { name: 'Research chat' })
+  const reply = page.getByRole('region', { name: 'Folio message' })
+  const action = page.getByRole('button', { name: 'Save to index', exact: true })
+  await expect(action).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Keep', exact: true })).toHaveCount(0)
+  await expect(reply.locator('strong').first()).toBeVisible()
+  const passage = reply.locator('p').nth(7)
+  const excerpt = await select(passage)
+  await expect(action).toBeVisible()
+  await page.screenshot({ path: test.info().outputPath('selection-desktop.png') })
+  await action.click()
+  await expect(action).toHaveCount(0)
+  await select(passage)
+  await action.click()
+  const scroll = await chat.locator('.messages').evaluate((el) => el.scrollTop)
+  await chat.getByRole('button', { name: 'INDEX', exact: true }).click()
+  const index = page.getByRole('region', { name: 'Index', exact: true })
   await expect(index.locator('.clipping')).toHaveCount(1)
-  await expect(index.locator('.excerpt')).toHaveText(
-    'Perhaps the interval matters as much as the observation.',
-  )
+  await expect(index.locator('.excerpt')).toHaveText(excerpt)
+  expect((await index.boundingBox())!.x).toBe(0)
+  expect((await index.boundingBox())!.width).toBe(380)
+  await page.screenshot({ path: test.info().outputPath('index-desktop.png') })
+  await index.getByRole('button', { name: 'CHAT', exact: true }).click()
+  await expect.poll(() => chat.locator('.messages').evaluate((el) => el.scrollTop)).toBeCloseTo(scroll, 0)
+  await chat.getByRole('button', { name: 'INDEX', exact: true }).click()
   await index.locator('.excerpt').click()
   await expect(index.getByRole('region', { name: 'Saved conversation' })).toContainText(
-    'Keep interpretation separate from the record',
+    'The Gap You Kept Open',
   )
-  await page.screenshot({ path: test.info().outputPath('index-desktop.png') })
   await index.getByRole('button', { name: 'Open research chat' }).click()
-  await expect(reply).toHaveClass(/highlight/)
-  await page.getByLabel('Research note').fill('My own observation, without a model.')
-  await page.getByRole('button', { name: 'Add note', exact: true }).click()
-  const own = page.getByRole('region', { name: 'You message' }).last()
-  await own.getByRole('button', { name: 'Keep', exact: true }).click()
+  await expect(passage).toBeInViewport()
   await page.reload()
-  await page.getByRole('button', { name: 'Open index', exact: true }).click()
-  await expect(index.locator('.clipping')).toHaveCount(2)
-  await expect(index).toContainText('My own observation, without a model.')
+  await chat.getByRole('button', { name: 'INDEX', exact: true }).click()
+  await expect(index.locator('.clipping')).toHaveCount(1)
   await page.setViewportSize({ width: 390, height: 844 })
   await page.screenshot({ path: test.info().outputPath('index-mobile.png') })
   expect((await index.boundingBox())!.width).toBeLessThan(390)
 })
 
-test('artifact rail exists only on selection and does not pollute research or the index', async ({
-  page,
-}) => {
+test('essay selection is non-destructive, keyboard accessible and dismissible', async ({ page }) => {
+  await page.goto('/prototypes/tracing/')
+  await page.getByRole('button', { name: 'Close research chat' }).click()
+  const essay = page.getByRole('article', { name: 'Sample essay' })
+  const original = await essay.textContent()
+  const excerpt = await select(essay.locator('p').first())
+  const action = page.getByRole('button', { name: 'Save to index' })
+  await expect(action).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(action).toHaveCount(0)
+  await select(essay.locator('p').first())
+  await expect(action).toBeVisible()
+  await page.keyboard.press('Tab')
+  await expect(action).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(essay).toHaveText(original!)
+  await page.getByRole('button', { name: 'Open index', exact: true }).click()
+  const index = page.getByRole('region', { name: 'Index', exact: true })
+  await expect(index.locator('.excerpt')).toHaveText(excerpt)
+  await expect(index).toContainText('01 / ESSAY')
+  await index.locator('.excerpt').click()
+  await expect(index).toContainText('ESSAY WHEN SAVED')
+  await index.getByRole('button', { name: 'Back to essay' }).click()
+  await expect(essay.locator('p').first()).toBeInViewport()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await select(essay.locator('p').first())
+  await expect(action).toBeVisible()
+  const box = (await action.boundingBox())!
+  expect(box.x).toBeGreaterThanOrEqual(0)
+  expect(box.x + box.width).toBeLessThanOrEqual(390)
+  await page.screenshot({ path: test.info().outputPath('selection-mobile.png') })
+})
+
+test('artifact rail is separate from research and index', async ({ page }) => {
   await page.goto('/prototypes/tracing/')
   const right = page.getByRole('complementary', { name: 'Graphic conversation' })
   await expect(right).toHaveCount(0)
   await page.getByRole('button', { name: 'Open graphic editing' }).click()
-  await expect(right).toBeVisible()
   await right.getByLabel('Graphic instruction').fill('Use small dots instead of a line.')
   await right.getByRole('button', { name: 'Note instruction' }).click()
   await expect(right).toContainText('Use small dots instead of a line.')
   await expect(page.getByRole('complementary', { name: 'Research chat' })).not.toContainText('Use small dots')
-  await page.screenshot({ path: test.info().outputPath('two-conversations.png') })
   await right.getByRole('button', { name: 'Close graphic conversation' }).click()
   await expect(right).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Graphic conversation' })).toHaveCount(0)
 })

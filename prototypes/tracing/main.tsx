@@ -1,6 +1,8 @@
 import React, { useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { KEY, keep, load, sample, type Notebook, type Message } from './model'
+import { KEY, keep, load, sample, type Notebook } from './model'
+import Markdown from '../../src/text/Markdown'
+import SelectionClip, { type SelectedClip } from './SelectionClip'
 import './prototype.css'
 
 function Study() {
@@ -29,6 +31,7 @@ function Study() {
   const [instruction, setInstruction] = useState(''),
     [objectNotes, setObjectNotes] = useState<string[]>([])
   const messageNodes = useRef(new Map<string, HTMLElement>())
+  const chatScroll = useRef(0)
   const [notice, setNotice] = useState('')
   const save = (next: Notebook) => {
     setBook(next)
@@ -40,30 +43,48 @@ function Study() {
       setError('Kept in this tab only. Browser saving is unavailable; do not close this prototype yet.')
     }
   }
-  const clip = (message: Message) => {
-    const selection = getSelection(),
-      node = messageNodes.current.get(message.id)
-    const selected =
-      selection && node?.contains(selection.anchorNode) && node.contains(selection.focusNode)
-        ? selection.toString().trim()
-        : ''
-    const excerpt = selected || message.text
-    const next = keep(book, message.id, excerpt)
-    const entry = next.clips.find((c) => c.messageId === message.id && c.excerpt === excerpt)!
+  const clip = ({ id, excerpt, source }: SelectedClip) => {
+    const essay = [...document.querySelectorAll('article h1, article p')]
+      .map((el) => el.textContent)
+      .join('\n\n')
+    const next = keep(book, id, excerpt, source, essay)
+    const entry = next.clips.find((c) => c.messageId === id && c.excerpt === excerpt)!
     save(next)
     setHighlight(entry.id)
-    setNotice('Kept in INDEX.')
+    setNotice('Saved to INDEX.')
   }
-  const openSource = (messageId: string) => {
+  const openSource = (messageId: string, source = 'chat', excerpt = '') => {
     setIndex(false)
-    setResearch(true)
+    setResearch(source === 'chat')
     setHighlight(messageId)
-    requestAnimationFrame(() => messageNodes.current.get(messageId)?.scrollIntoView({ block: 'center' }))
+    requestAnimationFrame(() => {
+      const root =
+        source === 'essay' ? document.querySelector('article') : messageNodes.current.get(messageId)
+      if (!root) return
+      // Find the actual passage inside long answers, not the middle of the entire answer.
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+      const nodes: Text[] = []
+      let node: Node | null
+      while ((node = walker.nextNode())) nodes.push(node as Text)
+      const offset = nodes
+        .map((n) => n.data)
+        .join('')
+        .indexOf(excerpt)
+      let consumed = 0
+      for (const n of nodes) {
+        if (offset >= consumed && offset < consumed + n.length) {
+          n.parentElement?.scrollIntoView({ block: 'center' })
+          return
+        }
+        consumed += n.length
+      }
+      root.scrollIntoView({ block: 'start' })
+    })
   }
   return (
     <>
       <div className="study-label">
-        FOLIO / INDEX STUDY <span>local prototype · sample conversation · no live AI</span>
+        FOLIO / INDEX STUDY <span>local prototype · captured live response · no new AI requests</span>
       </div>
       <div
         className="studio"
@@ -74,15 +95,26 @@ function Study() {
           }
         }}
       >
-        {research && (
+        {research && !index && (
           <aside className="research panel" aria-label="Research chat">
             <header>
-              <h2>CHAT</h2>
+              <nav className="drawer-tabs" aria-label="Left drawer">
+                <button aria-pressed="true">CHAT</button>
+                <button onClick={() => setIndex(true)}>INDEX</button>
+              </nav>
               <button aria-label="Close research chat" onClick={() => setResearch(false)}>
                 ×
               </button>
             </header>
-            <div className="messages">
+            <div
+              className="messages"
+              ref={(el) => {
+                if (el) el.scrollTop = chatScroll.current
+              }}
+              onScroll={(e) => {
+                chatScroll.current = e.currentTarget.scrollTop
+              }}
+            >
               {book.messages.map((m) => (
                 <section
                   key={m.id}
@@ -90,28 +122,17 @@ function Study() {
                   aria-label={`${m.who} message`}
                 >
                   <small>{m.who}</small>
-                  <p
+                  <div
+                    data-clip-source="chat"
+                    data-clip-id={m.id}
+                    tabIndex={0}
                     ref={(el) => {
                       if (el) messageNodes.current.set(m.id, el)
                       else messageNodes.current.delete(m.id)
                     }}
                   >
-                    {m.text}
-                  </p>
-                  <button className="keep" onMouseDown={(e) => e.preventDefault()} onClick={() => clip(m)}>
-                    Keep
-                  </button>
-                  {book.clips.some((c) => c.messageId === m.id) && (
-                    <button
-                      className="source"
-                      onClick={() => {
-                        setIndex(true)
-                        setHighlight(book.clips.find((c) => c.messageId === m.id)!.id)
-                      }}
-                    >
-                      In index
-                    </button>
-                  )}
+                    <Markdown>{m.text}</Markdown>
+                  </div>
                 </section>
               ))}
             </div>
@@ -138,8 +159,74 @@ function Study() {
             </form>
           </aside>
         )}
+        {index && (
+          <section className="tracing panel" aria-label="Index">
+            <header>
+              <nav className="drawer-tabs" aria-label="Left drawer">
+                <button
+                  onClick={() => {
+                    setIndex(false)
+                    setResearch(true)
+                  }}
+                >
+                  CHAT
+                </button>
+                <button aria-pressed="true">INDEX</button>
+              </nav>
+              <button
+                aria-label="Close index"
+                onClick={() => {
+                  setIndex(false)
+                  setResearch(false)
+                }}
+              >
+                ×
+              </button>
+            </header>
+            <div className="index-scroll">
+              {!book.clips.length && (
+                <p className="empty">Select a passage in chat or the essay to save it here.</p>
+              )}
+              {book.clips.map((c, i) => (
+                <section key={c.id} className={`clipping ${highlight === c.id ? 'highlight' : ''}`}>
+                  <small>
+                    {String(i + 1).padStart(2, '0')} / {c.source === 'essay' ? 'ESSAY' : 'CHAT'}
+                  </small>
+                  <button
+                    className="excerpt"
+                    aria-expanded={expanded === c.id}
+                    onClick={() => setExpanded(expanded === c.id ? '' : c.id)}
+                  >
+                    {c.excerpt}
+                  </button>
+                  {expanded === c.id && (
+                    <div className="context" role="region" aria-label="Saved conversation">
+                      <small>{c.source === 'essay' ? 'ESSAY WHEN SAVED' : 'CONVERSATION WHEN SAVED'}</small>
+                      {c.conversation.map((m) => (
+                        <div key={m.id}>
+                          <small>{m.who}</small>
+                          <Markdown>{m.text}</Markdown>
+                        </div>
+                      ))}
+                      <button onClick={() => openSource(c.messageId, c.source, c.excerpt)}>
+                        {c.source === 'essay' ? 'Back to essay' : 'Open research chat'}
+                      </button>
+                      <button
+                        className="source"
+                        onClick={() => save({ ...book, clips: book.clips.filter((x) => x.id !== c.id) })}
+                      >
+                        Remove clipping
+                      </button>
+                    </div>
+                  )}
+                </section>
+              ))}
+            </div>
+            <footer>Research stays beside the essay, not inside it.</footer>
+          </section>
+        )}
         <main className="sheet">
-          <article aria-label="Sample essay">
+          <article aria-label="Sample essay" data-clip-source="essay" data-clip-id="essay">
             <h1>The space between observations</h1>
             <p>
               For one week I returned to the same window. Nothing there was extraordinary: a branch, a pale
@@ -205,62 +292,23 @@ function Study() {
             <button
               aria-label="Open research chat"
               title="Research chat"
-              onClick={() => setResearch(!research)}
+              onClick={() => {
+                setResearch(!research || index)
+                setIndex(false)
+              }}
             >
               ◉
             </button>
-            <button aria-label="Open index" onClick={() => setIndex(!index)}>
+            <button
+              aria-label="Open index"
+              onClick={() => {
+                setIndex(!index)
+                setResearch(true)
+              }}
+            >
               INDEX{book.clips.length ? <sup>{book.clips.length}</sup> : null}
             </button>
           </nav>
-          {index && (
-            <section className="tracing" aria-label="Tracing index">
-              <header>
-                <h2>INDEX</h2>
-                <button aria-label="Close index" onClick={() => setIndex(false)}>
-                  ×
-                </button>
-              </header>
-              <div className="index-scroll">
-                {!book.clips.length && (
-                  <p className="empty">
-                    Keep a thought from chat. It can stay here until you know where it belongs.
-                  </p>
-                )}
-                {book.clips.map((c, i) => (
-                  <section key={c.id} className={`clipping ${highlight === c.id ? 'highlight' : ''}`}>
-                    <small>{String(i + 1).padStart(2, '0')} / RESEARCH</small>
-                    <button
-                      className="excerpt"
-                      aria-expanded={expanded === c.id}
-                      onClick={() => setExpanded(expanded === c.id ? '' : c.id)}
-                    >
-                      {c.excerpt}
-                    </button>
-                    {expanded === c.id && (
-                      <div className="context" role="region" aria-label="Saved conversation">
-                        <small>CONVERSATION WHEN KEPT</small>
-                        {c.conversation.map((m) => (
-                          <div key={m.id}>
-                            <small>{m.who}</small>
-                            <p>{m.text}</p>
-                          </div>
-                        ))}
-                        <button onClick={() => openSource(c.messageId)}>Open research chat</button>
-                        <button
-                          className="source"
-                          onClick={() => save({ ...book, clips: book.clips.filter((x) => x.id !== c.id) })}
-                        >
-                          Remove clipping
-                        </button>
-                      </div>
-                    )}
-                  </section>
-                ))}
-              </div>
-              <footer>Research stays beside the essay, not inside it.</footer>
-            </section>
-          )}
         </main>
         {artifact && (
           <aside className="object panel" aria-label="Graphic conversation">
@@ -301,6 +349,7 @@ function Study() {
           </aside>
         )}
       </div>
+      <SelectionClip save={clip} />
       <div className="notice" role={error ? 'alert' : 'status'}>
         {error || notice}
       </div>
