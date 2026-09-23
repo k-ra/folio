@@ -1,5 +1,21 @@
 import { test, expect } from './fixtures'
 
+test('unreadable earlier clippings stay untouched and cannot be accidentally overwritten', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.evaluate(() => localStorage.setItem('folio.index-study.v4:browser:s-offline-chat', '{broken'))
+  await page.getByRole('button', { name: 'Homepage settings', exact: true }).click()
+  await page.getByRole('button', { name: 'Open offline chat sample', exact: true }).click()
+  await page.getByRole('button', { name: 'INDEX', exact: true }).click()
+  const panel = page.getByRole('region', { name: 'Index', exact: true })
+  await expect(panel.getByRole('alert')).toContainText('stored copy is unchanged')
+  await expect(panel.getByRole('textbox', { name: 'Index', exact: true })).toHaveCount(0)
+  expect(await page.evaluate(() => localStorage.getItem('folio.index-study.v4:browser:s-offline-chat'))).toBe(
+    '{broken',
+  )
+})
+
 test('old Markdown opens as editable prose, keeps formatting, and leaves the original untouched', async ({
   page,
 }) => {

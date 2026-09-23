@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { simulated } from '../ai'
 import { FOLIO_STYLE } from '../style/presets'
 import type { Style } from '../model/types'
@@ -7,6 +7,7 @@ import { sampleStyle } from '../model/sampleStyles'
 import { mockEssay } from '../model/samples/mockEssay'
 import Write from '../write/Write'
 import { useConnection } from '../ai/connection'
+import { bindApiKeyOwner } from '../ai/session'
 
 const PAPERS = [
   { id: 'folio', name: 'Folio', style: FOLIO_STYLE },
@@ -21,6 +22,7 @@ function initialPaper(): Style {
 /** An isolated, disposable review surface. Never reads or writes the user's stories. */
 export default function Playground() {
   const connection = useConnection()
+  useEffect(() => { bindApiKeyOwner(null) }, [])
   const [story, setStory] = useState(() => mockEssay(initialPaper()))
   const [run, setRun] = useState(0)
   const paper =

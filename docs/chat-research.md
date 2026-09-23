@@ -11,7 +11,7 @@ Both calls share the existing 180-second request timeout, cancellation signal an
 
 Provider URL annotations are converted into safe clickable Markdown and returned sources are appended to the reply. Invalid URL schemes/credentials are rejected. Retrieved content is explicitly untrusted. A response without cited sources is labeled unverified. Search results and model summaries still require human judgment; neither a bounded search nor a source link guarantees factual correctness.
 
-No new service, database or secret is required beyond existing BYOK Vercel/local deployment. The configured OpenAI model must support web search; unsupported-provider/model errors are surfaced rather than silently switching providers. API keys remain tab-only and outside stories/backups.
+No new service, database or secret is required beyond existing BYOK Vercel/local deployment. The configured OpenAI model must support web search; unsupported-provider/model errors are surfaced rather than silently switching providers. Visitor keys can be remembered in that browser but remain outside stories/backups.
 
 Contract references: [web search and citations](https://developers.openai.com/api/docs/guides/tools-web-search), [Responses tool-call limits](https://developers.openai.com/api/reference/cli/resources/responses/methods/create).
 

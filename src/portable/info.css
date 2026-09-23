@@ -33,6 +33,9 @@
 .info-actions input[type='file'] {
   font-size: 10px;
 }
+.info-actions input[hidden] {
+  display: none;
+}
 .info-actions label {
   display: block;
 }

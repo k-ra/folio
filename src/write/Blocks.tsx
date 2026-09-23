@@ -37,7 +37,6 @@ function BlockRow({ ctl, b, i }: { ctl: WriteCtl; b: Block; i: number }) {
   const [noteHeld, setNoteHeld] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>()
   const wakeNote = () => {
-    ctl.hoverBlock(b.id)
     setNoteAwake(true)
     clearTimeout(timer.current)
     timer.current = setTimeout(() => setNoteAwake(false), 1800)
@@ -48,11 +47,17 @@ function BlockRow({ ctl, b, i }: { ctl: WriteCtl; b: Block; i: number }) {
   const showPlus = b.type === 'text' && !b.text && (sel || hov || pickerOpen)
   const showDelete = b.type !== 'text' && (sel || hov)
   const hasNote = story.notes[b.id] !== undefined
+  useEffect(() => {
+    if (hasNote) {
+      clearTimeout(timer.current)
+      setNoteAwake(false)
+      setNoteHeld(false)
+    }
+  }, [hasNote])
   const fullBleed =
     b.type === 'magic' && b.layout === 'full-bleed' && (b.revision >= 0 || b.status === 'rendering')
   const showNoteGhost =
     !hasNote &&
-    (hov || (!ctl.blockHover && sel) || noteHeld) &&
     b.type !== 'padding' &&
     b.type !== 'magic' &&
     b.type !== 'fancy' &&
@@ -64,8 +69,7 @@ function BlockRow({ ctl, b, i }: { ctl: WriteCtl; b: Block; i: number }) {
     <div
       data-block-id={b.id}
       className={fullBleed ? 'block-row-full-bleed' : undefined}
-      onMouseEnter={wakeNote}
-      onMouseMove={wakeNote}
+      onMouseEnter={() => ctl.hoverBlock(b.id)}
       onMouseLeave={() => ctl.hoverBlock(null)}
       onClick={() => ctl.selectBlock(b.id)}
       style={{
@@ -288,29 +292,35 @@ function BlockRow({ ctl, b, i }: { ctl: WriteCtl; b: Block; i: number }) {
         </MarginNote>
       )}
       {showNoteGhost && (
-        <button
-          className="note-add"
-          onClick={(e) => {
-            e.stopPropagation()
-            ctl.addNote(b.id)
+        <div
+          className="note-add-bar"
+          onMouseEnter={wakeNote}
+          onMouseMove={wakeNote}
+          onMouseLeave={() => {
+            clearTimeout(timer.current)
+            setNoteAwake(false)
           }}
-          style={{
-            position: 'absolute',
-            top: 4,
-            left: 'calc(100% + var(--margin-gap))',
-            ...mono,
-            opacity: noteHeld ? 0.8 : hov && noteAwake ? 0.3 : 0,
-            pointerEvents: noteHeld || (hov && noteAwake) ? 'auto' : 'none',
-            whiteSpace: 'nowrap',
-            transition: 'opacity .2s',
-          }}
-          onFocus={() => setNoteHeld(true)}
-          onBlur={(e) => setNoteHeld(e.currentTarget.matches(':hover'))}
-          onMouseEnter={() => setNoteHeld(true)}
-          onMouseLeave={(e) => setNoteHeld(document.activeElement === e.currentTarget)}
         >
-          + NOTE
-        </button>
+          <button
+            className="note-add"
+            onClick={(e) => {
+              e.stopPropagation()
+              ctl.addNote(b.id)
+            }}
+            style={{
+              ...mono,
+              opacity: noteHeld ? 0.8 : noteAwake ? 0.3 : 0,
+              whiteSpace: 'nowrap',
+              transition: 'opacity .2s',
+            }}
+            onFocus={() => setNoteHeld(true)}
+            onBlur={(e) => setNoteHeld(e.currentTarget.matches(':hover'))}
+            onMouseEnter={() => setNoteHeld(true)}
+            onMouseLeave={(e) => setNoteHeld(document.activeElement === e.currentTarget)}
+          >
+            + NOTE
+          </button>
+        </div>
       )}
       {showDelete && (
         <button

@@ -1,3 +1,82 @@
+.home-settings {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  width: min(300px, calc(100vw - 64px));
+  box-sizing: border-box;
+  padding: 0 18px;
+  border-block: 17px solid;
+  max-height: calc(100dvh - 80px);
+  overflow: auto;
+  display: grid;
+  gap: 13px;
+  box-shadow: 0 20px 40px -20px rgb(0 0 0 / 0.5);
+  animation: fadein 0.2s ease both;
+}
+.home-settings-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.home-settings-swatches {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.home-settings-prompt {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 0;
+  border-bottom: 1px solid currentColor;
+  font: 400 12px/1.5 'Instrument Sans', sans-serif;
+}
+.home-settings .ai-connection-inline {
+  margin-top: 0;
+}
+.home-settings .info-actions {
+  margin: 0;
+  gap: 8px;
+}
+.home-settings .info-group,
+.home-settings .info-actions form {
+  gap: 5px;
+}
+.home-settings .info-actions input:not([type='checkbox']):not([type='file']) {
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  padding: 4px 0;
+}
+.home-settings .info-actions .eyebrow {
+  font-size: 10px;
+  opacity: 0.55;
+  letter-spacing: 0.1em;
+}
+.home-settings .info-secondary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.home-settings .info-secondary-actions button,
+.home-settings .info-secondary-actions label {
+  min-height: 24px;
+}
+.home-settings .info-account-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.home-settings .info-account-row span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.home-settings .info-actions button {
+  min-height: 24px;
+}
+
 .story-library {
   /* Leave the full 90vh flight scrollable even with a short or sparse library. */
   min-height: 190vh;

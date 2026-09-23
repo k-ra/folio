@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { example } from './storyFixture'
 import { StorySync } from '../src/cloud/sync'
 import { fingerprint, type CloudRow, type CloudTransport } from '../src/cloud/transport'
+import { indexFromMarkdown } from '../src/text/indexDocument'
 
 describe('cloud compare-and-swap and recovery', () => {
   const fake = () => {
@@ -82,5 +83,27 @@ describe('cloud compare-and-swap and recovery', () => {
   })
   it('hashes equivalent object key order identically', async () => {
     expect(await fingerprint({ a: 1, b: 2 })).toBe(await fingerprint({ b: 2, a: 1 }))
+  })
+  it('syncs Index-only edits, recovers failures and blocks conflicting Index overwrites', async () => {
+    const f = fake(),
+      s = { ...example(), index: indexFromMarkdown('Original') }
+    const a = new StorySync({}, f.api, async () => {})
+    await a.sync([s], () => true)
+    const b = new StorySync(structuredClone(a.checkpoint), f.api, async () => {})
+    const edited = { ...s, index: indexFromMarkdown('**Device A**') }
+    f.setFail(true)
+    await expect(a.sync([edited], () => true)).rejects.toThrow('Network')
+    expect(f.rows.get(s.id)?.story?.index).toEqual(s.index)
+    f.setFail(false)
+    await a.sync([edited], () => true)
+    await b.sync([{ ...s, index: indexFromMarkdown('Device B') }], () => true)
+    expect(b.conflicts).toHaveLength(1)
+    expect(f.rows.get(s.id)?.story?.index).toEqual(edited.index)
+    let received
+    await b.sync([s], (_id, _before, remote) => {
+      received = remote?.index
+      return true
+    })
+    expect(received).toEqual(edited.index)
   })
 })

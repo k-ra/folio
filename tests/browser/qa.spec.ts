@@ -17,9 +17,10 @@ test('writing, ordinary margin notes, style history, and reload stay intact with
   await page.locator('textarea:focus').press('Enter')
   await page.locator('textarea:focus').press('Backspace')
   await expect(page.locator('textarea:focus')).toHaveValue('Second paragraph.')
-  // The note affordance follows the mouse and intentionally fades during keyboard-only writing.
-  await page.locator('textarea:focus').hover()
-  await page.getByRole('button', { name: '+ NOTE', exact: true }).click()
+  // Approach the note through its local bar, not the whole writing row.
+  const row = page.locator('[data-block-id]').filter({ has: page.locator('textarea:focus') })
+  await row.locator('.note-add-bar').hover()
+  await row.getByRole('button', { name: '+ NOTE', exact: true }).click()
   await page.getByPlaceholder('a note in the margin').fill('Keep this small thought.')
   await page.getByPlaceholder('Untitled', { exact: true }).click()
   await page.getByRole('button', { name: 'Open style' }).click()

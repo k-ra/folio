@@ -42,16 +42,19 @@ for (const width of [1440, 390, 320]) {
     await expect(menu.getByRole('button', { name: 'AI connected', exact: true })).toBeVisible()
     expect(paid).toBe(0)
     const storage = await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))
-    expect(storage).not.toContain('sk-offline-browser-test')
+    expect(storage).toContain('sk-offline-browser-test')
     await page.screenshot({ path: `test-results/byok-home-${width}.png` })
     await page.reload()
     await expect(configure).toBeVisible()
     await configure.click()
     await expect(menu.getByLabel('OpenAI API key', { exact: true })).toHaveCount(0)
-    await expect(menu.getByRole('button', { name: 'No AI', exact: true })).toHaveAttribute(
+    await expect(menu.getByRole('button', { name: 'AI', exact: true })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
+    await menu.getByRole('button', { name: 'AI connected', exact: true }).click()
+    await menu.getByRole('button', { name: 'Forget', exact: true }).click()
+    expect(await page.evaluate(() => localStorage.getItem('folio.ai.device-key.v1:guest'))).toBeNull()
     expect(paid).toBe(0)
   })
 }
@@ -113,14 +116,18 @@ for (const width of [1440, 390, 320]) {
     await expect(dialog).not.toBeVisible()
     await expect(page.getByRole('button', { name: 'AI settings', exact: true })).toBeFocused()
     const storage = await page.evaluate(() => JSON.stringify([localStorage, sessionStorage]))
-    expect(storage).not.toContain('sk-offline-browser-test')
+    expect(storage).toContain('sk-offline-browser-test')
     await page.reload()
     await expect(connect).toBeVisible()
+    await connect.click()
+    await dialog.getByRole('button', { name: 'AI connected', exact: true }).click()
+    await dialog.getByRole('button', { name: 'Forget', exact: true }).click()
+    expect(await page.evaluate(() => localStorage.getItem('folio.ai.device-key.v1:guest'))).toBeNull()
     expect(paid).toBe(0)
   })
 }
 
-test('visitor key goes in the request header; errors recover and disconnect forgets it', async ({ page }) => {
+test('visitor key goes in the request header; errors recover and No AI pauses it', async ({ page }) => {
   await page.route('**/api/magic/status', (route) =>
     route.fulfill({ json: { configured: false, byok: true } }),
   )

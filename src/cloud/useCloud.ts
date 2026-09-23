@@ -5,6 +5,7 @@ import { newId } from '../model/util'
 import { StorySync, type Checkpoint, type Conflict } from './sync'
 import { fingerprint, transportFor } from './transport'
 import { pendingGoogleImport, clearGoogleImport } from './googleImport'
+import { withBrowserIndex } from '../model/indexClippings'
 
 export function useCloud(
   owner: string | undefined,
@@ -108,7 +109,9 @@ export function useCloud(
       if (!alive.current) throw new Error('Account changed. Import stopped; originals are unchanged.')
       if (existing.has(story.id)) continue
       try {
-        await transport.save(story.id, 0, story)
+        // This path runs only after explicit browser-import consent (button or Google nonce).
+        // Never read guest clippings from the ordinary account autosave path.
+        await transport.save(story.id, 0, withBrowserIndex(story, localStorage))
         imported++
       } catch (e) {
         if (!(e instanceof Error && e.message.startsWith('Conflict:'))) throw e

@@ -9,7 +9,17 @@ import Markdown from '../text/Markdown'
 import { IndexContents, type IndexStudy } from './IndexStudy'
 import ChatSettings from './ChatSettings'
 
-export default function Panel({ ctl, index }: { ctl: WriteCtl; index?: IndexStudy }) {
+export default function Panel({
+  ctl,
+  index,
+  indexBeside = false,
+  canSplitIndex = false,
+}: {
+  ctl: WriteCtl
+  index?: IndexStudy
+  indexBeside?: boolean
+  canSplitIndex?: boolean
+}) {
   const { panel, story, S } = ctl
   const bottom = useRef<HTMLDivElement>(null)
   const key = panel?.kind === 'block' ? panel.id : panel?.kind
@@ -34,37 +44,62 @@ export default function Panel({ ctl, index }: { ctl: WriteCtl; index?: IndexStud
         ? focusLabel(story, ctl.chatFocus)
         : null
   const title = panel?.kind === 'data' ? 'Data' : 'Chat'
-  return (
-    <section
-      className="chat-panel"
-      aria-label={index?.open ? 'Index' : artifact ? 'Artifact chat' : fancy ? 'Text styling chat' : title}
-      style={{ background: S.bg, color: S.ink, fontFamily: FONTS[S.bodyFont] }}
+  const tabs = (
+    <span className="index-tabs">
+      <button aria-pressed={!index?.open} onClick={() => index?.setOpen(false)}>
+        CHAT
+      </button>
+      <button aria-pressed={index?.open} onClick={() => index?.setOpen(true)}>
+        INDEX
+      </button>
+    </span>
+  )
+  const splitButton = index && canSplitIndex && (
+    <button
+      className="index-split-toggle"
+      aria-label="Show chat and index side by side"
+      aria-pressed={indexBeside}
+      title={indexBeside ? 'Return to a single drawer' : 'Chat, index and essay side by side'}
+      onClick={() => {
+        index.setBeside(!indexBeside)
+        index.setOpen(!indexBeside)
+      }}
     >
-      <header className="panel-header">
-        <h2>
-          {index ? (
-            <span className="index-tabs">
-              <button aria-pressed={!index.open} onClick={() => index.setOpen(false)}>
-                CHAT
-              </button>
-              <button aria-pressed={index.open} onClick={() => index.setOpen(true)}>
-                INDEX
-              </button>
-            </span>
-          ) : (
-            title.toUpperCase()
-          )}
-        </h2>
-        <button aria-label="Close chat panel" onClick={ctl.closePanel}>
-          ×
-        </button>
-      </header>
-      {index && (
-        <div style={{ display: index.open ? 'contents' : 'none' }}>
-          <IndexContents study={index} />
-        </div>
-      )}
-      <div style={{ display: index?.open ? 'none' : 'contents' }}>
+      <svg
+        width="17"
+        height="15"
+        viewBox="0 0 17 15"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1"
+        aria-hidden="true"
+      >
+        <rect x="1" y="1" width="15" height="13" rx="1" />
+        <path d="M6 1v13M11 1v13" />
+      </svg>
+    </button>
+  )
+  return (
+    <div className="conversation-layout">
+      <section
+        className="chat-panel conversation-chat"
+        aria-label={artifact ? 'Artifact chat' : fancy ? 'Text styling chat' : title}
+        style={{
+          background: S.bg,
+          color: S.ink,
+          fontFamily: FONTS[S.bodyFont],
+          display: index?.open && !indexBeside ? 'none' : undefined,
+        }}
+      >
+        <header className="panel-header">
+          <h2>{index && !indexBeside ? tabs : title.toUpperCase()}</h2>
+          <span className="panel-header-actions">
+            {splitButton}
+            <button aria-label="Close chat panel" onClick={ctl.closePanel}>
+              ×
+            </button>
+          </span>
+        </header>
         {panel?.kind === 'data' && (
           <div className="data-files">
             {story.blocks
@@ -157,7 +192,38 @@ export default function Panel({ ctl, index }: { ctl: WriteCtl; index?: IndexStud
             </button>
           </div>
         </footer>
-      </div>
-    </section>
+      </section>
+      {index && (
+        <section
+          className="chat-panel index-panel"
+          aria-label="Index"
+          style={{
+            background: S.bg,
+            color: S.ink,
+            fontFamily: FONTS[S.bodyFont],
+            display: index.open || indexBeside ? undefined : 'none',
+          }}
+        >
+          <header className="panel-header">
+            <h2>{indexBeside ? 'INDEX' : tabs}</h2>
+            <span className="panel-header-actions">
+              {!indexBeside && splitButton}
+              <button
+                aria-label={indexBeside ? 'Close index' : 'Close chat panel'}
+                onClick={() => {
+                  if (indexBeside) {
+                    index.setBeside(false)
+                    index.setOpen(false)
+                  } else ctl.closePanel()
+                }}
+              >
+                ×
+              </button>
+            </span>
+          </header>
+          <IndexContents study={index} />
+        </section>
+      )}
+    </div>
   )
 }

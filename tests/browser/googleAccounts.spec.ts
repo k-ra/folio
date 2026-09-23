@@ -86,6 +86,9 @@ test('Google consent returns to the same import flow, recovers failures and pres
       }
     })
   }, example())
+  await page.evaluate(() =>
+    localStorage.setItem('folio.index-study.v3:browser:portable-example', 'Google import clipping'),
+  )
   await page.goto('/')
   const settings = () => page.getByRole('button', { name: 'Homepage settings', exact: true })
   const google = () =>
@@ -110,7 +113,11 @@ test('Google consent returns to the same import flow, recovers failures and pres
   await page.getByRole('button', { name: 'Retry cloud save', exact: true }).click()
   await expect(page.locator('.library-story')).toHaveCount(1)
   expect(writes).toBe(1)
-  expect(rows['portable-example'].story).toEqual(example())
+  expect(rows['portable-example'].story).toMatchObject(example())
+  expect(JSON.stringify(rows['portable-example'].story.index)).toContain('Google import clipping')
+  expect(
+    await page.evaluate(() => localStorage.getItem('folio.index-study.v3:browser:portable-example')),
+  ).toBe('Google import clipping')
   await page.getByRole('button', { name: 'Sign out', exact: true }).click()
   await expect(page.locator('.library-story')).toHaveCount(1)
   await settings().click()

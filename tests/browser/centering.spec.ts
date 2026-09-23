@@ -62,7 +62,7 @@ test('ordinary notes and their add control stay inside a narrow centered page', 
   await page.setViewportSize({ width: 390, height: 1000 })
   await page.goto('/?qa=essay&story=whales')
   await page.locator('textarea[data-id="whales-listening"]').click()
-  const add = page.getByRole('button', { name: '+ NOTE', exact: true })
+  const add = page.locator('[data-block-id="whales-listening"] .note-add')
   const control = await add.boundingBox()
   expect(control!.x + control!.width).toBeLessThanOrEqual(390)
   await add.click()

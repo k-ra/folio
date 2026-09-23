@@ -314,29 +314,50 @@ test('offline charts preserve their responsive width and keyboard interaction', 
   }
 })
 
-test('note affordance follows the mouse, fades when idle, and stays available on focus', async ({ page }) => {
-  await loadExample(page)
-  // Remove fixture notes to inspect the affordance on two paragraphs.
-  for (const id of ['a', 'b']) {
-    const note = page.locator(`textarea[data-id="n-${id}"]`)
-    await note.fill('')
-    await note.blur()
-  }
-  const a = page.locator('textarea[data-id="a"]'),
-    b = page.locator('textarea[data-id="b"]')
-  await a.focus()
-  await b.hover()
+for (const width of [1440, 766, 390])
+  test(`note bar bridges the gap without whole-row hover at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1000 })
+    await loadExample(page)
+    // Remove fixture notes to inspect the affordance on two paragraphs.
+    for (const id of ['a', 'b']) {
+      const note = page.locator(`textarea[data-id="n-${id}"]`)
+      await note.fill('')
+      await note.blur()
+    }
+    const a = page.locator('textarea[data-id="a"]'),
+      b = page.locator('textarea[data-id="b"]')
+    await a.focus()
+    await b.hover()
+    const add = page.locator('[data-block-id="b"] .note-add')
+    await expect(add).toHaveCSS('opacity', '0')
+    const bar = page.locator('[data-block-id="b"] .note-add-bar')
+    const bounds = (await bar.boundingBox())!
+    // The essay's y-band outside the small bar must not activate anything.
+    await page.mouse.move(bounds.x + bounds.width + 8, bounds.y + 8)
+    await expect(add).toHaveCSS('opacity', '0')
+    await page.mouse.move(bounds.x + 1, bounds.y + 8)
+    await expect(add).toHaveCSS('opacity', '0.3')
+    await expect(a).toBeFocused()
+    await page.waitForTimeout(2100)
+    await expect(add).toHaveCSS('opacity', '0')
+    const button = (await add.boundingBox())!
+    await page.mouse.move(button.x + button.width / 2, button.y + button.height / 2, { steps: 20 })
+    await page.waitForTimeout(2100)
+    await expect(add).toHaveCSS('opacity', '0.8')
+    await page.screenshot({ path: `test-results/note-bar-${width}.png` })
+    await add.click()
+    await expect(page.locator('textarea[data-id="n-b"]')).toBeFocused()
+    await page.mouse.move(1, 1)
+    await page.locator('textarea[data-id="n-b"]').blur()
+    await expect(add).toHaveCSS('opacity', '0')
+  })
+
+test('note button remains available to keyboard focus without activating a writing row', async ({ page }) => {
+  await loadExample(page, { ...example(), notes: {} })
   const add = page.locator('[data-block-id="b"] .note-add')
-  await expect(add).toHaveCSS('opacity', '0.3')
-  await expect(a).toBeFocused()
-  await page.waitForTimeout(2100)
-  await expect(add).toHaveCSS('opacity', '0')
-  await b.hover({ position: { x: 12, y: 12 } })
-  await add.hover()
-  await page.waitForTimeout(2100)
-  await expect(add).toHaveCSS('opacity', '0.8')
   await add.focus()
   await page.mouse.move(1, 1)
+  await page.waitForTimeout(2100)
   await expect(add).toHaveCSS('opacity', '0.8')
   await add.press('Enter')
   await expect(page.locator('textarea[data-id="n-b"]')).toBeFocused()

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { Story } from '../model/types'
 import { chatSettingsSchema } from '../ai/chatSettings'
+import { indexDocumentSchema } from '../text/indexSchema'
 
 const text = z.string()
 const color = text.regex(/^#[\da-f]{6}$/i)
@@ -175,6 +176,7 @@ const snapshot = z.object({
   presets: z.array(z.object({ id, name: text, style })).optional(),
 })
 const schema = snapshot.extend({
+  index: indexDocumentSchema.optional(),
   chatSettings: chatSettingsSchema.optional(),
   chats: z.record(text, z.array(message)),
   id,

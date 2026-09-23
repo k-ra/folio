@@ -100,10 +100,14 @@ test('accounts require explicit browser import, deduplicate, isolate libraries, 
       }
     })
   }, example())
+  await page.evaluate(() =>
+    localStorage.setItem('folio.index-study.v3:browser:portable-example', '**Browser clipping**'),
+  )
   await page.goto('/')
   const settings = () => page.getByRole('button', { name: 'Homepage settings', exact: true })
   const signIn = async () => {
     await settings().click()
+    await page.getByRole('button', { name: 'Email sign-in', exact: true }).click()
     await page.getByLabel('Email', { exact: true }).fill(`${active}@example.test`)
     await page.getByRole('button', { name: 'Email me a sign-in code', exact: true }).click()
     await page.getByLabel('Sign-in code', { exact: true }).fill('123456')
@@ -118,15 +122,27 @@ test('accounts require explicit browser import, deduplicate, isolate libraries, 
   await expect(page.locator('.library-story')).toHaveCount(1)
   await page.getByRole('button', { name: 'Import browser stories to my account' }).click()
   expect(writes).toBe(1)
+  expect(JSON.stringify(rows.a['portable-example'].story!.index)).toContain('Browser clipping')
+  expect(
+    await page.evaluate(() => localStorage.getItem('folio.index-study.v3:browser:portable-example')),
+  ).toBe('**Browser clipping**')
   await settings().click()
   await page.getByRole('button', { name: 'Open A field of light', exact: true }).first().click()
   fail = true
   await page.locator('textarea[data-id="b"]').fill('Saved locally during outage')
+  await page.getByRole('button', { name: 'Open chat', exact: true }).click()
+  await page.getByRole('button', { name: 'INDEX', exact: true }).click()
+  const index = page.getByRole('textbox', { name: 'Index', exact: true })
+  await expect(index.locator('strong')).toHaveText('Browser clipping')
+  await index.fill('Index saved locally during outage')
   await expect(page.locator('.essay-status')).toContainText('CLOUD ERROR')
   await expect(page.locator('.essay-status')).toContainText('SAVED LOCALLY')
   await page.reload()
   await page.getByRole('button', { name: 'Open A field of light', exact: true }).first().click()
   await expect(page.locator('textarea[data-id="b"]')).toHaveValue('Saved locally during outage')
+  await page.getByRole('button', { name: 'Open chat', exact: true }).click()
+  await page.getByRole('button', { name: 'INDEX', exact: true }).click()
+  await expect(index).toHaveText('Index saved locally during outage')
   await expect(page.locator('.essay-status')).toContainText('CLOUD ERROR')
   fail = false
   await page.getByRole('button', { name: 'All stories', exact: true }).click()
@@ -138,6 +154,9 @@ test('accounts require explicit browser import, deduplicate, isolate libraries, 
   await settings().click()
   await page.getByRole('button', { name: 'Open A field of light', exact: true }).first().click()
   await expect(page.locator('.essay-status')).toContainText('CLOUD SAVED')
+  expect(JSON.stringify(rows.a['portable-example'].story!.index)).toContain(
+    'Index saved locally during outage',
+  )
   expect(rows.a['portable-example'].story!.blocks[1]).toMatchObject({
     text: 'Saved locally during outage',
   })
@@ -158,6 +177,9 @@ test('accounts require explicit browser import, deduplicate, isolate libraries, 
   expect(
     Object.values(rows.a).find((r) => r.story?.title.endsWith('(device copy)'))?.story?.blocks[1],
   ).toMatchObject({ text: 'Conflicting local writing' })
+  expect(
+    JSON.stringify(Object.values(rows.a).find((r) => r.story?.title.endsWith('(device copy)'))?.story?.index),
+  ).toContain('Index saved locally during outage')
   await page.getByRole('button', { name: 'Sign out', exact: true }).click()
   active = 'b'
   await signIn()

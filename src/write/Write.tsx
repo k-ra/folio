@@ -65,11 +65,27 @@ export default function Write({
   saving,
   cloudStatus,
 }: Props) {
-  const indexStudy = useIndexStudy(story)
+  const indexStudy = useIndexStudy(
+    story,
+    upStory,
+    saveError ? 'Local save failed' : saving ? 'Saving locally…' : cloudStatus || 'Saved locally',
+  )
   const [panel, setPanel] = useState<PanelT | null>(
     story.chatSettings?.offlineSample ? { kind: 'chat' } : null,
   )
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_WIDTH)
+  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth)
+  useEffect(() => {
+    const resize = () => setViewportWidth(window.innerWidth)
+    window.addEventListener('resize', resize)
+    return () => window.removeEventListener('resize', resize)
+  }, [])
+  const canSplitIndex = viewportWidth > 1100
+  const indexBeside = panel?.kind === 'chat' && indexStudy.beside && canSplitIndex
+  const indexWidth = Math.min(320, Math.max(260, viewportWidth * 0.22))
+  // Reserve a readable essay; resizing chat cannot push its rail or text offscreen.
+  const chatLimit = indexBeside ? Math.min(720, viewportWidth - indexWidth - 480) : undefined
+  const chatWidth = chatLimit === undefined ? panelWidth : Math.min(panelWidth, chatLimit)
   const pasting = useRef(false)
   const editLabel = () => {
     const pasted = pasting.current
@@ -589,7 +605,7 @@ export default function Write({
 
   return (
     <div
-      className={`writing-page ${panelOpen ? 'panel-open' : ''}`}
+      className={`writing-page ${panelOpen ? 'panel-open' : ''} ${indexBeside ? 'index-workspace' : ''}`}
       onPasteCapture={() => {
         pasting.current = true
         setTimeout(() => {
@@ -612,8 +628,9 @@ export default function Write({
         aria-hidden={!panelOpen}
         style={
           {
-            width: panelOpen ? `min(${panelWidth}px, 94vw)` : 0,
+            width: panelOpen ? `min(${chatWidth + (indexBeside ? indexWidth : 0)}px, 94vw)` : 0,
             '--panel-width': `${panelWidth}px`,
+            '--chat-width': `${chatWidth}px`,
             flex: 'none',
             overflow: 'hidden',
             position: 'sticky',
@@ -624,8 +641,17 @@ export default function Write({
           } as CSSProperties
         }
       >
-        {panelOpen && <Panel ctl={ctl} index={panel?.kind === 'chat' ? indexStudy : undefined} />}
-        {panelOpen && isChatPanel(panel) && <PanelResize width={panelWidth} resize={setPanelWidth} />}
+        {panelOpen && (
+          <Panel
+            ctl={ctl}
+            index={panel?.kind === 'chat' ? indexStudy : undefined}
+            indexBeside={indexBeside}
+            canSplitIndex={canSplitIndex}
+          />
+        )}
+        {panelOpen && isChatPanel(panel) && (
+          <PanelResize width={chatWidth} resize={setPanelWidth} maxWidth={chatLimit} />
+        )}
       </div>
 
       <div

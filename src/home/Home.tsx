@@ -561,53 +561,36 @@ export default function Home({ stories, setStories, theme, pickTheme, ai, onOpen
               <div
                 role="region"
                 aria-label="Homepage settings"
-                style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: 30,
-                  width: 252,
-                  padding: '0 16px',
-                  borderBlock: '16px solid transparent',
-                  boxSizing: 'border-box',
-                  background: hb.panel,
-                  color: hb.ink,
-                  boxShadow: '0 20px 40px -20px rgba(0,0,0,.5)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 14,
-                  animation: 'fadein .2s ease both',
-                  maxHeight: 'calc(100dvh - 110px)',
-                  overflowY: 'auto',
-                }}
+                className="home-settings"
+                style={{ background: hb.panel, color: hb.ink, borderColor: hb.panel }}
               >
-                <div style={{ ...mono, opacity: 0.55 }}>YOUR HOMEPAGE</div>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  {(Object.keys(HOME_THEMES) as HomeThemeKey[]).map((k) => (
-                    <button
-                      key={k}
-                      onClick={() => pickTheme(k)}
-                      title={HOME_THEMES[k].name}
-                      style={{
-                        width: 26,
-                        height: 26,
-                        borderRadius: '50%',
-                        background: HOME_THEMES[k].bg,
-                        outline: k === theme ? '1px solid currentColor' : '1px solid transparent',
-                        outlineOffset: 3,
-                      }}
-                    />
-                  ))}
+                <div className="home-settings-theme">
+                  <span style={{ ...mono, opacity: 0.55 }}>YOUR HOMEPAGE</span>
+                  <div className="home-settings-swatches">
+                    {(Object.keys(HOME_THEMES) as HomeThemeKey[]).map((k) => (
+                      <button
+                        key={k}
+                        onClick={() => pickTheme(k)}
+                        title={HOME_THEMES[k].name}
+                        aria-label={HOME_THEMES[k].name}
+                        aria-pressed={k === theme}
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: '50%',
+                          background: HOME_THEMES[k].bg,
+                          outline: k === theme ? '1px solid currentColor' : '1px solid transparent',
+                          outlineOffset: 3,
+                        }}
+                      />
+                    ))}
+                  </div>
                 </div>
                 <input
+                  aria-label="Describe your homepage"
                   placeholder="or describe it: fog, dusk, a dark room…"
                   onKeyDown={homeStyleKey}
-                  style={{
-                    font: `400 12px/1.5 ${SANS}`,
-                    borderBottom: '1px solid currentColor',
-                    padding: '4px 0',
-                    width: '100%',
-                    boxSizing: 'border-box',
-                  }}
+                  className="home-settings-prompt"
                 />
                 <AIConnection inline />
                 <InfoActions />

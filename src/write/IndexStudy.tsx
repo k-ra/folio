@@ -1,57 +1,44 @@
 import { useEffect, useState } from 'react'
 import type { Story } from '../model/types'
+import type { StoryUpdater } from '../model/store'
+import { withBrowserIndex } from '../model/indexClippings'
 import { useAccount } from '../cloud/Auth'
 import type { JSONContent } from '@tiptap/core'
-import IndexEditor, { emptyIndex, indexFromMarkdown, readIndexDocument } from './IndexEditor'
-import { literalMarkdown, loadIndex, selectionMarkdown } from './indexMarkdown'
+import IndexEditor, { emptyIndex, indexFromMarkdown } from './IndexEditor'
+import { literalMarkdown, selectionMarkdown } from './indexMarkdown'
 import './indexStudy.css'
 
 type Passage = { excerpt: string }
 type Anchor = Passage & { left: number; top: number }
 
-/** Branch-only experiment: clipping storage is separate from published story schemas. */
-export function useIndexStudy(story: Story) {
+/** Index uses the story's local durability and revision-checked cloud sync. */
+export function useIndexStudy(story: Story, upStory: (fn: StoryUpdater) => void, status: string) {
   const { user } = useAccount()
-  const identity = `${user?.id || 'browser'}:${story.id}`
-  const storage = `folio.index-study.v4:${identity}`
-  const [loaded] = useState((): { document: JSONContent; error: string } => {
+  const [loaded] = useState((): { document?: JSONContent; error: string } => {
     try {
-      const saved = localStorage.getItem(storage)
       return {
-        document:
-          saved !== null
-            ? readIndexDocument(saved)
-            : indexFromMarkdown(
-                loadIndex(
-                  localStorage,
-                  `folio.index-study.v3:${identity}`,
-                  `folio.index-study.v2:${identity}`,
-                ),
-              ),
+        document: withBrowserIndex(story, localStorage, user?.id).index,
         error: '',
       }
     } catch {
       return {
-        document: emptyIndex(),
         error: 'Saved clippings could not be read. The stored copy is unchanged.',
       }
     }
   })
-  const [document, setDocument] = useState(loaded.document)
-  const [error, setError] = useState(loaded.error)
+  const document = story.index ?? loaded.document ?? emptyIndex()
+  const error = story.index ? '' : loaded.error
+  useEffect(() => {
+    if (loaded.document && story.index === undefined)
+      upStory((s) => (s.index === undefined ? { ...s, index: loaded.document } : s))
+  }, [loaded.document, story.index])
   const [open, setOpen] = useState(false)
+  const [beside, setBeside] = useState(false)
   const [notice, setNotice] = useState('')
   const persist = (next: JSONContent) => {
-    setDocument(next)
-    try {
-      if (loaded.error) throw new Error(loaded.error)
-      localStorage.setItem(storage, JSON.stringify(next))
-      setError('')
-      return true
-    } catch {
-      setError('Clippings are only in this tab. Browser saving failed.')
-      return false
-    }
+    if (error) return false
+    upStory((s) => ({ ...s, index: next }))
+    return true
   }
   const save = (passage: Passage) => {
     const content = document.content || []
@@ -60,7 +47,7 @@ export function useIndexStudy(story: Story) {
       type: 'doc',
       content: [...(empty ? [] : content), ...(indexFromMarkdown(passage.excerpt).content || [])],
     })
-    setNotice(saved ? 'Saved to index' : 'Added to index · not saved')
+    setNotice(saved ? 'Added to index' : 'Index unavailable · original clippings unchanged')
   }
   useEffect(() => {
     if (!notice) return
@@ -72,7 +59,10 @@ export function useIndexStudy(story: Story) {
     edit: persist,
     open,
     setOpen,
+    beside,
+    setBeside,
     error,
+    status,
     notice,
     save,
   }
@@ -83,10 +73,10 @@ export function IndexContents({ study }: { study: IndexStudy }) {
   return (
     <>
       <div className="chat-messages index-contents" aria-label="Saved clippings">
-        <IndexEditor value={study.document} onChange={study.edit} />
+        {!study.error && <IndexEditor value={study.document} onChange={study.edit} />}
       </div>
       <small className="index-local">
-        Prototype · clippings stay in this browser, outside exports and cloud saves.
+        {study.error ? 'Index unavailable' : study.status} · Private, not published.
       </small>
       {study.error && (
         <p role="alert" className="magic-error">

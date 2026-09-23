@@ -1,6 +1,65 @@
-// Deliberately memory-only: never put credentials in stories, URLs or browser storage.
+// BYOK credentials are never part of stories, backups, cloud records, or URLs.
+// A visitor can explicitly remember a key on this device. Browser storage is not a vault.
 let apiKey = ''
 let disabled = false
+let owner: string | null = null
+const keyFor = (id: string) => `folio.ai.device-key.v1:${id}`
+const offFor = (id: string) => `folio.ai.off.v1:${id}`
+function storage(): Storage | null {
+  try { return typeof localStorage === 'undefined' ? null : localStorage } catch { return null }
+}
+function notifyKey() { listeners.forEach((listener) => listener()) }
+export function bindApiKeyOwner(id: string | null) {
+  const next = id || 'guest'
+  if (owner === next) return
+  owner = next
+  const store = storage()
+  try {
+    disabled = store?.getItem(offFor(next)) === '1'
+    apiKey = disabled ? '' : store?.getItem(keyFor(next)) || ''
+  } catch { disabled = false; apiKey = '' }
+  keyRevision++
+  updateRequestState('ready')
+  notifyKey()
+}
+export function hasRememberedApiKey() {
+  if (!owner) return false
+  try { return !!storage()?.getItem(keyFor(owner)) } catch { return false }
+}
+export function rememberApiKey(value: string): boolean {
+  setApiKey(value)
+  if (!owner) return false
+  try {
+    const store = storage()
+    if (!store) return false
+    store.setItem(keyFor(owner), value.trim())
+    store.removeItem(offFor(owner))
+    notifyKey()
+    return true
+  } catch { return false }
+}
+export function resumeAI() {
+  if (!owner || !hasRememberedApiKey()) return false
+  try {
+    const key = storage()?.getItem(keyFor(owner)) || ''
+    setApiKey(key)
+    storage()?.removeItem(offFor(owner))
+    return true
+  } catch { return false }
+}
+export function forgetApiKey() {
+  if (owner) {
+    try {
+      storage()?.removeItem(keyFor(owner))
+      storage()?.setItem(offFor(owner), '1')
+    } catch { /* Keep the in-memory disconnect. */ }
+  }
+  apiKey = ''
+  disabled = true
+  keyRevision++
+  updateRequestState('ready')
+  notifyKey()
+}
 let maxRequestBytes = 4_000_000
 let requestState: 'ready' | 'connected' | 'error' = 'ready'
 let keyRevision = 0
@@ -22,9 +81,12 @@ export const isAIDisabled = () => disabled
 export function disableAI() {
   apiKey = ''
   disabled = true
+  if (owner) {
+    try { storage()?.setItem(offFor(owner), '1') } catch { /* Memory-only fallback. */ }
+  }
   keyRevision++
   updateRequestState('ready')
-  listeners.forEach((listener) => listener())
+  notifyKey()
 }
 export const subscribeKey = (listener: () => void) => {
   listeners.add(listener)
@@ -39,7 +101,7 @@ export function setApiKey(value: string) {
   disabled = false
   keyRevision++
   updateRequestState('ready')
-  listeners.forEach((listener) => listener())
+  notifyKey()
 }
 export function setRequestLimit(bytes: unknown) {
   if (typeof bytes === 'number' && Number.isFinite(bytes) && bytes > 0) maxRequestBytes = bytes

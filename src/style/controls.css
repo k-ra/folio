@@ -688,6 +688,24 @@
 }
 /* The page's available width matters, including a floating sheet or open panel.
    Don't reserve an asymmetric notes gutter when a real margin no longer fits. */
+.note-add-bar {
+  /* A continuous, local hover path across the gap—not the paragraph's whole y-band. */
+  position: absolute;
+  left: 100%;
+  top: 0;
+  padding-left: var(--margin-gap);
+  min-height: 28px;
+  display: flex;
+  align-items: flex-start;
+}
+.note-add {
+  min-height: 28px;
+}
+@media (hover: none) {
+  .note-add {
+    opacity: 0.45 !important;
+  }
+}
 @container essay (max-width: 991px) {
   .margin-note {
     position: relative;
@@ -695,10 +713,11 @@
     width: min(240px, 100%);
     margin: 16px 0 0 auto;
   }
-  .note-add {
-    top: calc(100% + 4px) !important;
-    left: auto !important;
+  .note-add-bar {
+    top: 100%;
+    left: auto;
     right: 0;
+    padding: 4px 0 0 var(--margin-gap);
   }
   .essay-orbs button > span:last-child {
     display: none;

@@ -16,6 +16,8 @@ The browser suite uses `tests/browser/fixtures.ts` to block live generation. Pro
 
 `productPolish.spec.ts` covers chat resizing/reset, cross-paragraph drag and Select All, partial copy, retained formatting undo, paste history, and compact download/account placement. Selection is a temporary native text surface; mounted editors retain their undo state. Conversation changes save normally but do not create essay revisions, and restoring an essay preserves the current chats.
 
+Index rich text is stored in `Story.index`, not a separate browser-only document. It autosaves through the story store and private cloud transport, round-trips in `.folio`, and stays out of publication and essay history. `indexPersistence.test.tsx`, `cloud.test.ts`, and the offline account browser tests cover migration, isolation, consent, outage recovery and conflicts. The old workspace-scoped clipping keys are read-only migration backups. No new database migration is needed.
+
 ## Boundaries
 
 - `src/model/`: stories, versions, migrations and IndexedDB persistence.
@@ -24,7 +26,7 @@ The browser suite uses `tests/browser/fixtures.ts` to block live generation. Pro
 - `src/style/`: category galleries, presets and reversible draft previews.
 - `server/`: shared, request-scoped AI handlers with a local Vite adapter. `routes.ts` enforces the hosted BYOK boundary; `http.ts` handles both streamed and pre-parsed request bodies.
 - `api/`: Vercel Node entry point. The function bundles the image-style reference WebPs explicitly. No server credentials enter the static build.
-- `src/ai/session.ts`: tab-memory-only key and common request transport; never persist this state in the story model.
+- `src/ai/session.ts`: account-scoped browser-local BYOK key and common request transport; never persist credentials in the story model or cloud rows.
 - `server/chatPolicy.ts`: fixed browsing boundary and editable story-chat prompt. [Chat research](chat-research.md) documents the isolated public-topic pass, tool budget, citation rendering and offline verification.
 
 The public seed contains original neutral demonstrations and **Listening before translating**, a sourced whale essay with a real NOAA CSV. Source notes are in `src/model/samples/README.md`. `/?qa=essay` is an isolated test fixture; ordinary visitors open the demo from their story library.

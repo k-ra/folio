@@ -96,12 +96,13 @@ for (const initialPaper of ['folio', 'tide']) {
       }
       const setItem = Storage.prototype.setItem
       Storage.prototype.setItem = function (key, value) {
-        writes.push(`Storage set: ${key}`)
+        // Supabase uses short-lived localStorage locks even while offline; they are not story writes.
+        if (!key.startsWith('lswt-')) writes.push(`Storage set: ${key}`)
         return setItem.call(this, key, value)
       }
       const removeItem = Storage.prototype.removeItem
       Storage.prototype.removeItem = function (key) {
-        writes.push(`Storage remove: ${key}`)
+        if (!key.startsWith('lswt-')) writes.push(`Storage remove: ${key}`)
         return removeItem.call(this, key)
       }
       const clear = Storage.prototype.clear

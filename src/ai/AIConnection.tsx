@@ -2,10 +2,13 @@ import { useId, useRef, useState, useSyncExternalStore } from 'react'
 import { useConnection } from './connection'
 import {
   disableAI,
+  forgetApiKey,
   getAIRequestState,
   hasApiKey,
+  hasRememberedApiKey,
   isAIDisabled,
-  setApiKey,
+  rememberApiKey,
+  resumeAI,
   subscribeAIRequestState,
 } from './session'
 import './connection.css'
@@ -48,8 +51,8 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
       onSubmit={(e) => {
         e.preventDefault()
         try {
-          setApiKey(draft)
-          close()
+          if (rememberApiKey(draft)) close()
+          else setError('AI works for this tab, but this browser could not remember the key.')
         } catch (cause) {
           setError((cause as Error).message)
         }
@@ -57,7 +60,10 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
     >
       <div className="ai-connection-line">
         <div className="ai-choice" role="group" aria-label="AI preference">
-          <button type="button" aria-pressed={enabled} onClick={() => setChoosing(true)}>
+          <button type="button" aria-pressed={enabled} onClick={() => {
+            if (!resumeAI()) setChoosing(true)
+            else reset()
+          }}>
             AI
           </button>
           <button
@@ -78,7 +84,7 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
                 id={id + '-key'}
                 aria-label="OpenAI API key"
                 aria-describedby={id + '-privacy'}
-                title="Tab only · API charges apply. Your key is not saved with stories."
+                title="Saved on this browser only · API charges apply. Not saved with stories."
                 type="password"
                 autoComplete="off"
                 spellCheck={false}
@@ -89,14 +95,15 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
                 autoFocus
                 aria-invalid={!!error}
               />
-              <button type="submit" disabled={!draft.trim()}>
-                Save
-              </button>
+              {draft.trim() ? <button type="submit">Save</button> : hasRememberedApiKey() ? (
+                <button type="button" onClick={() => { forgetApiKey(); reset() }}>Forget</button>
+              ) : <button type="submit" disabled>Save</button>}
             </div>
             <span id={id + '-privacy'} className="ai-accessible-help">
-              Tab only; API charges apply. Explicit AI requests send your key and relevant content through
-              this site’s server to OpenAI. Use a deployment you trust. Reloading forgets the key; it is never
-              saved with stories. Saving a key makes no model request.
+              Saved only in this browser, separately for each signed-in account. Google sign-in does not
+              encrypt or sync the key. Anyone with access to this browser or site scripts may read it.
+              Explicit AI requests send the key and relevant content through this site’s server to OpenAI.
+              Use a deployment you trust. API charges apply. The key is never saved with stories or exports.
             </span>
           </>
         )}

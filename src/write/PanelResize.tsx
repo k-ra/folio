@@ -2,9 +2,17 @@ import { useState } from 'react'
 export const DEFAULT_PANEL_WIDTH = 380
 export const panelLimit = () =>
   Math.max(260, Math.min(720, innerWidth <= 900 ? innerWidth * 0.94 : innerWidth - 360))
-export default function PanelResize({ width, resize }: { width: number; resize: (width: number) => void }) {
+export default function PanelResize({
+  width,
+  resize,
+  maxWidth = panelLimit(),
+}: {
+  width: number
+  resize: (width: number) => void
+  maxWidth?: number
+}) {
   const [dragging, setDragging] = useState(false)
-  const clamp = (n: number) => Math.max(260, Math.min(panelLimit(), n))
+  const clamp = (n: number) => Math.max(260, Math.min(maxWidth, n))
   return (
     <div
       className={`panel-resize ${dragging ? 'is-dragging' : ''}`}
@@ -12,7 +20,7 @@ export default function PanelResize({ width, resize }: { width: number; resize: 
       aria-label="Chat width"
       aria-orientation="vertical"
       aria-valuemin={260}
-      aria-valuemax={panelLimit()}
+      aria-valuemax={maxWidth}
       aria-valuenow={Math.round(clamp(width))}
       tabIndex={0}
       onPointerDown={(e) => {

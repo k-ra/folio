@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { User } from '@supabase/supabase-js'
 import { cloudClient } from './client'
 import { bindGoogleImport, clearGoogleImport, pendingGoogleImport } from './googleImport'
+import { bindApiKeyOwner } from '../ai/session'
 
 type Identity = Pick<User, 'id' | 'email'>
 const IDENTITY = 'folio.account.identity'
@@ -30,7 +31,11 @@ export function AccountProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(!cloudClient || !!user)
   const [error, setError] = useState('')
   useEffect(() => {
-    if (!cloudClient) return
+    if (!cloudClient) {
+      bindApiKeyOwner(null)
+      return
+    }
+    if (user) bindApiKeyOwner(user.id)
     const callback = new URL(location.href)
     const nonce = callback.searchParams.get('folio_import')
     const denied =
@@ -61,6 +66,7 @@ export function AccountProvider({ children }: { children: ReactNode }) {
         setReady(true)
         return
       }
+      bindApiKeyOwner(session?.user?.id || null)
       setUser(session?.user || null)
       setReady(true)
       try {

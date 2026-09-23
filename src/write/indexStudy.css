@@ -1,4 +1,57 @@
 /* Only the experimental controls. The workshop and chat use their existing styles. */
+.conversation-layout {
+  display: flex;
+  height: 100%;
+  min-width: 0;
+}
+.conversation-layout > section {
+  min-width: 0;
+  /* Layout switches should not slide the writing surface or its caret. */
+  animation: none;
+}
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.panel-header-actions > button {
+  display: grid;
+  place-items: center;
+  opacity: 0.45;
+  font-size: 20px;
+  min-width: 20px;
+  min-height: 20px;
+}
+.panel-header-actions > button:hover,
+.panel-header-actions > button[aria-pressed='true'] {
+  opacity: 1;
+}
+.index-workspace .conversation-chat {
+  width: var(--chat-width);
+  flex: none;
+}
+.index-workspace .index-panel {
+  flex: 1;
+  padding-inline: 24px;
+}
+.index-workspace .panel-resize {
+  left: calc(var(--chat-width) - 5px);
+  right: auto;
+}
+.index-workspace .essay-sheet {
+  --gutter-min: 56px;
+  --rail-left: 18px;
+}
+.index-workspace .essay-header {
+  padding-right: 24px;
+}
+.index-workspace .margin-note,
+.index-workspace .note-add-bar {
+  display: none;
+}
+.index-workspace .essay-orbs button > span:last-child {
+  display: none;
+}
 .index-tabs {
   display: flex;
   gap: 22px;
