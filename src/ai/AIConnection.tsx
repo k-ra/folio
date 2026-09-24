@@ -3,12 +3,14 @@ import { useConnection } from './connection'
 import {
   disableAI,
   forgetApiKey,
+  getAIProvider,
   getAIRequestState,
   hasApiKey,
   hasRememberedApiKey,
   isAIDisabled,
   rememberApiKey,
   resumeAI,
+  selectAIProvider,
   subscribeAIRequestState,
 } from './session'
 import './connection.css'
@@ -21,6 +23,8 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
   const [choosing, setChoosing] = useState(false)
   const [draft, setDraft] = useState('')
   const [error, setError] = useState('')
+  const provider = getAIProvider()
+  const providerName = provider === 'anthropic' ? 'Anthropic' : 'OpenAI'
   const requestState = useSyncExternalStore(subscribeAIRequestState, getAIRequestState)
   const connected = !isAIDisabled() && (hasApiKey() || connection?.configured === true)
   const enabled = connected || choosing
@@ -79,10 +83,23 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
         </div>
         {choosing && (
           <>
+            <select
+              className="ai-provider"
+              aria-label="AI provider"
+              value={provider}
+              onChange={(e) => {
+                selectAIProvider(e.currentTarget.value as 'openai' | 'anthropic')
+                setDraft('')
+                setError('')
+              }}
+            >
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+            </select>
             <div className="ai-key-row">
               <input
                 id={id + '-key'}
-                aria-label="OpenAI API key"
+                aria-label={`${providerName} API key`}
                 aria-describedby={id + '-privacy'}
                 title="Saved on this browser only · API charges apply. Not saved with stories."
                 type="password"
@@ -90,7 +107,7 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
                 spellCheck={false}
                 value={draft}
                 onChange={(e) => setDraft(e.currentTarget.value)}
-                placeholder={hasApiKey() ? 'Connected · replace key…' : 'OpenAI API key'}
+                placeholder={hasApiKey() ? 'Connected · replace key…' : `${providerName} key`}
                 maxLength={503}
                 autoFocus
                 aria-invalid={!!error}
@@ -100,9 +117,10 @@ export default function AIConnection({ inline = false }: { inline?: boolean }) {
               ) : <button type="submit" disabled>Save</button>}
             </div>
             <span id={id + '-privacy'} className="ai-accessible-help">
-              Saved only in this browser, separately for each signed-in account. Google sign-in does not
+              Saved only in this browser, separately for each signed-in account and provider. Google sign-in does not
               encrypt or sync the key. Anyone with access to this browser or site scripts may read it.
-              Explicit AI requests send the key and relevant content through this site’s server to OpenAI.
+              Explicit AI requests send the key and relevant content through this site’s server to {providerName}.
+              Anthropic supports chat and code-based visuals here; image generation and web research require OpenAI.
               Use a deployment you trust. API charges apply. The key is never saved with stories or exports.
             </span>
           </>

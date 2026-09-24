@@ -66,6 +66,21 @@
   text-decoration: underline;
   text-underline-offset: 5px;
 }
+.ai-provider {
+  flex: 0 1 82px;
+  min-width: 72px;
+  max-width: 92px;
+  padding: 4px 0;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.ai-provider:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+}
 .ai-key-row {
   display: flex;
   align-items: center;

@@ -1,9 +1,15 @@
 // BYOK credentials are never part of stories, backups, cloud records, or URLs.
 // A visitor can explicitly remember a key on this device. Browser storage is not a vault.
+export type AIProvider = 'openai' | 'anthropic'
+let provider: AIProvider = 'openai'
 let apiKey = ''
 let disabled = false
 let owner: string | null = null
 const keyFor = (id: string) => `folio.ai.device-key.v1:${id}`
+const anthropicKeyFor = (id: string) => `folio.ai.anthropic-key.v1:${id}`
+const providerFor = (id: string) => `folio.ai.provider.v1:${id}`
+const storageKey = (id: string, selected: AIProvider) =>
+  selected === 'anthropic' ? anthropicKeyFor(id) : keyFor(id)
 const offFor = (id: string) => `folio.ai.off.v1:${id}`
 function storage(): Storage | null {
   try { return typeof localStorage === 'undefined' ? null : localStorage } catch { return null }
@@ -16,15 +22,28 @@ export function bindApiKeyOwner(id: string | null) {
   const store = storage()
   try {
     disabled = store?.getItem(offFor(next)) === '1'
-    apiKey = disabled ? '' : store?.getItem(keyFor(next)) || ''
-  } catch { disabled = false; apiKey = '' }
+    provider = store?.getItem(providerFor(next)) === 'anthropic' ? 'anthropic' : 'openai'
+    apiKey = disabled ? '' : store?.getItem(storageKey(next, provider)) || ''
+  } catch { disabled = false; provider = 'openai'; apiKey = '' }
   keyRevision++
   updateRequestState('ready')
   notifyKey()
 }
 export function hasRememberedApiKey() {
   if (!owner) return false
-  try { return !!storage()?.getItem(keyFor(owner)) } catch { return false }
+  try { return !!storage()?.getItem(storageKey(owner, provider)) } catch { return false }
+}
+export const getAIProvider = () => provider
+export function selectAIProvider(next: AIProvider) {
+  if (next === provider) return
+  provider = next
+  try {
+    if (owner) storage()?.setItem(providerFor(owner), next)
+    apiKey = disabled || !owner ? '' : storage()?.getItem(storageKey(owner, next)) || ''
+  } catch { apiKey = '' }
+  keyRevision++
+  updateRequestState('ready')
+  notifyKey()
 }
 export function rememberApiKey(value: string): boolean {
   setApiKey(value)
@@ -32,7 +51,8 @@ export function rememberApiKey(value: string): boolean {
   try {
     const store = storage()
     if (!store) return false
-    store.setItem(keyFor(owner), value.trim())
+    store.setItem(storageKey(owner, provider), value.trim())
+    store.setItem(providerFor(owner), provider)
     store.removeItem(offFor(owner))
     notifyKey()
     return true
@@ -41,7 +61,7 @@ export function rememberApiKey(value: string): boolean {
 export function resumeAI() {
   if (!owner || !hasRememberedApiKey()) return false
   try {
-    const key = storage()?.getItem(keyFor(owner)) || ''
+    const key = storage()?.getItem(storageKey(owner, provider)) || ''
     setApiKey(key)
     storage()?.removeItem(offFor(owner))
     return true
@@ -50,7 +70,7 @@ export function resumeAI() {
 export function forgetApiKey() {
   if (owner) {
     try {
-      storage()?.removeItem(keyFor(owner))
+      storage()?.removeItem(storageKey(owner, provider))
       storage()?.setItem(offFor(owner), '1')
     } catch { /* Keep the in-memory disconnect. */ }
   }
@@ -96,7 +116,8 @@ export const subscribeKey = (listener: () => void) => {
 }
 export function setApiKey(value: string) {
   const key = value.trim()
-  if (key && !/^sk-[\w-]{10,500}$/.test(key)) throw new Error('Enter an OpenAI API key beginning with sk-.')
+  if (key && !(provider === 'anthropic' ? /^sk-ant-[\w-]{10,500}$/.test(key) : /^sk-(?!ant-)[\w-]{10,500}$/.test(key)))
+    throw new Error(`Enter an ${provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} API key beginning with ${provider === 'anthropic' ? 'sk-ant-' : 'sk-'}.`)
   apiKey = key
   disabled = false
   keyRevision++
@@ -116,7 +137,10 @@ export async function apiFetch(
       'This request is too large for this host. On Vercel, keep the complete request below 4 MB, including attachments and the previous artifact. Use a smaller data extract or image; the local server supports larger files.',
     )
   const headers = new Headers(init.headers)
-  if (apiKey) headers.set('X-Folio-Api-Key', apiKey)
+  if (apiKey) {
+    headers.set('X-Folio-Api-Key', apiKey)
+    headers.set('X-Folio-Provider', provider)
+  }
   const revision = keyRevision
   try {
     const response = await fetch(path, {

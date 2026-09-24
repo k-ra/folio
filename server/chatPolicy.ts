@@ -3,7 +3,7 @@ import { chatSettingsSchema, DEFAULT_CHAT_PROMPT } from '../src/ai/chatSettings.
 /** Browsing never receives a story, conversation, custom prompt or model-derived query. */
 export function chatPolicy(settings: unknown, provider?: string) {
   const options = chatSettingsSchema.parse(settings ?? {})
-  if (options.browsing && provider === 'claude')
+  if (options.browsing && (provider === 'claude' || provider === 'anthropic'))
     throw new Error(
       'Web browsing requires an OpenAI API key. Connect one in AI settings, or turn browsing off.',
     )

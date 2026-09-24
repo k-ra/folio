@@ -34,7 +34,7 @@ export function apiHandler(base: Env, root: string, hosted = false) {
       const env = requestEnv(req, base, hosted)
       if (!connectionStatus(env).configured)
         return jsonResponse(res, 401, {
-          error: 'Connect your own OpenAI API key in AI settings first.',
+          error: 'Connect your own API key in AI settings first.',
         })
       if (hosted) await readBody(req, HOSTED_REQUEST_BYTES)
       const handler =

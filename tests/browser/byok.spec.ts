@@ -200,6 +200,32 @@ test('visitor key goes in the request header; errors recover and No AI pauses it
   expect(requests).toHaveLength(2)
 })
 
+test('Anthropic can be selected and remembered without enabling image generation', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 780 })
+  await page.route('**/api/magic/status', (route) =>
+    route.fulfill({ json: { configured: false, images: false, byok: true } }),
+  )
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Homepage settings', exact: true }).click()
+  const menu = page.getByRole('region', { name: 'Homepage settings' })
+  await menu.getByRole('button', { name: 'AI', exact: true }).click()
+  await menu.getByLabel('AI provider').selectOption('anthropic')
+  await expect(menu.getByLabel('Anthropic API key')).toBeVisible()
+  await page.screenshot({ path: 'test-results/byok-anthropic-390.png', animations: 'disabled' })
+  const box = (await menu.boundingBox())!
+  expect(box.x + box.width).toBeLessThanOrEqual(390)
+  await menu.getByLabel('Anthropic API key').fill('sk-ant-offline-browser-key')
+  await menu.getByRole('button', { name: 'Save', exact: true }).click()
+  expect(await page.evaluate(() => localStorage.getItem('folio.ai.anthropic-key.v1:guest'))).toBe('sk-ant-offline-browser-key')
+  await page.reload()
+  await page.getByRole('button', { name: 'Homepage settings', exact: true }).click()
+  await menu.getByRole('button', { name: 'AI connected', exact: true }).click()
+  await expect(menu.getByLabel('AI provider')).toHaveValue('anthropic')
+  await menu.getByLabel('AI provider').selectOption('openai')
+  await expect(menu.getByLabel('OpenAI API key')).toBeVisible()
+  await expect(menu.getByRole('button', { name: 'AI connected', exact: true })).toHaveCount(0)
+})
+
 test('a static-only installation does not offer a nonfunctional key form', async ({ page }) => {
   await page.route('**/api/magic/status', (route) => route.fulfill({ status: 404, body: 'Not found' }))
   await page.goto('/')

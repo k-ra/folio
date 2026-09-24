@@ -13,10 +13,11 @@ type TextPayload = {
 
 export function connectionStatus(env: Env) {
   const claude = env.FOLIO_TEXT_PROVIDER === 'claude' && !!env.FOLIO_CLAUDE_CLI
+  const anthropic = env.FOLIO_TEXT_PROVIDER === 'anthropic' && !!env.ANTHROPIC_API_KEY
   return {
-    configured: claude || !!env.OPENAI_API_KEY,
+    configured: claude || anthropic || !!env.OPENAI_API_KEY,
     images: !!env.OPENAI_API_KEY,
-    provider: claude ? 'Claude' : env.OPENAI_API_KEY ? 'OpenAI' : null,
+    provider: claude || anthropic ? 'Claude' : env.OPENAI_API_KEY ? 'OpenAI' : null,
   }
 }
 
@@ -33,6 +34,10 @@ export async function generateTextResult(
   if (env.FOLIO_TEXT_PROVIDER === 'claude') {
     if (payload.tools?.length) throw new Error('Web browsing requires an OpenAI API key.')
     return { text: await claudeText(env, payload, signal), sources: [] }
+  }
+  if (env.FOLIO_TEXT_PROVIDER === 'anthropic') {
+    if (payload.tools?.length) throw new Error('Web browsing requires an OpenAI API key.')
+    return { text: await anthropicText(env, payload, signal), sources: [] }
   }
   if (!env.OPENAI_API_KEY) throw new Error('No model connected. Configure the local server first.')
   const response = await fetch('https://api.openai.com/v1/responses', {
@@ -72,6 +77,56 @@ export async function generateTextResult(
     ),
   ]
   return { text, sources }
+}
+
+/** Request-scoped Anthropic BYOK transport; never reads a deployment owner's key. */
+async function anthropicText(env: Env, payload: TextPayload, signal: AbortSignal): Promise<string> {
+  if (!env.ANTHROPIC_API_KEY) throw new Error('Connect an Anthropic API key in AI settings first.')
+  const messages = payload.input.map((message) => ({
+    role: message.role,
+    content: message.content.map((part) => {
+      if (part.type === 'input_text') return { type: 'text', text: part.text || '' }
+      if (part.type === 'input_image' && part.image_url) {
+        const match = /^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/.exec(part.image_url)
+        if (!match) throw new Error('Claude accepts PNG, JPEG or WebP image references only.')
+        return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } }
+      }
+      throw new Error('This image reference is not supported by Claude.')
+    }),
+  }))
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.ANTHROPIC_API_KEY}`,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: env.FOLIO_ANTHROPIC_MODEL || 'claude-sonnet-4-6',
+      max_tokens: payload.max_output_tokens || (payload.text ? 16000 : 4096),
+      system: payload.instructions,
+      messages,
+      ...(payload.text ? { output_config: { format: { type: 'json_schema', schema: payload.text.format.schema } } } : {}),
+    }),
+    signal,
+  })
+  if (!response.ok)
+    throw new Error(
+      response.status === 401
+        ? 'Anthropic rejected this API key. Replace it in AI settings and try again.'
+        : response.status === 429
+          ? 'The model has reached its limit. Try again shortly.'
+          : `Claude could not finish (${response.status}). Check your key and model access.`,
+    )
+  const result = (await response.json()) as {
+    stop_reason?: string
+    content?: { type: string; text?: string }[]
+  }
+  if (result.stop_reason === 'max_tokens' || result.stop_reason === 'refusal')
+    throw new Error('Claude did not return a complete result. Your previous version is unchanged.')
+  const text = result.content?.filter((part) => part.type === 'text').map((part) => part.text || '').join('') || ''
+  if (!text.trim()) throw new Error('Claude returned no text. Please retry.')
+  return text
 }
 
 export function claudeArgs(payload: TextPayload, model: string) {

@@ -122,7 +122,7 @@ export function createMagicHandler(env: Env, root: string) {
       if (image && !env.OPENAI_API_KEY) {
         json(503, {
           error:
-            'Image generation needs an OpenAI API key. The local Claude connection supports chat, graphics, and data.',
+            'Image generation needs an OpenAI API key. Choose OpenAI in AI settings; Claude supports chat, graphics, and data.',
         })
         return
       }

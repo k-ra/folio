@@ -59,13 +59,18 @@ export function jsonResponse(res: ServerResponse, status: number, value: unknown
 
 export function requestEnv(req: IncomingMessage, base: Env, hosted: boolean): Env {
   const key = req.headers['x-folio-api-key']
-  if (key !== undefined && (typeof key !== 'string' || !/^sk-[\w-]{10,500}$/.test(key)))
-    throw new HttpError(400, 'Enter a valid OpenAI API key in AI settings.')
+  const provider = req.headers['x-folio-provider'] ?? 'openai'
+  if (provider !== 'openai' && provider !== 'anthropic')
+    throw new HttpError(400, 'Choose OpenAI or Anthropic in AI settings.')
+  const valid = provider === 'anthropic' ? /^sk-ant-[\w-]{10,500}$/ : /^sk-(?!ant-)[\w-]{10,500}$/
+  if (key !== undefined && (typeof key !== 'string' || !valid.test(key)))
+    throw new HttpError(400, `Enter a valid ${provider === 'anthropic' ? 'Anthropic' : 'OpenAI'} API key in AI settings.`)
   if (hosted || key) {
     // Never fall back to a deployment owner's key or local subscription for visitors.
     return {
-      OPENAI_API_KEY: key as string | undefined,
-      FOLIO_TEXT_PROVIDER: 'openai',
+      OPENAI_API_KEY: provider === 'openai' ? key as string | undefined : undefined,
+      ANTHROPIC_API_KEY: provider === 'anthropic' ? key as string | undefined : undefined,
+      FOLIO_TEXT_PROVIDER: provider === 'anthropic' ? 'anthropic' : 'openai',
       FOLIO_TEXT_MODEL: base.FOLIO_TEXT_MODEL,
       FOLIO_IMAGE_MODEL: base.FOLIO_IMAGE_MODEL,
     }

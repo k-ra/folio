@@ -26,7 +26,7 @@ Index rich text is stored in `Story.index`, not a separate browser-only document
 - `src/style/`: category galleries, presets and reversible draft previews.
 - `server/`: shared, request-scoped AI handlers with a local Vite adapter. `routes.ts` enforces the hosted BYOK boundary; `http.ts` handles both streamed and pre-parsed request bodies.
 - `api/`: Vercel Node entry point. The function bundles the image-style reference WebPs explicitly. No server credentials enter the static build.
-- `src/ai/session.ts`: account-scoped browser-local BYOK key and common request transport; never persist credentials in the story model or cloud rows.
+- `src/ai/session.ts`: provider-specific, account-scoped browser-local BYOK keys and common request transport; never persist credentials in the story model or cloud rows.
 - `server/chatPolicy.ts`: fixed browsing boundary and editable story-chat prompt. [Chat research](chat-research.md) documents the isolated public-topic pass, tool budget, citation rendering and offline verification.
 
 The public seed contains original neutral demonstrations and **Listening before translating**, a sourced whale essay with a real NOAA CSV. Source notes are in `src/model/samples/README.md`. `/?qa=essay` is an isolated test fixture; ordinary visitors open the demo from their story library.
